@@ -45,7 +45,7 @@ public class MemoryCache<K, V> implements Cache<K, V>, FrequencyCount<K> {
     }
 
     @Override
-    public K delete(K key) {
+    public K del(K key) {
         if ( key != null ) {
             cacheMap.remove(key);
             return key;
