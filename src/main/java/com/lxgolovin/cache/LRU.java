@@ -47,7 +47,8 @@ public class LRU<K> implements CacheAlgorithm<K> {
         if ( key != null ) {
             lruMap.put(key, value);
             tail = key;
-            if (head == null){ head = key; }
+            if (head == null) { head = key; }
+            else if ( head == key ) { updateHead(); }
             return key;
         }
         throw new IllegalArgumentException();

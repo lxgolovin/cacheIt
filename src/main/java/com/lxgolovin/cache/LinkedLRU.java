@@ -6,13 +6,13 @@ import java.util.Map;
 public class LinkedLRU<K> extends LinkedHashMap implements CacheAlgorithm<K>  {
 
     private Map lruMap;
-
+/*
     @Override
     protected boolean removeEldestEntry(Map.Entry eldest) {
 
         return super.removeEldestEntry(eldest);
     }
-
+*/
 
 
     public LinkedLRU() {
