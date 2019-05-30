@@ -50,7 +50,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      *          {@link MemoryCache#cacheMap} does not contain the key
      */
     @Override
-    public K del(K key) {
+    public K delete(K key) {
         if ( key != null && cacheMap.containsKey(key)) {
             cacheMap.remove(key);
             return key;

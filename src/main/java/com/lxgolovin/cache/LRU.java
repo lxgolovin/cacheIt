@@ -3,7 +3,7 @@ package com.lxgolovin.cache;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LRU<K> implements CacheAlgo<K> {
+public class LRU<K> implements CacheAlgorithm<K> {
 
     private Map<K, Long> lruMap;
 
@@ -22,10 +22,10 @@ public class LRU<K> implements CacheAlgo<K> {
         tail = head = null;
     }
 
-    public LRU(K key) {
-        lruMap = new HashMap<>();
-        add(key);
-    }
+//    public LRU(K key) {
+//        lruMap = new HashMap<>();
+//        add(key);
+//    }
 
     @Override
     public K head() {
@@ -73,7 +73,7 @@ public class LRU<K> implements CacheAlgo<K> {
      *          {@link LRU#lruMap} does not contain the key
      */
     @Override
-    public K del(K key) {
+    public K delete(K key) {
         if ( key != null && lruMap.containsKey(key)) {
             lruMap.remove(key);
             if (key == head) { updateHead(); }
@@ -84,14 +84,14 @@ public class LRU<K> implements CacheAlgo<K> {
     }
 
     private void updateTail() {
-        tail = (K)lruMap.entrySet().stream()
+        tail = lruMap.entrySet().stream()
                 .sorted(Map.Entry.<K,Long>comparingByValue().reversed())
-                .map(x->x.getKey()).toArray()[0];
+                .map(x->x.getKey()).findFirst().orElse(null);
     }
 
     private void updateHead() {
-        head = (K)lruMap.entrySet().stream()
-                .sorted(Map.Entry.<K,Long>comparingByValue())
-                .map(x->x.getKey()).toArray()[0];
+        head = lruMap.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue())
+                .map(x->x.getKey()).findFirst().orElse(null);
     }
 }

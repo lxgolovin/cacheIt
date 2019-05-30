@@ -3,7 +3,7 @@ package com.lxgolovin.cache;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class LinkedLRU<K> extends LinkedHashMap implements CacheAlgo<K>  {
+public class LinkedLRU<K> extends LinkedHashMap implements CacheAlgorithm<K>  {
 
     private Map lruMap;
 
@@ -44,7 +44,7 @@ public class LinkedLRU<K> extends LinkedHashMap implements CacheAlgo<K>  {
     }
 
     @Override
-    public K del(K key) {
+    public K delete(K key) {
         return null;
     }
 }
