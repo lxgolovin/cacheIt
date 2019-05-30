@@ -1,4 +1,4 @@
-package main.java.com.lxgolovin.cache;
+package com.lxgolovin.cache;
 
 public interface Cache<K, V> {
     V get(K key);
