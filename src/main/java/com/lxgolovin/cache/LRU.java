@@ -3,38 +3,51 @@ package com.lxgolovin.cache;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LRU<K, V> implements CacheAlgo<K,V> {
+public class LRU<K> implements CacheAlgo<K> {
 
-    private Map lruMap;
+    private Map<K, Long> lruMap;
+
+    /**
+     * The youngest element in Map
+     */
+    private K tail;
+
+    /**
+     *  The eldest element in Map
+     */
+    private K head;
 
     public LRU() {
         lruMap = new HashMap<>();
+        tail = head = null;
     }
 
-    public LRU(K key, V value) {
+    public LRU(K key) {
         lruMap = new HashMap<>();
+        add(key);
     }
 
     @Override
     public K head() {
-        return null;
+        return head;
     }
 
     @Override
     public K tail() {
-        return null;
+        return tail;
     }
 
     /**
      * @param key - may not be null
-     * @param value - may no be null
-     * @throws IllegalArgumentException if any of the params is null or
-     *          {@link LRU#lruMap} does not contain the key
+     * @throws IllegalArgumentException if any of the params is null
      */
     @Override
-    public K add(K key, V value) {
-        if ( key != null & value != null ) {
+    public K add(K key) {
+        long value = System.nanoTime();
+        if ( key != null ) {
             lruMap.put(key, value);
+            tail = key;
+            if (head == null){ head = key; }
             return key;
         }
         throw new IllegalArgumentException();
@@ -42,14 +55,13 @@ public class LRU<K, V> implements CacheAlgo<K,V> {
 
     /**
      * @param key - may not be null
-     * @param value - may no be null
      * @throws IllegalArgumentException if any of the params is null or
      *          {@link LRU#lruMap} does not contain the key
      */
     @Override
-    public K renew(K key, V value) {
-        if ( ( key != null & value != null ) && lruMap.containsKey(key)  ) {
-            lruMap.put(key, value);
+    public K renew(K key) {
+        if ( ( key != null ) && lruMap.containsKey(key)  ) {
+            add(key);
             return key;
         }
         throw new IllegalArgumentException();
@@ -64,8 +76,22 @@ public class LRU<K, V> implements CacheAlgo<K,V> {
     public K del(K key) {
         if ( key != null && lruMap.containsKey(key)) {
             lruMap.remove(key);
+            if (key == head) { updateHead(); }
+            if (key == tail) { updateTail(); }
             return key;
         }
         throw new IllegalArgumentException();
+    }
+
+    private void updateTail() {
+        tail = (K)lruMap.entrySet().stream()
+                .sorted(Map.Entry.<K,Long>comparingByValue().reversed())
+                .map(x->x.getKey()).toArray()[0];
+    }
+
+    private void updateHead() {
+        head = (K)lruMap.entrySet().stream()
+                .sorted(Map.Entry.<K,Long>comparingByValue())
+                .map(x->x.getKey()).toArray()[0];
     }
 }

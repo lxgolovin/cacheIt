@@ -1,0 +1,16 @@
+# IDEA stuff
+.idea/*
+*.iml
+~.*
+
+
+# eclipse stuff
+.classpath
+.project
+/bin/*
+
+
+# Gradle stuff
+.gradle/*
+/build/*
+/out/*

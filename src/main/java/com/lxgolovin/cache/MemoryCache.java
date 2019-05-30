@@ -3,7 +3,7 @@ package com.lxgolovin.cache;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MemoryCache<K, V> implements Cache<K, V> {
+public class MemoryCache<K, V> implements Cache<K, V>  {
 
     private Map<K, V> cacheMap;
 
