@@ -1,9 +1,4 @@
-
-ext {
-}
-
-
-apply plugin: 'java'
+plugins.apply('java')
 
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
@@ -18,8 +13,6 @@ repositories {
 
 
 dependencies {
-    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.4.2'
-    implementation(localGroovy())
     testImplementation('org.junit.jupiter:junit-jupiter:5.4.2')
 }
 
@@ -31,6 +24,7 @@ test {
     useJUnitPlatform()
     testLogging {
         events "passed", "skipped", "failed"
+        exceptionFormat "full"
     }
 }
 
