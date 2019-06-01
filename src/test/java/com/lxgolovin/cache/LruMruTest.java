@@ -9,8 +9,8 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.*;
 
 class LruMruTest {
-    private LruMru<Integer> lqueue;
-    private LruMru<Integer> mqueue;
+    private CacheAlgorithm<Integer> lqueue;
+    private CacheAlgorithm<Integer> mqueue;
     private int[] arr;
 
     @BeforeEach
@@ -37,7 +37,7 @@ class LruMruTest {
     void lruAlgorithm() {
         assertEquals(1,lqueue.delete());
         lqueue.shift(1);
-        assertEquals(2,lqueue.delete());
+        assertEquals(2,lqueue.unshift(2));
         lqueue.shift(3);
         assertEquals(4,lqueue.delete());
         assertThrows(IllegalArgumentException.class,
@@ -48,7 +48,7 @@ class LruMruTest {
     void mruAlgorithm() {
         assertEquals(4, mqueue.delete());
         mqueue.shift(4);
-        assertEquals(4, mqueue.delete());
+        assertEquals(4, mqueue.unshift(4));
         assertEquals(3, mqueue.delete());
         mqueue.shift(1);
         assertEquals(1, mqueue.delete());
@@ -57,12 +57,13 @@ class LruMruTest {
                 () -> { mqueue.shift(null); }  );
 
         assertEquals(2, mqueue.delete());
-        assertEquals(null, mqueue.delete());
+        assertNull(mqueue.delete());
     }
 
     @Test
     void deleteAll() {
-        Arrays.stream(arr).forEach(x -> lqueue.delete());
-        assertEquals(null, lqueue.delete());
+        // Arrays.stream(arr).forEach(x -> lqueue.delete());
+        lqueue.flash();
+        assertNull(lqueue.delete());
     }
 }

@@ -85,6 +85,23 @@ public class LruMru<I> implements CacheAlgorithm<I> {
         throw new IllegalArgumentException();
     }
 
+    /**
+     * Removes element from the queue
+     * @param elem - may not be null
+     * @throws IllegalArgumentException if any of the params is null
+     */
+    @Override
+    public I unshift(I elem) {
+        if ( elem != null ) {
+            queue.remove(elem);
+            if ( elem == head ) { updateHead(); }
+            if ( elem == tail ) { updateTail(); }
+
+            return elem;
+        }
+        throw new IllegalArgumentException();
+    }
+
 
     /**
      * Deletes element from the queue depending on the algorithm type
@@ -123,6 +140,11 @@ public class LruMru<I> implements CacheAlgorithm<I> {
     @Override
     public String getType() {
         return toString();
+    }
+
+    @Override
+    public void flash() {
+        queue.clear();
     }
 
     private void updateTail() {
