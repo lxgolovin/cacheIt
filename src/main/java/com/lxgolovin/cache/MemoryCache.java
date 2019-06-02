@@ -4,12 +4,17 @@ package com.lxgolovin.cache;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ *
+ * @param <K>
+ * @param <V>
+ */
 public class MemoryCache<K, V> implements Cache<K, V>  {
 
     /**
      * Default cache size
      */
-    private static final int DEFAULT_CACHE_SIZE = 5;
+    static final int DEFAULT_CACHE_SIZE = 5;
 
     /**
      * Map to keep data
@@ -47,9 +52,12 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     @Override
     public K cache(K key, V value) {
-        if ( key == null | value == null ) { throw new IllegalArgumentException(); }
+        if ((key == null) | (value == null) ) {
+            throw new IllegalArgumentException();
+        }
+
         // TODO: need to implement dynamic size change during init phase
-        if ( size() == DEFAULT_CACHE_SIZE ) {
+        if (size() == DEFAULT_CACHE_SIZE) {
             // using deletion by algorithm
             delete();
         }
@@ -64,10 +72,16 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     @Override
     public V get(K key){
-        if ( key == null || !cacheMap.containsKey(key) ) { throw new IllegalArgumentException(); }
+        if ((key == null) || (!cacheMap.containsKey(key))) {
+            throw new IllegalArgumentException();
+        }
         return cacheMap.get(algo.shift(key));
     }
 
+    /**
+     *
+     * @return
+     */
     @Override
     public K delete() {
         return delete(algo.delete());
@@ -80,17 +94,26 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     @Override
     public K delete(K key) {
-        if ( key == null || !cacheMap.containsKey(key) ) { throw new IllegalArgumentException(); }
+        if ((key == null) || (!cacheMap.containsKey(key))) {
+            throw new IllegalArgumentException();
+        }
         cacheMap.remove(algo.delete(key));
         return key;
     }
 
+    /**
+     *
+     */
     @Override
     public void clear(){
         cacheMap.clear();
         algo.flash();
     }
 
+    /**
+     *
+     * @return
+     */
     @Override
     public int size() {
         return cacheMap.size();

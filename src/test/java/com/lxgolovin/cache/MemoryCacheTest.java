@@ -7,23 +7,45 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ *
+ */
 class MemoryCacheTest {
-    private final static int RANGE_MAX = 9;
-    private final static int CACHE_CAPACITY = 5;
-    private Cache<Integer, Integer> lruCache, mruCache;
 
+    /**
+     *
+     */
+    private int RANGE_MAX = 9;
+
+    /**
+     *
+     */
+    private int CACHE_CAPACITY = MemoryCache.DEFAULT_CACHE_SIZE;
+
+    /**
+     *
+     */
+    private Cache<Integer, Integer> lruCache;
+    private Cache<Integer, Integer> mruCache;
+
+    /**
+     *
+     */
     @BeforeEach
     void setUp() {
         CacheAlgorithm<Integer> lru = new LruMru<>();
         lruCache = new MemoryCache<>(lru);
 
-        CacheAlgorithm<Integer> mru = new LruMru<>("MRU");
+        CacheAlgorithm<Integer> mru = new LruMru<>(LruMru.MRU_ALGORITHM);
         mruCache = new MemoryCache<>(mru, 0, 0);
 
         IntStream.rangeClosed(1,RANGE_MAX).forEach(x->lruCache.cache(x,x));
         IntStream.rangeClosed(1,RANGE_MAX).forEach(x->mruCache.cache(x,x));
     }
 
+    /**
+     *
+     */
     @Test
     void getInLruAlgorithm() {
         // 5..9 are the elements after init and size is 5
@@ -36,6 +58,9 @@ class MemoryCacheTest {
                 () -> lruCache.get(null) );
     }
 
+    /**
+     *
+     */
     @Test
     void getInMruAlgorithm() {
         // 0..3,9 are the elements after init and size is 5
@@ -48,6 +73,9 @@ class MemoryCacheTest {
                 () -> lruCache.get(null) );
     }
 
+    /**
+     *
+     */
     @Test
     void deleteInLruAlgorithm() {
         // 5..9 are the elements after init
@@ -63,6 +91,9 @@ class MemoryCacheTest {
 
     }
 
+    /**
+     *
+     */
     @Test
     void deleteInMruAlgorithm() {
         // 0..3,9 are the elements after init and size is 5
@@ -78,12 +109,18 @@ class MemoryCacheTest {
 
     }
 
+    /**
+     *
+     */
     @Test
     void size() {
         assertTrue(CACHE_CAPACITY >= lruCache.size());
         assertEquals(5, lruCache.size());
     }
 
+    /**
+     *
+     */
     @Test
     void clearCache() {
         lruCache.clear();

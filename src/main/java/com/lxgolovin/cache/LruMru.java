@@ -4,37 +4,41 @@ package com.lxgolovin.cache;
 import java.util.*;
 import java.util.Map;
 
+/**
+ *
+ * @param <I>
+ */
 public class LruMru<I> implements CacheAlgorithm<I> {
 
     /**
      * LRU algorithm
      */
-    private static final String LRU_ALGORITHM = "LRU";
+    static final String LRU_ALGORITHM = "LRU";
 
     /**
      * MRU algorithm
      */
-     private static final String MRU_ALGORITHM = "MRU";
+    static final String MRU_ALGORITHM = "MRU";
 
     /**
      * Default algorithm type if none is defined in constructor
      */
-    private static final String DEFAULT_ALGORITHM_TYPE = LRU_ALGORITHM;
+    static final String DEFAULT_ALGORITHM_TYPE = "LRU";
 
     /**
      * The default initial capacity - MUST be a power of two.
      */
-    private static final int DEFAULT_INITIAL_CAPACITY = 1 << 4; // aka 16
+    private final int DEFAULT_INITIAL_CAPACITY = 1 << 4; // aka 16
 
     /**
      * The load factor used when none specified in constructor.
      */
-    private static final float DEFAULT_LOAD_FACTOR = 0.75f;
+    private final float DEFAULT_LOAD_FACTOR = 0.75f;
 
     /**
      * Dummy value to associate with an Object in the backing Map
      */
-    private static final Object DUMMY = new Object();
+    private final Object DUMMY = new Object();
 
     /**
      * Current algorithm type
@@ -56,17 +60,24 @@ public class LruMru<I> implements CacheAlgorithm<I> {
      */
     private Map<I, Object> queue;
 
+    /**
+     *
+     */
     public LruMru() {
         queue = new LinkedHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, true);
-        tail = head = null;
+        tail = null;
+        head = null;
     }
 
+    /**
+     *
+     * @param algorithm
+     */
     public LruMru(String algorithm) {
         queue = new LinkedHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, true);
-        if ( MRU_ALGORITHM.equals(algorithm) ) {
-            algo = algorithm;
-        } else { algo = LRU_ALGORITHM; }
-        tail = head = null;
+        algo = (MRU_ALGORITHM.equals(algorithm)) ? algorithm : LRU_ALGORITHM;
+        tail = null;
+        head = null;
     }
 
     /**
@@ -76,12 +87,17 @@ public class LruMru<I> implements CacheAlgorithm<I> {
      */
     @Override
     public I shift(I elem) {
-        if ( elem == null ) { throw new IllegalArgumentException(); }
+        if (elem == null) {
+            throw new IllegalArgumentException();
+        }
 
         queue.put(elem, DUMMY);
         tail = elem;
-        if (head == null) { head = elem; }
-        else if ( head == elem ) { updateHead(); }
+        if (head == null) {
+            head = elem;
+        } else if (head == elem) {
+            updateHead();
+        }
 
         return elem;
     }
@@ -95,17 +111,21 @@ public class LruMru<I> implements CacheAlgorithm<I> {
     public I delete() {
         I elem = null;
 
-        if ( queue.size() > 0 ) {
+        if (queue.size() > 0) {
             switch (algo) {
                 case LRU_ALGORITHM:
                     queue.remove(head);
                     elem = head;
                     updateHead();
                     break;
+
                 case MRU_ALGORITHM:
                     queue.remove(tail);
                     elem = tail;
                     updateTail();
+                    break;
+
+                default:
                     break;
             }
         }
@@ -119,15 +139,25 @@ public class LruMru<I> implements CacheAlgorithm<I> {
      */
     @Override
     public I delete(I elem) {
-        if ( elem == null ) { throw new IllegalArgumentException(); }
+        if (elem == null) {
+            throw new IllegalArgumentException();
+        }
 
         queue.remove(elem);
-        if ( elem == head ) { updateHead(); }
-        if ( elem == tail ) { updateTail(); }
+        if (elem == head ) {
+            updateHead();
+        }
+        if (elem == tail) {
+            updateTail();
+        }
 
         return elem;
     }
 
+    /**
+     *
+     * @return
+     */
     @Override
     public String toString() {
         return algo;
@@ -141,11 +171,17 @@ public class LruMru<I> implements CacheAlgorithm<I> {
         return toString();
     }
 
+    /**
+     *
+     */
     @Override
     public void flash() {
         queue.clear();
     }
 
+    /**
+     *
+     */
     private void updateTail() {
         if (queue.size() > 0) {
             List<I> list = new ArrayList<>(queue.keySet());
@@ -153,11 +189,19 @@ public class LruMru<I> implements CacheAlgorithm<I> {
         } else {
             tail = null;
         }
-        if ( tail == null ) head = null;
+
+        if (tail == null) {
+            head = null;
+        }
     }
 
+    /**
+     *
+     */
     private void updateHead() {
         head = queue.keySet().stream().findFirst().orElse(null);
-        if ( head == null ) tail = null;
+        if (head == null) {
+            tail = null;
+        }
     }
 }
