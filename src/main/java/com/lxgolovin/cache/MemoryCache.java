@@ -8,23 +8,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     /**
      * Default cache size
      */
-    private static final int DEFAULT_CACHE_SIZE = 10;
-
-    /**
-     * LRU algorithm
-     */
-    private static final String LRU_ALGORITHM = "LRU";
-
-    /**
-     * MRU algorithm
-     */
-    private static final String MRU_ALGORITHM = "MRU";
-
-    /**
-     * Default algorithm type if none is defined in constructor
-     */
-    private static final String DEFAULT_ALGORITHM_TYPE = LRU_ALGORITHM;
-
+    private static final int DEFAULT_CACHE_SIZE = 5;
 
     /**
      * Map to keep data
@@ -34,17 +18,26 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     /**
      *
      */
-    CacheAlgorithm<K> algo;
+    private CacheAlgorithm<K> algo;
 
-
-    public MemoryCache() {
+    /**
+     *
+     * @param algorithm
+     */
+    public MemoryCache(CacheAlgorithm<K> algorithm) {
         cacheMap = new HashMap<>();
-        algo = new LruMru<>();
+        algo = algorithm;
     }
 
-    public MemoryCache(K key, V value) {
+    /**
+     *
+     * @param algorithm
+     * @param key
+     * @param value
+     */
+    public MemoryCache(CacheAlgorithm<K> algorithm, K key, V value) {
         cacheMap = new HashMap<>();
-        algo = new LruMru<>();
+        algo = algorithm;
         cache(key, value);
     }
 
@@ -55,11 +48,13 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     @Override
     public K cache(K key, V value) {
-        if ( key != null & value != null ) {
-            cacheMap.put(algo.shift(key), value);
-            return key;
+        if ( key == null | value == null ) { throw new IllegalArgumentException(); }
+        if ( size() == DEFAULT_CACHE_SIZE ) {
+            // TODO: check if the key is already in cacheMap!
+//            delete(key);
         }
-        throw new IllegalArgumentException();
+        cacheMap.put(algo.shift(key), value);
+        return key;
     }
 
     /**
@@ -69,10 +64,8 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     @Override
     public V get(K key){
-        if ( key != null && cacheMap.containsKey(key) ) {
-            return cacheMap.get(algo.shift(key));
-        }
-        throw new IllegalArgumentException();
+        if ( key == null || !cacheMap.containsKey(key) ) { throw new IllegalArgumentException(); }
+        return cacheMap.get(algo.shift(key));
     }
 
     /**
@@ -82,11 +75,9 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     @Override
     public K delete(K key) {
-        if ( key != null && cacheMap.containsKey(key)) {
-            cacheMap.remove(algo.unshift(key));
-            return key;
-        }
-        throw new IllegalArgumentException();
+        if ( key == null || !cacheMap.containsKey(key) ) { throw new IllegalArgumentException(); }
+        cacheMap.remove(algo.delete(key));
+        return key;
     }
 
     @Override

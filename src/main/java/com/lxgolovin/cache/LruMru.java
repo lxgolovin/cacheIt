@@ -38,7 +38,7 @@ public class LruMru<I> implements CacheAlgorithm<I> {
     /**
      * Current algorithm type
      */
-    private String algorithm = DEFAULT_ALGORITHM_TYPE;
+    private String algo = DEFAULT_ALGORITHM_TYPE;
 
     /**
      * The youngest element in queue
@@ -53,18 +53,18 @@ public class LruMru<I> implements CacheAlgorithm<I> {
     /**
      * Queue to organize algorithm
      */
-    public Map<I, Object> queue;
+    private Map<I, Object> queue;
 
     public LruMru() {
         queue = new LinkedHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, true);
         tail = head = null;
     }
 
-    public LruMru(String algoType) {
+    public LruMru(String algorithm) {
         queue = new LinkedHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, true);
-        if (algoType != null && algoType == MRU_ALGORITHM ) {
-            algorithm = algoType;
-        } else { algorithm = LRU_ALGORITHM; }
+        if ( MRU_ALGORITHM.equals(algorithm) ) {
+            algo = algorithm;
+        } else { algo = LRU_ALGORITHM; }
         tail = head = null;
     }
 
@@ -75,33 +75,15 @@ public class LruMru<I> implements CacheAlgorithm<I> {
      */
     @Override
     public I shift(I elem) {
-        if ( elem != null ) {
-            queue.put(elem, DUMMY);
-            tail = elem;
-            if (head == null) { head = elem; }
-            else if ( head == elem ) { updateHead(); }
-            return elem;
-        }
-        throw new IllegalArgumentException();
+        if ( elem == null ) { throw new IllegalArgumentException(); }
+
+        queue.put(elem, DUMMY);
+        tail = elem;
+        if (head == null) { head = elem; }
+        else if ( head == elem ) { updateHead(); }
+
+        return elem;
     }
-
-    /**
-     * Removes element from the queue
-     * @param elem - may not be null
-     * @throws IllegalArgumentException if any of the params is null
-     */
-    @Override
-    public I unshift(I elem) {
-        if ( elem != null ) {
-            queue.remove(elem);
-            if ( elem == head ) { updateHead(); }
-            if ( elem == tail ) { updateTail(); }
-
-            return elem;
-        }
-        throw new IllegalArgumentException();
-    }
-
 
     /**
      * Deletes element from the queue depending on the algorithm type
@@ -113,7 +95,7 @@ public class LruMru<I> implements CacheAlgorithm<I> {
         I elem = null;
 
         if ( queue.size() > 0 ) {
-            switch (algorithm) {
+            switch (algo) {
                 case LRU_ALGORITHM:
                     queue.remove(head);
                     elem = head;
@@ -129,9 +111,25 @@ public class LruMru<I> implements CacheAlgorithm<I> {
         return elem;
     }
 
+    /**
+     * Removes element from the queue
+     * @param elem - may not be null
+     * @throws IllegalArgumentException if any of the params is null
+     */
+    @Override
+    public I delete(I elem) {
+        if ( elem == null ) { throw new IllegalArgumentException(); }
+
+        queue.remove(elem);
+        if ( elem == head ) { updateHead(); }
+        if ( elem == tail ) { updateTail(); }
+
+        return elem;
+    }
+
     @Override
     public String toString() {
-        return algorithm;
+        return algo;
     }
 
     /**

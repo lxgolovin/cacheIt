@@ -37,7 +37,7 @@ class LruMruTest {
     void lruAlgorithm() {
         assertEquals(1,lqueue.delete());
         lqueue.shift(1);
-        assertEquals(2,lqueue.unshift(2));
+        assertEquals(2,lqueue.delete(2));
         lqueue.shift(3);
         assertEquals(4,lqueue.delete());
         assertThrows(IllegalArgumentException.class,
@@ -48,7 +48,7 @@ class LruMruTest {
     void mruAlgorithm() {
         assertEquals(4, mqueue.delete());
         mqueue.shift(4);
-        assertEquals(4, mqueue.unshift(4));
+        assertEquals(4, mqueue.delete(4));
         assertEquals(3, mqueue.delete());
         mqueue.shift(1);
         assertEquals(1, mqueue.delete());
@@ -62,7 +62,6 @@ class LruMruTest {
 
     @Test
     void deleteAll() {
-        // Arrays.stream(arr).forEach(x -> lqueue.delete());
         lqueue.flash();
         assertNull(lqueue.delete());
     }

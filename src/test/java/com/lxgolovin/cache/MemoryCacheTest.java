@@ -7,13 +7,17 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MemoryCacheTest {
-    private final static int RANGE_MAX = 10;
+    private final static int RANGE_MAX = 20;
     private final static int CACHE_CAPACITY = 5;
-    private Cache<Integer, Integer> lruCache;
+    private CacheAlgorithm<Integer> algoLru, algoMru;
+    private Cache<Integer, Integer> lruCache, mruCache;
 
     @BeforeEach
     void setUp() {
-        lruCache = new MemoryCache<>();
+        algoLru = new LruMru<>();
+//        algoMru = new LruMru<>("MRU");
+        lruCache = new MemoryCache<>(algoLru);
+//        mruCache = new MemoryCache<>(algoMru);
         IntStream.rangeClosed(1,RANGE_MAX).forEach(x->lruCache.cache(x,x));
     }
 
@@ -39,7 +43,8 @@ class MemoryCacheTest {
 
     @Test
     void size() {
-        assertEquals(CACHE_CAPACITY,lruCache.size());
+        assertTrue(CACHE_CAPACITY >= lruCache.size());
+        assertEquals(5, lruCache.size());
     }
 
     @Test
