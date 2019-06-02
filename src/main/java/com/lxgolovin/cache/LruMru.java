@@ -1,5 +1,6 @@
 package com.lxgolovin.cache;
 
+// TODO: To be documented
 import java.util.*;
 import java.util.Map;
 

@@ -1,5 +1,6 @@
 package com.lxgolovin.cache;
 
+// TODO: To be documented
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,6 +48,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     @Override
     public K cache(K key, V value) {
         if ( key == null | value == null ) { throw new IllegalArgumentException(); }
+        // TODO: need to implement dynamic size change during init phase
         if ( size() == DEFAULT_CACHE_SIZE ) {
             // using deletion by algorithm
             delete();

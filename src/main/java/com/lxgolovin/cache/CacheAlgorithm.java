@@ -1,5 +1,5 @@
 package com.lxgolovin.cache;
-
+// TODO: To be documented
 public interface CacheAlgorithm<I> {
     I shift(I elem);
     I delete();

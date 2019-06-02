@@ -1,5 +1,5 @@
 package com.lxgolovin.cache;
-
+// TODO: To be documented
 public interface Cache<K, V> {
     K cache(K key, V value);
     V get(K key);
