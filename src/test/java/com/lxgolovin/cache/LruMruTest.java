@@ -3,23 +3,20 @@ package com.lxgolovin.cache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-
-import java.util.Arrays;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class LruMruTest {
     private CacheAlgorithm<Integer> lqueue;
     private CacheAlgorithm<Integer> mqueue;
-    private int[] arr;
 
     @BeforeEach
     void setUp() {
         lqueue = new LruMru<>();
         mqueue = new LruMru<>("MRU");
-        arr = new int[]{1,2,3,4};
-        Arrays.stream(arr).forEach(x -> lqueue.shift(x));
-        Arrays.stream(arr).forEach(x -> mqueue.shift(x));
+        IntStream.rangeClosed(1,4).forEach(x -> lqueue.shift(x));
+        IntStream.rangeClosed(1,4).forEach(x -> mqueue.shift(x));
 
     }
 
@@ -41,7 +38,7 @@ class LruMruTest {
         lqueue.shift(3);
         assertEquals(4,lqueue.delete());
         assertThrows(IllegalArgumentException.class,
-                () -> { lqueue.shift(null); }  );
+                () -> lqueue.shift(null) );
     }
 
     @Test
@@ -54,7 +51,7 @@ class LruMruTest {
         assertEquals(1, mqueue.delete());
 
         assertThrows(IllegalArgumentException.class,
-                () -> { mqueue.shift(null); }  );
+                () -> mqueue.shift(null) );
 
         assertEquals(2, mqueue.delete());
         assertNull(mqueue.delete());

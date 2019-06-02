@@ -22,7 +22,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
     /**
      *
-     * @param algorithm
+     * @param algorithm specifies algorithm type that is used by the cache
      */
     public MemoryCache(CacheAlgorithm<K> algorithm) {
         cacheMap = new HashMap<>();
@@ -31,9 +31,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
     /**
      *
-     * @param algorithm
-     * @param key
-     * @param value
+     * @param algorithm specifies algorithm type that is used by the cache
      */
     public MemoryCache(CacheAlgorithm<K> algorithm, K key, V value) {
         cacheMap = new HashMap<>();
@@ -50,8 +48,8 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     public K cache(K key, V value) {
         if ( key == null | value == null ) { throw new IllegalArgumentException(); }
         if ( size() == DEFAULT_CACHE_SIZE ) {
-            // TODO: check if the key is already in cacheMap!
-//            delete(key);
+            // using deletion by algorithm
+            delete();
         }
         cacheMap.put(algo.shift(key), value);
         return key;
@@ -66,6 +64,11 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     public V get(K key){
         if ( key == null || !cacheMap.containsKey(key) ) { throw new IllegalArgumentException(); }
         return cacheMap.get(algo.shift(key));
+    }
+
+    @Override
+    public K delete() {
+        return delete(algo.delete());
     }
 
     /**
