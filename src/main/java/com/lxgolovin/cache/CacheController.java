@@ -2,6 +2,7 @@ package com.lxgolovin.cache;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  *
@@ -13,7 +14,7 @@ public class CacheController<K,V> {
     /**
      *
      */
-    private LinkedList<Cache> cclist = new LinkedList<>();
+    private LinkedList<Cache<K,V>> cclist = new LinkedList<>();
 
     /**
      *
@@ -51,17 +52,30 @@ public class CacheController<K,V> {
         return cclist.size();
     }
 
+    private boolean isCcEmpty() {
+        return levels() < 1;
+    }
+
     /**
      * @param key if null, returns false
      * @param value if null, returns false
      * @return returns true if success, else false
+     * @throws NoSuchElementException generates when trying to add data to empty cache controller
+     * @throws IllegalArgumentException if any of the params is null
      */
-    public boolean load(K key, V value) {
-        if ((key == null) | (value == null)) {
-            // TODO: need to ask question
-            return false;
+    public K load(K key, V value) {
+        K retKey;
+
+        if (isCcEmpty()) {
+            throw new NoSuchElementException();
         }
-        return true;
+        if ((key == null) | (value == null)) {
+            throw new IllegalArgumentException();
+        }
+
+        retKey = cclist.getLast().cache(key, value);
+        // TODO: need to implement move to next level
+        return (key.equals(retKey)) ? key : retKey;
     }
 
     /**

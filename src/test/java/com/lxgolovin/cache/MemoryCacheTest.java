@@ -15,16 +15,6 @@ class MemoryCacheTest {
     /**
      *
      */
-    private int RANGE_MAX = 9;
-
-    /**
-     *
-     */
-    private int CACHE_CAPACITY = MemoryCache.DEFAULT_CACHE_SIZE;
-
-    /**
-     *
-     */
     private Cache<Integer, Integer> lruCache;
     private Cache<Integer, Integer> mruCache;
 
@@ -33,14 +23,15 @@ class MemoryCacheTest {
      */
     @BeforeEach
     void setUp() {
+        int maxRange = 9;
         CacheAlgorithm<Integer> lru = new LruMru<>();
         lruCache = new MemoryCache<>(lru);
 
         CacheAlgorithm<Integer> mru = new LruMru<>(LruMru.MRU_ALGORITHM);
         mruCache = new MemoryCache<>(mru, 0, 0);
 
-        IntStream.rangeClosed(1,RANGE_MAX).forEach(x->lruCache.cache(x,x));
-        IntStream.rangeClosed(1,RANGE_MAX).forEach(x->mruCache.cache(x,x));
+        IntStream.rangeClosed(1,maxRange).forEach(x->lruCache.cache(x,x));
+        IntStream.rangeClosed(1,maxRange).forEach(x->mruCache.cache(x,x));
     }
 
     /**
@@ -114,7 +105,7 @@ class MemoryCacheTest {
      */
     @Test
     void size() {
-        assertTrue(CACHE_CAPACITY >= lruCache.size());
+        assertTrue(MemoryCache.DEFAULT_CACHE_SIZE >= lruCache.size());
         assertEquals(5, lruCache.size());
     }
 

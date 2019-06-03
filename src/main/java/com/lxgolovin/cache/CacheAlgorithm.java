@@ -3,29 +3,29 @@ package com.lxgolovin.cache;
 
 /**
  *
- * @param <I>
+ * @param <E>
  */
-public interface CacheAlgorithm<I> {
+public interface CacheAlgorithm<E> {
 
     /**
      *
      * @param elem
      * @return
      */
-    I shift(I elem);
+    E shift(E elem);
 
     /**
      *
      * @return
      */
-    I delete();
+    E delete();
 
     /**
      *
      * @param elem
      * @return
      */
-    I delete(I elem);
+    E delete(E elem);
 
     /**
      *

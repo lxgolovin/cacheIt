@@ -1,16 +1,49 @@
-# IDEA stuff
-.idea/*
+# Java
+*.class
+.mtj.tmp/
+*.jar
+*.war
+*.ear
+hs_err_pid*
+*.nar
+*.zip
+*.tar.gz
+*.rar
+
+# Gradle
+.gradle/
+build/
+out/
+
+# IntelliJ
 *.iml
-~.*
+.idea/
+*.ipr
+*.iws
+out/
+.idea_modules/
 
-
-# eclipse stuff
+# Eclipse
+.metadata
 .classpath
 .project
-/bin/*
+.settings/
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.loadpath
 
+# OS X
+.DS_Store
 
-# Gradle stuff
-.gradle/*
-/build/*
-/out/*
+# Linux
+# backup files
+*~
+
+# Windows
+# thumbnails
+Thumbs.db

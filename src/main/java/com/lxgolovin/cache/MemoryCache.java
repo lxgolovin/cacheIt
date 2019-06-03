@@ -52,6 +52,8 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     @Override
     public K cache(K key, V value) {
+        K result = key;
+
         if ((key == null) | (value == null) ) {
             throw new IllegalArgumentException();
         }
@@ -59,10 +61,10 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
         // TODO: need to implement dynamic size change during init phase
         if (size() == DEFAULT_CACHE_SIZE) {
             // using deletion by algorithm
-            delete();
+            result = delete();
         }
         cacheMap.put(algo.shift(key), value);
-        return key;
+        return result;
     }
 
     /**
