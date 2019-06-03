@@ -58,6 +58,7 @@ public class CacheController<K,V> {
      */
     public boolean load(K key, V value) {
         if ((key == null) | (value == null)) {
+            // TODO: need to ask question
             return false;
         }
         return true;

@@ -41,7 +41,6 @@ class CacheControllerTest {
         assertEquals(2,cc.addLevel(lruCache));
         cc.removeLevel(1);
         assertEquals(1, cc.levels());
-
     }
 
     /**

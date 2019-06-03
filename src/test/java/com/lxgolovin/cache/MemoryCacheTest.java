@@ -129,6 +129,5 @@ class MemoryCacheTest {
                 () -> lruCache.delete(5) );
         assertThrows(IllegalArgumentException.class,
                 () -> lruCache.get(5) );
-
     }
 }
