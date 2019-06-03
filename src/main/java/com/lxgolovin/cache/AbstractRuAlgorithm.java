@@ -1,14 +1,14 @@
 package com.lxgolovin.cache;
-
 // TODO: To be documented
-import java.util.*;
+
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
  *
  * @param <E>
  */
-public class LruMru<E> implements CacheAlgorithm<E> {
+abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
 
     /**
      * LRU algorithm
@@ -41,43 +41,21 @@ public class LruMru<E> implements CacheAlgorithm<E> {
     private final Object DUMMY = new Object();
 
     /**
-     * Current algorithm type
-     */
-    private String algo = DEFAULT_ALGORITHM_TYPE;
-
-    /**
-     * The youngest element in queue
-     */
-    private E tail;
-
-    /**
      *  The eldest element in queue
      */
-    private E head;
+    protected E peak;
 
     /**
      * Queue to organize algorithm
      */
-    private Map<E, Object> queue;
+    protected Map<E, Object> queue;
 
     /**
      *
      */
-    public LruMru() {
+    public AbstractRuAlgorithm() {
         queue = new LinkedHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, true);
-        tail = null;
-        head = null;
-    }
-
-    /**
-     *
-     * @param algorithm
-     */
-    public LruMru(String algorithm) {
-        queue = new LinkedHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, true);
-        algo = (MRU_ALGORITHM.equals(algorithm)) ? algorithm : LRU_ALGORITHM;
-        tail = null;
-        head = null;
+        peak = null;
     }
 
     /**
@@ -90,13 +68,11 @@ public class LruMru<E> implements CacheAlgorithm<E> {
         if (elem == null) {
             throw new IllegalArgumentException();
         }
-
         queue.put(elem, DUMMY);
-        tail = elem;
-        if (head == null) {
-            head = elem;
-        } else if (head == elem) {
-            updateHead();
+        if (peak == null) {
+            peak = elem;
+        } else if (peak == elem) {
+            updatePeak();
         }
 
         return elem;
@@ -109,32 +85,13 @@ public class LruMru<E> implements CacheAlgorithm<E> {
      */
     @Override
     public E delete() {
-        E elem = null;
-
-        if (queue.size() > 0) {
-            switch (algo) {
-                case LRU_ALGORITHM:
-                    queue.remove(head);
-                    elem = head;
-                    updateHead();
-                    break;
-
-                case MRU_ALGORITHM:
-                    queue.remove(tail);
-                    elem = tail;
-                    updateTail();
-                    break;
-
-                default:
-                    break;
-            }
-        }
-        return elem;
+        return delete(peak);
     }
 
     /**
      * Removes element from the queue
      * @param elem - may not be null
+     * @return returns element that was deleted
      * @throws IllegalArgumentException if any of the params is null
      */
     @Override
@@ -144,32 +101,31 @@ public class LruMru<E> implements CacheAlgorithm<E> {
         }
 
         queue.remove(elem);
-        if (elem == head ) {
-            updateHead();
+        if (elem == peak ) {
+            updatePeak();
         }
-        if (elem == tail) {
-            updateTail();
-        }
-
         return elem;
     }
 
     /**
      *
-     * @return
+     */
+    protected abstract void updatePeak();
+
+    /**
+     *
+     * @return returns toString for the object
      */
     @Override
     public String toString() {
-        return algo;
+        return getType();
     }
 
     /**
      * @return type of used algorithm
      */
     @Override
-    public String getType() {
-        return toString();
-    }
+    public abstract String getType();
 
     /**
      *
@@ -177,31 +133,6 @@ public class LruMru<E> implements CacheAlgorithm<E> {
     @Override
     public void flash() {
         queue.clear();
-    }
-
-    /**
-     *
-     */
-    private void updateTail() {
-        if (queue.size() > 0) {
-            List<E> list = new ArrayList<>(queue.keySet());
-            tail = list.get(list.size()-1);
-        } else {
-            tail = null;
-        }
-
-        if (tail == null) {
-            head = null;
-        }
-    }
-
-    /**
-     *
-     */
-    private void updateHead() {
-        head = queue.keySet().stream().findFirst().orElse(null);
-        if (head == null) {
-            tail = null;
-        }
+        peak = null;
     }
 }
