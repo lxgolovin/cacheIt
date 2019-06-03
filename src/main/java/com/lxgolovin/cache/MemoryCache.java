@@ -1,6 +1,7 @@
 package com.lxgolovin.cache;
 
 // TODO: To be documented
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -68,6 +69,30 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     }
 
     /**
+     *
+     * @param entry
+     * @return
+     */
+    @Override
+    public AbstractMap.SimpleEntry<K, V> cacheSE(AbstractMap.SimpleEntry<K, V> entry) {
+        AbstractMap.SimpleEntry<K,V> result = entry;
+
+        if ((entry == null) || (entry.getKey() == null) || (entry.getValue() == null) ) {
+            throw new IllegalArgumentException();
+        }
+
+        // TODO: need to implement dynamic size change during init phase
+        if (size() == DEFAULT_CACHE_SIZE) {
+            // using deletion by algorithm
+            result = deleteSE();
+        }
+
+        algo.shift(entry.getKey());
+        cacheMap.put(entry.getKey(), entry.getValue());
+        return result;
+    }
+
+    /**
      * @param key - may not be null
      * @throws IllegalArgumentException if any of the params is null or
      *          {@link MemoryCache#cacheMap} does not contain the key
@@ -90,6 +115,15 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     }
 
     /**
+     *
+     * @return
+     */
+    @Override
+    public AbstractMap.SimpleEntry<K, V> deleteSE() {
+        return deleteSE(algo.delete());
+    }
+
+    /**
      * @param key - may not be null
      * @throws IllegalArgumentException if any of the params is null or
      *          {@link MemoryCache#cacheMap} does not contain the key
@@ -101,6 +135,18 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
         }
         cacheMap.remove(algo.delete(key));
         return key;
+    }
+
+    @Override
+    public AbstractMap.SimpleEntry<K, V> deleteSE(K key) {
+        AbstractMap.SimpleEntry<K,V> entry = new AbstractMap.SimpleEntry<>(key, null);
+
+        if ((key == null) || (!cacheMap.containsKey(key))) {
+            throw new IllegalArgumentException();
+        }
+
+        entry.setValue(cacheMap.remove(algo.delete(key)));
+        return entry;
     }
 
     /**

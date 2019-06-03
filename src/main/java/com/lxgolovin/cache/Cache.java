@@ -1,5 +1,8 @@
 package com.lxgolovin.cache;
 
+import java.util.AbstractMap;
+import java.util.Map;
+
 /**
  *
  * @param <K>
@@ -17,6 +20,13 @@ public interface Cache<K, V> {
 
     /**
      *
+     * @param entry
+     * @return
+     */
+    AbstractMap.SimpleEntry<K, V> cacheSE(AbstractMap.SimpleEntry<K,V> entry);
+
+    /**
+     *
      * @param key
      * @return
      */
@@ -28,12 +38,21 @@ public interface Cache<K, V> {
      */
     K delete();
 
+    AbstractMap.SimpleEntry<K,V> deleteSE();
+
     /**
      *
      * @param key
      * @return
      */
     K delete(K key);
+
+    /**
+     *
+     * @param entry
+     * @return
+     */
+    AbstractMap.SimpleEntry<K,V> deleteSE(K key);
 
     /**
      *
