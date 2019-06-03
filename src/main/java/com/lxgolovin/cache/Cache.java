@@ -16,7 +16,7 @@ public interface Cache<K, V> {
      * @param value
      * @return
      */
-    K cache(K key, V value);
+    AbstractMap.SimpleEntry<K, V> cache(K key, V value);
 
     /**
      *
@@ -30,29 +30,27 @@ public interface Cache<K, V> {
      * @param key
      * @return
      */
-    V get(K key);
+    AbstractMap.SimpleEntry<K, V> get(K key);
 
     /**
      *
      * @return
      */
-    K delete();
-
-    AbstractMap.SimpleEntry<K,V> deleteSE();
+    AbstractMap.SimpleEntry<K,V> delete();
 
     /**
      *
      * @param key
      * @return
      */
-    K delete(K key);
+    AbstractMap.SimpleEntry<K,V> delete(K key);
 
     /**
      *
      * @param entry
      * @return
      */
-    AbstractMap.SimpleEntry<K,V> deleteSE(K key);
+    AbstractMap.SimpleEntry<K,V> delete(AbstractMap.SimpleEntry<K,V> entry);
 
     /**
      *

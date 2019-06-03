@@ -73,9 +73,9 @@ public class CacheController<K,V> {
             throw new IllegalArgumentException();
         }
 
-        retKey = cclist.getLast().cache(key, value);
+//        retKey = cclist.getLast().cache(key, value);
         // TODO: need to implement move to next level
-        return (key.equals(retKey)) ? key : retKey;
+        return key; //(key.equals(retKey)) ? key : retKey;
     }
 
     /**

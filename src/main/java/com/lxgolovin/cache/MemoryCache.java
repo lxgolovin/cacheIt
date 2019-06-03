@@ -40,11 +40,18 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      *
      * @param algorithm specifies algorithm type that is used by the cache
      */
-    public MemoryCache(CacheAlgorithm<K> algorithm, K key, V value) {
-        AbstractMap.SimpleEntry<K,V> entry = new AbstractMap.SimpleEntry<>(key, value);
+    public MemoryCache(CacheAlgorithm<K> algorithm, AbstractMap.SimpleEntry<K,V> entry) {
         cacheMap = new HashMap<>();
         algo = algorithm;
-        cacheSE(entry);
+        cache(entry);
+    }
+
+    /**
+     *
+     * @param algorithm specifies algorithm type that is used by the cache
+     */
+    public MemoryCache(CacheAlgorithm<K> algorithm, K key, V value) {
+        this(algorithm, new AbstractMap.SimpleEntry<>(key, value));
     }
 
     /**
@@ -53,20 +60,22 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      * @throws IllegalArgumentException if any of the params is null
      */
     @Override
-    public K cache(K key, V value) {
-        K result = key;
+    public AbstractMap.SimpleEntry<K, V> cache(K key, V value) {
+        return cache(new AbstractMap.SimpleEntry<>(key, value));
+//        AbstractMap.SimpleEntry<K,V> result = new AbstractMap.SimpleEntry<>(key, value);
+//        K result = key;
 
-        if ((key == null) | (value == null) ) {
-            throw new IllegalArgumentException();
-        }
-
-        // TODO: need to implement dynamic size change during init phase
-        if (size() == DEFAULT_CACHE_SIZE) {
-            // using deletion by algorithm
-            result = delete();
-        }
-        cacheMap.put(algo.shift(key), value);
-        return result;
+//        if ((key == null) | (value == null) ) {
+//            throw new IllegalArgumentException();
+//        }
+//
+//         TODO: need to implement dynamic size change during init phase
+//        if (size() == DEFAULT_CACHE_SIZE) {
+//             using deletion by algorithm
+//            result = delete();
+//        }
+//        cacheMap.put(algo.shift(key), value);
+//        return result;
     }
 
     /**
@@ -85,7 +94,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
         // TODO: need to implement dynamic size change during init phase
         if (size() == DEFAULT_CACHE_SIZE) {
             // using deletion by algorithm
-            result = deleteSE();
+            result = delete();
         }
 
         algo.shift(entry.getKey());
@@ -99,11 +108,11 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      *          {@link MemoryCache#cacheMap} does not contain the key
      */
     @Override
-    public V get(K key){
+    public AbstractMap.SimpleEntry<K,V> get(K key){
         if ((key == null) || (!cacheMap.containsKey(key))) {
             throw new IllegalArgumentException();
         }
-        return cacheMap.get(algo.shift(key));
+        return  new AbstractMap.SimpleEntry<K,V>(key, cacheMap.get(algo.shift(key)));
     }
 
     /**
@@ -111,17 +120,8 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      * @return
      */
     @Override
-    public K delete() {
-        return delete(algo.delete());
-    }
-
-    /**
-     *
-     * @return
-     */
-    @Override
-    public AbstractMap.SimpleEntry<K, V> deleteSE() {
-        return deleteSE(algo.delete());
+    public AbstractMap.SimpleEntry<K, V> delete() {
+        return delete(get(algo.delete()));
     }
 
     /**
@@ -130,23 +130,23 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      *          {@link MemoryCache#cacheMap} does not contain the key
      */
     @Override
-    public K delete(K key) {
-        if ((key == null) || (!cacheMap.containsKey(key))) {
-            throw new IllegalArgumentException();
-        }
-        cacheMap.remove(algo.delete(key));
-        return key;
+    public AbstractMap.SimpleEntry<K,V> delete(K key) {
+        return delete(new AbstractMap.SimpleEntry<>(get(key)));
     }
 
+    /**
+     *
+     * @param entry
+     * @return
+     */
     @Override
-    public AbstractMap.SimpleEntry<K, V> deleteSE(K key) {
-        AbstractMap.SimpleEntry<K,V> entry = new AbstractMap.SimpleEntry<>(key, null);
-
+    public AbstractMap.SimpleEntry<K, V> delete(AbstractMap.SimpleEntry<K, V> entry) {
+        K key = entry.getKey();
         if ((key == null) || (!cacheMap.containsKey(key))) {
             throw new IllegalArgumentException();
         }
 
-        entry.setValue(cacheMap.remove(algo.delete(key)));
+        cacheMap.remove(algo.delete(key));
         return entry;
     }
 
