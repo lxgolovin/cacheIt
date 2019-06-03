@@ -23,7 +23,7 @@ public interface Cache<K, V> {
      * @param entry
      * @return
      */
-    AbstractMap.SimpleEntry<K, V> cacheSE(AbstractMap.SimpleEntry<K,V> entry);
+    AbstractMap.SimpleEntry<K, V> cache(AbstractMap.SimpleEntry<K,V> entry);
 
     /**
      *

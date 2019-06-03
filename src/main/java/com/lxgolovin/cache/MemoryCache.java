@@ -41,9 +41,10 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      * @param algorithm specifies algorithm type that is used by the cache
      */
     public MemoryCache(CacheAlgorithm<K> algorithm, K key, V value) {
+        AbstractMap.SimpleEntry<K,V> entry = new AbstractMap.SimpleEntry<>(key, value);
         cacheMap = new HashMap<>();
         algo = algorithm;
-        cache(key, value);
+        cacheSE(entry);
     }
 
     /**
@@ -74,7 +75,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      * @return
      */
     @Override
-    public AbstractMap.SimpleEntry<K, V> cacheSE(AbstractMap.SimpleEntry<K, V> entry) {
+    public AbstractMap.SimpleEntry<K, V> cache(AbstractMap.SimpleEntry<K, V> entry) {
         AbstractMap.SimpleEntry<K,V> result = entry;
 
         if ((entry == null) || (entry.getKey() == null) || (entry.getValue() == null) ) {
