@@ -53,7 +53,7 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
     /**
      *
      */
-    public AbstractRuAlgorithm() {
+    protected AbstractRuAlgorithm() {
         queue = new LinkedHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, true);
         peak = null;
     }
