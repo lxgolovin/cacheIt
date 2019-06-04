@@ -49,9 +49,8 @@ class LruCacheControllerTest {
     void addRemoveCacheLevels() {
         cache = new MemoryCache<>(lru);
         assertEquals(2,cc.addLevel(cache));
-        cc.removeLevel(1);
-        assertEquals(1, cc.levels());
-        cc.removeLevel(0);
+        assertEquals(1, cc.removeLevel(1));
+        assertEquals(0, cc.removeLevel(0));
         assertEquals(0, cc.levels());
         // attempt to load data to empty cache (no levels left)
         assertThrows(NoSuchElementException.class,
