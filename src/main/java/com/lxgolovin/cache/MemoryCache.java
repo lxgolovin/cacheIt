@@ -60,10 +60,23 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     /**
      * @param key - may not be null
      * @param value - may no be null
+     * @throws IllegalArgumentException if any of the params is null
      */
     @Override
     public AbstractMap.SimpleEntry<K, V> cache(K key, V value) {
-        return cache(new AbstractMap.SimpleEntry<>(key, value));
+        AbstractMap.SimpleEntry<K,V> result = new AbstractMap.SimpleEntry<>(key, value);
+        if ((key == null) || (value == null)) {
+            throw new IllegalArgumentException();
+        }
+
+        // TODO: need to implement dynamic size change during init phase
+        if (size() == DEFAULT_CACHE_SIZE) {
+            // using deletion by algorithm
+            result = delete();
+        }
+
+        cacheMap.put(algo.shift(key), value);
+        return result;
     }
 
     /**
@@ -74,21 +87,10 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     @Override
     public AbstractMap.SimpleEntry<K, V> cache(AbstractMap.SimpleEntry<K, V> entry) {
-        AbstractMap.SimpleEntry<K,V> result = entry;
-
-        if ((entry == null) || (entry.getKey() == null) || (entry.getValue() == null) ) {
+        if (entry == null) {
             throw new IllegalArgumentException();
         }
-
-        // TODO: need to implement dynamic size change during init phase
-        if (size() == DEFAULT_CACHE_SIZE) {
-            // using deletion by algorithm
-            result = delete();
-        }
-
-        algo.shift(entry.getKey());
-        cacheMap.put(entry.getKey(), entry.getValue());
-        return result;
+        return cache(entry.getKey(), entry.getValue());
     }
 
     /**
@@ -130,12 +132,16 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
     /**
      *
-     * @param entry to be deleted
+     * @param entry to be deleted, cannot be null (note!: the entry is deleted only by key)
+     *              using {@link MemoryCache#delete(K key)} method, no checks for value=value done
      * @return entry deleted by the key
-
+     * @throws IllegalArgumentException if any of the params is null or
      */
     @Override
     public AbstractMap.SimpleEntry<K, V> delete(AbstractMap.SimpleEntry<K, V> entry) {
+        if (entry == null) {
+            throw new IllegalArgumentException();
+        }
         return delete(entry.getKey());
     }
 

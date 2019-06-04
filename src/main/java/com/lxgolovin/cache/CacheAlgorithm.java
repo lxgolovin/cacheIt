@@ -8,33 +8,31 @@ package com.lxgolovin.cache;
 public interface CacheAlgorithm<E> {
 
     /**
-     *
-     * @param elem
-     * @return
+     * Adds new element to the queue or renews elements order if it is already present in queue
+     * @param elem - to be inserted
      */
     E shift(E elem);
 
     /**
-     *
-     * @return
+     * Deletes element from the queue depending on the algorithm type
+     * @return if success, returns element, that was removed from the queue
      */
     E delete();
 
     /**
-     *
-     * @param elem
-     * @return
+     * Deletes defined element from the queue
+     * @return the element deleted
      */
     E delete(E elem);
 
     /**
-     *
+     * Flashes {@link AbstractRuAlgorithm#queue}
+     * All elements are deleted
      */
     void flash();
 
     /**
-     *
-     * @return
+     * @return type of used algorithm
      */
     String getType();
 }

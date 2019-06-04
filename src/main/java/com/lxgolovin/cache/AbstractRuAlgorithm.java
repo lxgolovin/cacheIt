@@ -80,8 +80,7 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
 
     /**
      * Deletes element from the queue depending on the algorithm type
-     * If success, returns element, that was removed from the queue
-     * Returns null if queue is empty
+     * @return if success, returns element, that was removed from the queue
      */
     @Override
     public E delete() {
@@ -92,11 +91,12 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
      * Removes element from the queue
      * @param elem - may not be null
      * @return returns element that was deleted
-     * @throws IllegalArgumentException if any of the params is null
+     * @throws IllegalArgumentException if any of the params is null or the elem
+     *          is not inside {@link AbstractRuAlgorithm#queue}
      */
     @Override
     public E delete(E elem) {
-        if (elem == null) {
+        if ((elem == null) || (!queue.containsKey(elem))) {
             throw new IllegalArgumentException();
         }
 
@@ -128,7 +128,8 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
     public abstract String getType();
 
     /**
-     *
+     * Flashes {@link AbstractRuAlgorithm#queue}
+     * All elements are deleted
      */
     @Override
     public void flash() {

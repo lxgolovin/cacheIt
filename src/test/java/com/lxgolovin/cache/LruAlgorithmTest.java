@@ -54,6 +54,7 @@ class LruAlgorithmTest {
         assertThrows(IllegalArgumentException.class,
                 () -> lQueue.shift(null));
     }
+
     /**
      *
      */

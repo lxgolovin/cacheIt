@@ -11,43 +11,41 @@ public interface Cache<K, V> {
 
     /**
      *
-     * @param key
-     * @param value
-     * @return
+     * @param key to define data to be loaded to cache
+     * @param value to be loaded to cache
+     * @return deleted entry or the inserted one
      */
     AbstractMap.SimpleEntry<K, V> cache(K key, V value);
 
     /**
      *
-     * @param entry
-     * @return
+     * @param entry with data to be loaded to cache
+     * @return deleted entry or the inserted one
      */
     AbstractMap.SimpleEntry<K, V> cache(AbstractMap.SimpleEntry<K,V> entry);
 
     /**
-     *
-     * @param key
-     * @return
+     * @param key to define the entry
+     * @return the entry by the key
      */
     AbstractMap.SimpleEntry<K, V> get(K key);
 
     /**
      *
-     * @return
+     * @return entry deleted by the defined algorithm
      */
     AbstractMap.SimpleEntry<K,V> delete();
 
     /**
-     *
-     * @param key
-     * @return
+     * @param key - for the entry to be deleted from cache
+     * @return entry deleted by the key
      */
     AbstractMap.SimpleEntry<K,V> delete(K key);
 
     /**
      *
-     * @param entry
-     * @return
+     * @param entry with data to be deleted from cache
+     * @return entry deleted by the key
      */
     AbstractMap.SimpleEntry<K,V> delete(AbstractMap.SimpleEntry<K,V> entry);
 
@@ -58,7 +56,7 @@ public interface Cache<K, V> {
 
     /**
      *
-     * @return
+     * @return size of the cache
      */
     int size();
 }

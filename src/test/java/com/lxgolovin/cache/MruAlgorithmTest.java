@@ -25,7 +25,6 @@ class MruAlgorithmTest {
     void setUp() {
         mQueue = new MruAlgorithm<>();
         IntStream.rangeClosed(1,4).forEach(x -> mQueue.shift(x));
-
     }
 
     /**
@@ -56,7 +55,7 @@ class MruAlgorithmTest {
         assertEquals(1, mQueue.delete());
         // {2}
         assertThrows(IllegalArgumentException.class,
-                () -> mQueue.shift(null) );
+                () -> mQueue.shift(null));
         assertEquals(2, mQueue.delete());
         // {}
         assertThrows(IllegalArgumentException.class,
