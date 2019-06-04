@@ -1,6 +1,7 @@
 package com.lxgolovin.cache;
 
 import java.util.AbstractMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
@@ -41,7 +42,7 @@ public class CacheController<K,V> {
      * @throws IndexOutOfBoundsException if there is now level with such index
      */
     public int removeLevel(int index) {
-        //TODO: possibly need to clean cache and move data to next levels
+        //TODO: possibly need to move data to next levels
         if ((index < 0) | (index >= levels())) {
             throw new IndexOutOfBoundsException();
         }
@@ -120,6 +121,15 @@ public class CacheController<K,V> {
         AbstractMap.SimpleEntry<K,V> entryBuffer = ccList.get(index).cache(entry);
         return ((entry != entryBuffer) && (levels() > (++index))) ?
                 load(entryBuffer, index) : entryBuffer;
+    }
+
+    public AbstractMap.SimpleEntry<K,V> get(K key) {
+        Iterator<Cache<K,V>> iterator = ccList.iterator();
+        while (iterator.hasNext()) {
+//            if (iterator.next().)
+            System.out.println(iterator.next().toString());
+        }
+        return null;
     }
 
     /**

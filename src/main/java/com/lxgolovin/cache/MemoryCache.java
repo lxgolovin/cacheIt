@@ -101,10 +101,21 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     @Override
     public AbstractMap.SimpleEntry<K,V> get(K key){
-        if ((key == null) || (!cacheMap.containsKey(key))) {
+        if (key == null) {
             throw new IllegalArgumentException();
         }
-        return  new AbstractMap.SimpleEntry<>(key, cacheMap.get(algo.shift(key)));
+        return  (contains(key)) ?
+                new AbstractMap.SimpleEntry<>(key, cacheMap.get(algo.shift(key))) : null;
+    }
+
+    /**
+     * Checks if the key is present in cache
+     * @param key to check in cache
+     * @return true is element found, else false
+     */
+    @Override
+    public boolean contains(K key) {
+        return cacheMap.containsKey(key);
     }
 
     /**

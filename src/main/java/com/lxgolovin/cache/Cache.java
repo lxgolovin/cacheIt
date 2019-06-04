@@ -50,6 +50,13 @@ public interface Cache<K, V> {
     AbstractMap.SimpleEntry<K,V> delete(AbstractMap.SimpleEntry<K,V> entry);
 
     /**
+     * Checks if the key is present in cache
+     * @param key to check in cache
+     * @return true is element found, else false
+     */
+    boolean contains(K key);
+
+    /**
      *
      */
     void clear();
