@@ -37,8 +37,8 @@ class MemoryCacheTest {
     /**
      *
      */
-//    @Test
-   /* void getInLruAlgorithm() {
+    @Test
+   void getInLruAlgorithm() {
         // 5..9 are the elements after init and size is 5
         assertEquals(5, lruCache.get(5));
         assertEquals(9, lruCache.get(9));
@@ -47,7 +47,7 @@ class MemoryCacheTest {
                 () -> lruCache.get(4) );
         assertThrows(IllegalArgumentException.class,
                 () -> lruCache.get(null) );
-    }*/
+    }
 
     /**
      *

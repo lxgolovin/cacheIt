@@ -49,9 +49,9 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
     /**
      *
-     * @param algorithm
-     * @param key
-     * @param value
+     * @param algorithm specifies algorithm type that is used by the cache
+     * @param key specifies key for the entry
+     * @param value defined value inside entry
      */
     public MemoryCache(CacheAlgorithm<K> algorithm, K key, V value) {
         this(algorithm, new AbstractMap.SimpleEntry<>(key, value));
@@ -60,31 +60,17 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     /**
      * @param key - may not be null
      * @param value - may no be null
-     * @throws IllegalArgumentException if any of the params is null
      */
     @Override
     public AbstractMap.SimpleEntry<K, V> cache(K key, V value) {
         return cache(new AbstractMap.SimpleEntry<>(key, value));
-//        AbstractMap.SimpleEntry<K,V> result = new AbstractMap.SimpleEntry<>(key, value);
-//        K result = key;
-
-//        if ((key == null) | (value == null) ) {
-//            throw new IllegalArgumentException();
-//        }
-//
-//         TODO: need to implement dynamic size change during init phase
-//        if (size() == DEFAULT_CACHE_SIZE) {
-//             using deletion by algorithm
-//            result = delete();
-//        }
-//        cacheMap.put(algo.shift(key), value);
-//        return result;
     }
 
     /**
      *
-     * @param entry
-     * @return
+     * @param entry with data to be loaded to cache
+     * @return deleted entry if cache was full, else the entry that was loaded
+     * @throws IllegalArgumentException if any of the params is null
      */
     @Override
     public AbstractMap.SimpleEntry<K, V> cache(AbstractMap.SimpleEntry<K, V> entry) {
@@ -107,6 +93,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
     /**
      * @param key - may not be null
+     * @return the entry by the key
      * @throws IllegalArgumentException if any of the params is null or
      *          {@link MemoryCache#cacheMap} does not contain the key
      */
@@ -120,7 +107,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
     /**
      *
-     * @return
+     * @return entry deleted by the defined algorithm
      */
     @Override
     public AbstractMap.SimpleEntry<K, V> delete() {
@@ -129,28 +116,27 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
     /**
      * @param key - may not be null
+     * @return entry deleted by the key
      * @throws IllegalArgumentException if any of the params is null or
      *          {@link MemoryCache#cacheMap} does not contain the key
      */
     @Override
     public AbstractMap.SimpleEntry<K,V> delete(K key) {
-        return delete(new AbstractMap.SimpleEntry<>(get(key)));
+        if ((key == null) || (!cacheMap.containsKey(key))) {
+            throw new IllegalArgumentException();
+        }
+        return new AbstractMap.SimpleEntry<>(key, cacheMap.remove(algo.delete(key)));
     }
 
     /**
      *
-     * @param entry
-     * @return
+     * @param entry to be deleted
+     * @return entry deleted by the key
+
      */
     @Override
     public AbstractMap.SimpleEntry<K, V> delete(AbstractMap.SimpleEntry<K, V> entry) {
-        K key = entry.getKey();
-        if ((key == null) || (!cacheMap.containsKey(key))) {
-            throw new IllegalArgumentException();
-        }
-
-        cacheMap.remove(algo.delete(key));
-        return entry;
+        return delete(entry.getKey());
     }
 
     /**
@@ -164,7 +150,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
     /**
      *
-     * @return
+     * @return size of the cache
      */
     @Override
     public int size() {
