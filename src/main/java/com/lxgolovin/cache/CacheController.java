@@ -1,7 +1,7 @@
 package com.lxgolovin.cache;
 
+import java.util.AbstractMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -14,25 +14,23 @@ public class CacheController<K,V> {
     /**
      *
      */
-    private LinkedList<Cache<K,V>> cclist = new LinkedList<>();
+    private LinkedList<Cache<K,V>> ccList = new LinkedList<>();
 
     /**
      *
      */
-    public CacheController() {
-        CacheAlgorithm<K> lru = new LruAlgorithm<>();
-        Cache<K, V> cache = new MemoryCache<>(lru);
+    public CacheController(Cache<K,V> cache) {
         addLevel(cache);
     }
 
     /**
      *
-     * @param cache
-     * @return
+     * @param cache level
+     * @return the number of levels
      */
     public int addLevel(Cache<K,V> cache) {
-        cclist.add(cache);
-        return cclist.size();
+        ccList.add(cache);
+        return levels();
     }
 
     /**
@@ -41,7 +39,17 @@ public class CacheController<K,V> {
      */
     public void removeLevel(int index) {
         //TODO: possibly need to clean cache and move data to next levels
-        cclist.remove(index);
+        ccList.get(index).clear();
+        ccList.remove(index);
+    }
+
+    /**
+     * Checks if the level is full up or not
+     * @param index of the level
+     * @return true if full up, else false
+     */
+    public boolean isLevelFull(int index) {
+        return (ccList.get(index).size() == ccList.get(index).sizeMax());
     }
 
     /**
@@ -49,41 +57,68 @@ public class CacheController<K,V> {
      * @return
      */
     public int levels() {
-        return cclist.size();
-    }
-
-    private boolean isCcEmpty() {
-        return levels() < 1;
-    }
-
-    /**
-     * @param key if null, returns false
-     * @param value if null, returns false
-     * @return returns true if success, else false
-     * @throws NoSuchElementException generates when trying to add data to empty cache controller
-     * @throws IllegalArgumentException if any of the params is null
-     */
-    public K load(K key, V value) {
-        K retKey;
-
-        if (isCcEmpty()) {
-            throw new NoSuchElementException();
-        }
-        if ((key == null) | (value == null)) {
-            throw new IllegalArgumentException();
-        }
-
-//        retKey = cclist.getLast().cache(key, value);
-        // TODO: need to implement move to next level
-        return key; //(key.equals(retKey)) ? key : retKey;
+        return ccList.size();
     }
 
     /**
      *
      * @return
      */
-    public List<K> getData() {
-        //TODO: export all data to List
-        return null;
+    private boolean isCcEmpty() {
+        return levels() < 1;
+    }
+
+    /**
+     *
+     * @param key
+     * @param value
+     * @return
+     */
+    public AbstractMap.SimpleEntry<K,V> load(K key, V value) {
+        if ((key == null) | (value == null)) {
+            throw new IllegalArgumentException();
+        }
+        return load(new AbstractMap.SimpleEntry<>(key, value));
+    }
+
+    /**
+     *
+     * @param entry
+     * @return
+     */
+    public AbstractMap.SimpleEntry<K,V> load(AbstractMap.SimpleEntry<K,V> entry) {
+        int index = 0;
+        if (isCcEmpty()) {
+            throw new NoSuchElementException();
+        }
+        if ((entry == null)) {
+            throw new IllegalArgumentException();
+        }
+        return load(entry, index);
+    }
+
+    /**
+     *
+     * @param entry
+     * @param index
+     * @return
+     */
+    private AbstractMap.SimpleEntry<K,V> load(AbstractMap.SimpleEntry<K,V> entry, int index) {
+        AbstractMap.SimpleEntry<K,V> entryBuffer = ccList.get(index).cache(entry);
+        return ((entry != entryBuffer) && (levels() > (++index))) ?
+                load(entryBuffer, index) : entryBuffer;
+    }
+
+    /**
+     * debug method. Will be corrected to get value only by key
+     * @param key
+     * @param index
+     * @return
+     */
+    public AbstractMap.SimpleEntry<K,V> get(K key, int index) {
+        if (key == null) {
+            throw new IllegalArgumentException();
+        }
+        return ccList.get(index).get(key);
     }
 }

@@ -26,21 +26,6 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
     static final String DEFAULT_ALGORITHM_TYPE = "LRU";
 
     /**
-     * The default initial capacity - MUST be a power of two.
-     */
-    private final int DEFAULT_INITIAL_CAPACITY = 1 << 4; // aka 16
-
-    /**
-     * The load factor used when none specified in constructor.
-     */
-    private final float DEFAULT_LOAD_FACTOR = 0.75f;
-
-    /**
-     * Dummy value to associate with an Object in the backing Map
-     */
-    private final Object DUMMY = new Object();
-
-    /**
      *  The eldest element in queue
      */
     protected E peak;
@@ -57,6 +42,22 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
         queue = new LinkedHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, true);
         peak = null;
     }
+
+    /**
+     * The default initial capacity - MUST be a power of two.
+     */
+    private final int DEFAULT_INITIAL_CAPACITY = 1 << 4; // aka 16
+
+    /**
+     * The load factor used when none specified in constructor.
+     */
+    private final float DEFAULT_LOAD_FACTOR = 0.75f;
+
+    /**
+     * Dummy value to associate with an Object in the backing Map
+     */
+    private final Object DUMMY = new Object();
+
 
     /**
      * Adds new element to the queue or renews elements order if it is already present in queue

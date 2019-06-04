@@ -56,7 +56,12 @@ public interface Cache<K, V> {
 
     /**
      *
-     * @return size of the cache
+     * @return current size of the cache
      */
     int size();
+
+    /**
+     * @return cache max size
+     */
+    int sizeMax();
 }

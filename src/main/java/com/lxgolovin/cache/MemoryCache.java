@@ -155,11 +155,19 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     }
 
     /**
-     *
-     * @return size of the cache
+     * @return current size of the cache
      */
     @Override
     public int size() {
         return cacheMap.size();
+    }
+
+    /**
+     * @return cache maxsize
+     */
+    @Override
+    public int sizeMax() {
+        // TODO: when size change will be implemented, this method to be fixed
+        return DEFAULT_CACHE_SIZE;
     }
 }
