@@ -39,6 +39,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     /**
      *
      * @param algorithm specifies algorithm type that is used by the cache
+     * @param entry with data to be loaded to cache
      */
     public MemoryCache(CacheAlgorithm<K> algorithm, AbstractMap.SimpleEntry<K,V> entry) {
         cacheMap = new HashMap<>();
@@ -48,7 +49,9 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
     /**
      *
-     * @param algorithm specifies algorithm type that is used by the cache
+     * @param algorithm
+     * @param key
+     * @param value
      */
     public MemoryCache(CacheAlgorithm<K> algorithm, K key, V value) {
         this(algorithm, new AbstractMap.SimpleEntry<>(key, value));
@@ -112,7 +115,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
         if ((key == null) || (!cacheMap.containsKey(key))) {
             throw new IllegalArgumentException();
         }
-        return  new AbstractMap.SimpleEntry<K,V>(key, cacheMap.get(algo.shift(key)));
+        return  new AbstractMap.SimpleEntry<>(key, cacheMap.get(algo.shift(key)));
     }
 
     /**

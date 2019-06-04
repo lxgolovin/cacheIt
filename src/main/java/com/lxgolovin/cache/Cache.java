@@ -1,7 +1,6 @@
 package com.lxgolovin.cache;
 
 import java.util.AbstractMap;
-import java.util.Map;
 
 /**
  *

@@ -2,7 +2,6 @@ package com.lxgolovin.cache;
 
 // TODO: To be documented
 import java.util.*;
-import java.util.Map;
 
 /**
  *
@@ -10,13 +9,6 @@ import java.util.Map;
  */
 public class MruAlgorithm<E> extends AbstractRuAlgorithm<E>
         implements CacheAlgorithm<E> {
-
-    /**
-     *
-     */
-    public MruAlgorithm() {
-        super();
-    }
 
     /**
      * Adds new element to the queue or renews elements order if it is already present in queue

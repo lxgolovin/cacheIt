@@ -20,7 +20,7 @@ public class CacheController<K,V> {
      *
      */
     public CacheController() {
-        CacheAlgorithm<K> lru = new LruMru<>();
+        CacheAlgorithm<K> lru = new LruAlgorithm<>();
         Cache<K, V> cache = new MemoryCache<>(lru);
         addLevel(cache);
     }
