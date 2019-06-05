@@ -135,10 +135,14 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     @Override
     public AbstractMap.SimpleEntry<K,V> delete(K key) {
-        if ((key == null) || (!cacheMap.containsKey(key))) {
+//        if ((key == null) || (!cacheMap.containsKey(key))) {
+        if (key == null) {
             throw new IllegalArgumentException();
         }
-        return new AbstractMap.SimpleEntry<>(key, cacheMap.remove(algo.delete(key)));
+
+        return  (contains(key)) ?
+                new AbstractMap.SimpleEntry<>(key, cacheMap.remove(algo.delete(key))) : null;
+//        return new AbstractMap.SimpleEntry<>(key, cacheMap.remove(algo.delete(key)));
     }
 
     /**

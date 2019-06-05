@@ -126,8 +126,9 @@ public class CacheController<K,V> {
     public AbstractMap.SimpleEntry<K,V> get(K key) {
         Iterator<Cache<K,V>> iterator = ccList.iterator();
         while (iterator.hasNext()) {
-//            if (iterator.next().)
-            System.out.println(iterator.next().toString());
+            if (iterator.next().contains(key)) {
+                return iterator.next().get(key);
+            }
         }
         return null;
     }

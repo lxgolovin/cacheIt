@@ -62,8 +62,7 @@ class MemoryCacheTest {
         assertEquals(7, lruCache.delete().getKey());
         // {8,5,9, 6->8} - this is the order now
         assertEquals(8, lruCache.get(6).getValue());
-        assertThrows(IllegalArgumentException.class,
-                () -> lruCache.get(4));
+        assertNull(lruCache.get(4));
         assertThrows(IllegalArgumentException.class,
                 () -> lruCache.get(null));
     }
@@ -81,8 +80,7 @@ class MemoryCacheTest {
         mruCache.cache(3,8);
         // {1,2,9,0,3->8} - so mru algorithm will delete 3
         assertEquals(8, mruCache.delete().getValue());
-        assertThrows(IllegalArgumentException.class,
-                () -> lruCache.get(4));
+        assertNull(lruCache.get(4));
         assertThrows(IllegalArgumentException.class,
                 () -> lruCache.get(null));
     }
@@ -100,8 +98,7 @@ class MemoryCacheTest {
         assertEquals(6, lruCache.delete().getKey());
         assertEquals(8, lruCache.delete(8).getKey());
         assertEquals(3, lruCache.size());
-        assertThrows(IllegalArgumentException.class,
-                () -> lruCache.delete(8));
+        assertNull(lruCache.delete(8));
     }
 
     /**
@@ -117,8 +114,7 @@ class MemoryCacheTest {
         // Now {0,1,3,9}
         assertEquals(3, mruCache.delete(3).getKey());
         assertEquals(3, mruCache.size());
-        assertThrows(IllegalArgumentException.class,
-                () -> mruCache.delete(8));
+        assertNull(mruCache.delete(8));
     }
 
     /**
@@ -137,9 +133,7 @@ class MemoryCacheTest {
     void clearCache() {
         lruCache.clear();
         assertEquals(0, lruCache.size());
-        assertThrows(IllegalArgumentException.class,
-                () -> lruCache.delete(5));
-        assertThrows(IllegalArgumentException.class,
-                () -> lruCache.get(5));
+        assertNull(lruCache.delete(5));
+        assertNull(lruCache.get(5));
     }
 }
