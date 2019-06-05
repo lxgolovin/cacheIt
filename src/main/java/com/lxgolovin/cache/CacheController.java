@@ -123,27 +123,62 @@ public class CacheController<K,V> {
                 load(entryBuffer, index) : entryBuffer;
     }
 
-    public AbstractMap.SimpleEntry<K,V> get(K key) {
+    /**
+     * Same as {@link CacheController#get(Object)}, but with iterator
+     * Gets an entry by the key from cache. Searches in all levels
+     * @param key to get entry
+     * @return null key not found
+     */
+    public AbstractMap.SimpleEntry<K,V> getIter(K key) {
         Iterator<Cache<K,V>> iterator = ccList.iterator();
         while (iterator.hasNext()) {
-            if (iterator.next().contains(key)) {
-                return iterator.next().get(key);
+            Cache<K,V> c = iterator.next();
+            if (c.contains(key)) {
+                return c.get(key);
             }
         }
         return null;
     }
 
     /**
-     * debug method. Will be corrected to get value only by key
+     * Gets an entry by the key from cache. Searches in all levels
+     * @param key to get entry
+     * @return null key not found
+     */
+    public AbstractMap.SimpleEntry<K,V> get(K key) {
+        for (Cache<K,V> c: ccList) {
+            if (c.contains(key)) {
+                return c.get(key);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * debug method. Is used for internal tests only
      * @param key to get data
      * @param index of cache level
      * @return entry with data
      * @throws IllegalArgumentException if key is null
      */
-    public AbstractMap.SimpleEntry<K,V> get(K key, int index) {
+    AbstractMap.SimpleEntry<K,V> get(K key, int index) {
         if (key == null) {
             throw new IllegalArgumentException();
         }
         return ccList.get(index).get(key);
+    }
+
+    /**
+     * Debug method for internal use only
+     * @param key to get level
+     * @return index of level
+     */
+    int getLevel(K key) {
+        for (int i = 0; i < levels(); i++) {
+            if (ccList.get(i).contains(key)) {
+                return i;
+            }
+        }
+        return levels();
     }
 }

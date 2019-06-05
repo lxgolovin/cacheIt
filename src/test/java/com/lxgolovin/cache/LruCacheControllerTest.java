@@ -94,7 +94,9 @@ class LruCacheControllerTest {
         // level2 {5,4}
         assertEquals(4, cc.get(4,1).getKey());
         assertEquals(5, cc.get(5,1).getKey());
-//        assertEquals(5, cc.get(5).getKey());
+        assertEquals(1, cc.getLevel(5));
+        assertEquals(1, cc.get(1).getKey());
+        assertEquals(1, cc.getIter(1).getKey());
         assertTrue(cc.isLevelFull(0));
         assertFalse(cc.isLevelFull(1));
 
