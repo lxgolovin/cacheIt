@@ -42,7 +42,7 @@ public class CacheController<K,V> {
      * @throws IndexOutOfBoundsException if there is now level with such index
      */
     public int removeLevel(int index) {
-        //TODO: possibly need to move data to next levels
+        //TODO: possibly need to move data to next levels when deleting level
         if ((index < 0) | (index >= levels())) {
             throw new IndexOutOfBoundsException();
         }

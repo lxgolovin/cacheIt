@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.AbstractMap;
-import java.util.NoSuchElementException;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,7 +45,6 @@ class MruCacheControllerTest {
         assertEquals(7, cc.load(8,64).getKey());
         // level1 {0,1,2,3,8}
         assertTrue(cc.isLevelFull(0));
-        assertEquals(1, cc.levels());
         assertEquals(2,cc.addLevel(cacheLevel2));
         // level1 {0,1,2,3,8}
         // level2 {}
