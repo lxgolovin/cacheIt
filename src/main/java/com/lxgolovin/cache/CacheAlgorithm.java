@@ -1,39 +1,41 @@
 package com.lxgolovin.cache;
-// TODO: To be documented
 
 /**
- *
+ * Defined cache algorithm. Specifies main methods to add values to the queue and delete them
+ * if needed. Has a possibility to clear all data and check the algorithm name
  * @param <E>
+ * @see AbstractRuAlgorithm
+ * @see LruAlgorithm
+ * @see MruAlgorithm
  */
 public interface CacheAlgorithm<E> {
 
     /**
      * Adds new element to the queue or renews elements order if it is already present in queue
-     * @param elem - to be inserted
-     * @return
+     * @param elem - may not be null
      */
-    //! What does it return?
-    E shift(E elem);
+    //!+ What does it return?
+    void shift(E elem);
 
     /**
      * Deletes element from the queue depending on the algorithm type
-     * @return if success, returns element, that was removed from the queue
+     * @return element that was deleted
      */
     //! if not success Exception?
-    E delete();
+    E pop();
 
     /**
-     * Deletes defined element from the queue
-     * @return the element deleted
+     * Removes element from the queue
+     * @param elem element to be deleted
      */
-    E delete(E elem);
+    void delete(E elem);
 
     /**
-     * Flashes {@link AbstractRuAlgorithm#queue}
+     * Clears all data from the queue
      * All elements are deleted
      */
     //! why flash? flush? clearAll? clear?
-    void flash();
+    void clearAll();
 
     /**
      * @return type of used algorithm
