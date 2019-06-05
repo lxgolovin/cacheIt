@@ -5,6 +5,7 @@ package com.lxgolovin.cache;
  *
  * @param <E>
  */
+//! Estimate the complexity of the algorithm
 public class LruAlgorithm<E> extends AbstractRuAlgorithm<E>
         implements CacheAlgorithm<E> {
 

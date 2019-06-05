@@ -11,12 +11,14 @@ public interface CacheAlgorithm<E> {
      * Adds new element to the queue or renews elements order if it is already present in queue
      * @param elem - to be inserted
      */
+    //! What does it return?
     E shift(E elem);
 
     /**
      * Deletes element from the queue depending on the algorithm type
      * @return if success, returns element, that was removed from the queue
      */
+    //! if not success Exception?
     E delete();
 
     /**
@@ -29,6 +31,7 @@ public interface CacheAlgorithm<E> {
      * Flashes {@link AbstractRuAlgorithm#queue}
      * All elements are deleted
      */
+    //! why flash? flush? clearAll? clear?
     void flash();
 
     /**
