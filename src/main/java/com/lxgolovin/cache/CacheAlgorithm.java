@@ -1,5 +1,7 @@
 package com.lxgolovin.cache;
 
+import java.util.Optional;
+
 /**
  * Defined cache algorithm. Specifies main methods to add values to the queue and delete them
  * if needed. Has a possibility to clear all data and check the algorithm name

@@ -2,6 +2,7 @@ package com.lxgolovin.cache;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Abstract class with some methods to define Recently Used (LRU-MRU) algorithms.
