@@ -20,7 +20,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     /**
      * Map to keep data
      */
-    private Map<K, V> cacheMap;
+    private final Map<K, V> cacheMap;
 
     /**
      *

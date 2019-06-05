@@ -10,6 +10,7 @@ public interface CacheAlgorithm<E> {
     /**
      * Adds new element to the queue or renews elements order if it is already present in queue
      * @param elem - to be inserted
+     * @return
      */
     E shift(E elem);
 
