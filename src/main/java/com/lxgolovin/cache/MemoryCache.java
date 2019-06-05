@@ -20,17 +20,22 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     /**
      * Map to keep data
      */
+    //! final
     private final Map<K, V> cacheMap;
 
     /**
      *
      */
+    //! final
     private CacheAlgorithm<K> algo;
 
     /**
      *
      * @param algorithm specifies algorithm type that is used by the cache
      */
+
+    //! add one more constructor with Map as parameter.
+
     public MemoryCache(CacheAlgorithm<K> algorithm) {
         cacheMap = new HashMap<>();
         algo = algorithm;
@@ -65,17 +70,19 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     @Override
     public AbstractMap.SimpleEntry<K, V> cache(K key, V value) {
         AbstractMap.SimpleEntry<K,V> result = new AbstractMap.SimpleEntry<>(key, value);
+        //! This should be the first line. Validation first.
         if ((key == null) || (value == null)) {
             throw new IllegalArgumentException();
         }
 
         // TODO: need to implement dynamic size change during init phase
+        //! Move a size param to constructors
         if (size() == DEFAULT_CACHE_SIZE & !contains(key)) {
             // using deletion by algorithm
             result = delete();
         }
 
-        cacheMap.put(algo.shift(key), value);
+        cacheMap.put(algo.shift(key), value); //! Do not mix up the logic in one line
         return result;
     }
 
@@ -105,7 +112,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
             throw new IllegalArgumentException();
         }
         return  (contains(key)) ?
-                new AbstractMap.SimpleEntry<>(key, cacheMap.get(algo.shift(key))) : null;
+                new AbstractMap.SimpleEntry<>(key, cacheMap.get(algo.shift(key))) : null; //! several lines
     }
 
     /**
@@ -165,7 +172,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     @Override
     public void clear(){
-        cacheMap.clear();
+        cacheMap.clear(); //! Why is it here clear() and in the next line flash()
         algo.flash();
     }
 

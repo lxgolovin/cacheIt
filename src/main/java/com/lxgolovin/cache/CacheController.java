@@ -11,6 +11,7 @@ import java.util.NoSuchElementException;
  * @param <K> to keep keys
  * @param <V> to keep values
  */
+//! Isn't this class the implementation of Cache?
 public class CacheController<K,V> {
 
     /**

@@ -7,6 +7,7 @@ import java.util.*;
  *
  * @param <E>
  */
+//! Estimate the complexity of the algorithm
 public class MruAlgorithm<E> extends AbstractRuAlgorithm<E>
         implements CacheAlgorithm<E> {
 

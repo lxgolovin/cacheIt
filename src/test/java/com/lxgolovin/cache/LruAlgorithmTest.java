@@ -40,7 +40,7 @@ class LruAlgorithmTest {
      *
      */
     @Test
-    void lruAlgorithm() {
+    void lruAlgorithm() { //! deleteCandadatesAfterShifts()
         // {1,2,3,4} after initialization phase
         assertEquals(1,lQueue.delete());
         // {2,3,4}
@@ -54,6 +54,8 @@ class LruAlgorithmTest {
         assertThrows(IllegalArgumentException.class,
                 () -> lQueue.shift(null));
     }
+
+    //! add methods to test delete() and shift() separately
 
     /**
      *

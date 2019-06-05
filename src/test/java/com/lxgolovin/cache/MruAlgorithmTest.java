@@ -40,7 +40,7 @@ class MruAlgorithmTest {
      *
      */
     @Test
-    void mruAlgorithm() {
+    void mruAlgorithm() { //! deleteCandadatesAfterShifts()
         // {1,2,3,4} after initialization phase
         assertEquals(4, mQueue.delete());
         // {1,2,3}
@@ -61,6 +61,8 @@ class MruAlgorithmTest {
         assertThrows(IllegalArgumentException.class,
                 () -> mQueue.delete());
     }
+
+    //! add methods to test delete() and shift() separately
 
     /**
      *
