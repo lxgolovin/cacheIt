@@ -69,9 +69,10 @@ class LruCacheControllerTest {
      *
      */
     @Test
-    void loadDataLruAlgorithmAdding2Levels() {
+    void loadDataAdding2Levels() {
         cache = new MemoryCache<>(lru);
         // Stream starts with {0..7} cached in level 1: {3,4,5,6,7}
+//        assertEquals(7, cc.load(7,64).getKey());
         assertEquals(3, cc.load(8,64).getKey());
         // level1 {4,5,6,7,8}
         assertTrue(cc.isLevelFull(0));

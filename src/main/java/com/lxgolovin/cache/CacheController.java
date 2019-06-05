@@ -119,7 +119,7 @@ public class CacheController<K,V> {
      */
     private AbstractMap.SimpleEntry<K,V> load(AbstractMap.SimpleEntry<K,V> entry, int index) {
         AbstractMap.SimpleEntry<K,V> entryBuffer = ccList.get(index).cache(entry);
-        return ((entry != entryBuffer) && (levels() > (++index))) ?
+        return ((entry.getKey() != entryBuffer.getKey()) && (levels() > (++index))) ?
                 load(entryBuffer, index) : entryBuffer;
     }
 

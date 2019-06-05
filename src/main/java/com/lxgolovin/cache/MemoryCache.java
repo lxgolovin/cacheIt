@@ -70,7 +70,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
         }
 
         // TODO: need to implement dynamic size change during init phase
-        if (size() == DEFAULT_CACHE_SIZE) {
+        if (size() == DEFAULT_CACHE_SIZE & !contains(key)) {
             // using deletion by algorithm
             result = delete();
         }
