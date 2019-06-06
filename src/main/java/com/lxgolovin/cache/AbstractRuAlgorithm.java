@@ -86,6 +86,7 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
      * @throws IllegalArgumentException if any of the params is null
      */
     @Override
+    // TODO: posibly need true/false if the element was is queue
     public void delete(E elem) {
         if (elem == null) {
             throw new IllegalArgumentException();
@@ -112,7 +113,7 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
      * All elements are deleted
      */
     @Override
-    public void clearAll() {
+    public void clear() {
         queue.clear();
     }
 }

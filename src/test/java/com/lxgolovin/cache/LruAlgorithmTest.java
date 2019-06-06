@@ -26,7 +26,7 @@ class LruAlgorithmTest {
      */
     @BeforeEach
     void setUp() {
-        IntStream.rangeClosed(1,4).forEach(x -> lQueue.shift(x));
+        IntStream.rangeClosed(1,4).forEach(lQueue::shift);
     }
 
     /**
@@ -101,7 +101,7 @@ class LruAlgorithmTest {
      */
     @Test
     void deleteAll() {
-        lQueue.clearAll();
+        lQueue.clear();
         assertNull(lQueue.pop());
     }
 }

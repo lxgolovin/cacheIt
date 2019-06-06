@@ -27,7 +27,7 @@ class MruAlgorithmTest {
      */
     @BeforeEach
     void setUp() {
-        IntStream.rangeClosed(1,4).forEach(x -> mQueue.shift(x));
+        IntStream.rangeClosed(1,4).forEach(mQueue::shift);
     }
 
     /**
@@ -106,7 +106,7 @@ class MruAlgorithmTest {
      */
     @Test
     void deleteAll() {
-        mQueue.clearAll();
+        mQueue.clear();
         assertNull(mQueue.pop());
     }
 }
