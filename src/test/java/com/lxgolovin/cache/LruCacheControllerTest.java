@@ -91,18 +91,26 @@ class LruCacheControllerTest {
         assertEquals(5,cc.sizeMax());
         // add level. current size not changed, max size doubled
         assertEquals(2,cc.addLevel(cacheLevel1));
+        // now: level 0: {3,4,5,6,7}; level 1: {}.
         assertEquals(5,cc.size());
         assertEquals(10,cc.sizeMax());
 
-        // adding one value (actually renew). Nothing is changed in sizes
+        // now: level 0: {3,4,5,6,7}; level 1: {}. adding one value (actually renew). Nothing is changed in sizes
         assertEquals(4, cc.cache(4,4).getKey());
         assertEquals(5,cc.size());
         assertEquals(10,cc.sizeMax());
 
-        // adding one new key-value. Current size increase
+        // now: level 0: {3,5,6,7,4}; level 1: {}; adding one new key-value. Current size increase
         assertEquals(3, cc.cache(8,64).getKey());
+        // now: level 0: {5,6,7,4,8}; level 1: {3};
         assertEquals(6,cc.size());
         assertEquals(10,cc.sizeMax());
+
+        // now: level 0: {5,6,7,4,8}; level 1: {3}; check size after deleting level 1
+        assertEquals(1, cc.removeLevel(0));
+        // now: level 0: {3};
+        assertEquals(1,cc.size());
+        assertEquals(5,cc.sizeMax());
     }
 
     /**
