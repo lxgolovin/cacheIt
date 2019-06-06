@@ -26,6 +26,8 @@ class LruCacheControllerTest {
 
     /**
      * Init CacheController with LRU algorithm with one level
+     * LRU cache is initialized
+     * only one level number 0 {3->9, 4->16, 5->25, 6->36, 7->49}
      */
     @BeforeEach
     void setUp() {
@@ -42,16 +44,65 @@ class LruCacheControllerTest {
      */
     @Test
     void addRemoveCacheLevels() {
-        /*
-        cache = new MemoryCache<>(lru);
-        assertEquals(2,cc.addLevel(cache));
+        CacheAlgorithm<Integer> lruLev1 = new LruAlgorithm<>();
+        Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(lruLev1);
+
+        assertEquals(2,cc.addLevel(cacheLevel1));
         assertEquals(1, cc.removeLevel(1));
         assertEquals(0, cc.removeLevel(0));
         assertEquals(0, cc.levels());
-        // attempt to load data to empty cache (no levels left)
-        assertThrows(NoSuchElementException.class,
-                () -> cc.load(1,1));
-         */
+
+        // try to remove non existing level
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> cc.removeLevel(5));
+    }
+
+    /**
+     * just for testing if simple cache is working
+     */
+    @Test
+    void cache() {
+        // Stream starts with {0..7} cached in level 0: {3,4,5,6,7}
+        assertEquals(3, cc.cache(0,0).getKey());
+        assertEquals(4, cc.cache(1,1).getKey());
+    }
+
+    /**
+     * Simple tests for get method
+     */
+    @Test
+    void get() {
+        // Stream starts with {0..7} cached in level 0: {3,4,5,6,7}
+        assertEquals(16,cc.get(4));
+        assertEquals(36,cc.get(6));
+        assertEquals(49,cc.get(7));
+    }
+
+    /**
+     * Simple tests to get current size of the cache and maximum available size of cache
+     */
+    @Test
+    void sizeAndMaxSize() {
+        CacheAlgorithm<Integer> lruLev1 = new LruAlgorithm<>();
+        Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(lruLev1);
+
+        // Stream starts with {0..7} cached in level 0: {3,4,5,6,7}
+        assertEquals(5,cc.size());
+        assertEquals(5,cc.sizeMax());
+        // add level. current size not changed, max size doubled
+        assertEquals(2,cc.addLevel(cacheLevel1));
+        assertEquals(5,cc.size());
+        assertEquals(10,cc.sizeMax());
+
+        // adding one value (actually renew). Nothing is changed in sizes
+        assertEquals(4, cc.cache(4,4).getKey());
+        assertEquals(5,cc.size());
+        assertEquals(10,cc.sizeMax());
+
+        // adding one new key-value. Current size increase
+        assertEquals(3, cc.cache(8,64).getKey());
+        assertEquals(6,cc.size());
+        assertEquals(10,cc.sizeMax());
     }
 
     /**
@@ -63,7 +114,9 @@ class LruCacheControllerTest {
     }
 
     /**
-     *
+     * Checking main LRU cache algorithm to work with 2 levels
+     * loading, moving and deleting (only popping, not delete by key)
+     * data between 2 levels
      */
     @Test
     void loadDataAdding2Levels() {

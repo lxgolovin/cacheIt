@@ -131,8 +131,6 @@ public class CacheController<K, V> implements Cache<K, V> {
         return returnEntry;
     }
 
-
-
     /**
      * Gets an entry by the key from cache. Searches in all levels
      * @param key with mapping in cache to value
@@ -150,51 +148,79 @@ public class CacheController<K, V> implements Cache<K, V> {
     }
 
     // TODO: Staring from this line, class is not documented. In progress
-    /*
-    NOT implemented yet
+    /**
+     * Removes the mapping for a key from the cache by used algorithm.
+     * @return popped out entry, returns null entry if the element was not
+     *          found in algorithm queue (empty)
      */
     @Override
     public Map.Entry<K, V> pop() {
+        // TODO: not implemented yet
         return null;
     }
 
-    /*
-    NOT implemented yet
+    /**
+     * Removes the mapping for a key from this cache. Does not depend on algorithm type
+     *
+     * <p>Returns the value for the associated key,
+     * or <tt>null</tt> if the cache contained no mapping for the key.
+     *
+     * @param key key whose mapping is to be removed from the cache
+     * @return the previous value associated with <tt>key</tt>, or
+     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
      */
     @Override
     public V delete(K key) {
+        // TODO: not implemented yet
         return null;
     }
 
-    /*
-    NOT implemented yet
+    /**
+     * Checks if the key is present in cache
+     * @param key to check in cache
+     * @return true is element found, else false
      */
     @Override
     public boolean contains(K key) {
+        for (Cache<K,V> c: ccList) {
+            if (c.contains(key)) {
+                return true;
+            }
+        }
         return false;
     }
 
-    /*
-    NOT implemented yet
+    /**
+     * Clears all data from the queue
+     * All elements are deleted.
      */
     @Override
     public void clear() {
+        // TODO: not implemented yet
     }
 
-    /*
-    NOT implemented yet
-    */
+    /**
+     * @return current size of the cache
+     */
     @Override
     public int size() {
-        return 0;
+        int size = 0;
+        for (Cache<K,V> c: ccList) {
+            size = size + c.size();
+        }
+        return size;
     }
 
-    /*
-    NOT implemented yet
+    /**
+     * @return maximum possible size of the cache
      */
     @Override
     public int sizeMax() {
-        return 0;
+        int size = 0;
+        for (Cache<K,V> c: ccList) {
+            size = size + c.sizeMax();
+        }
+        return size;
     }
 
     /**
