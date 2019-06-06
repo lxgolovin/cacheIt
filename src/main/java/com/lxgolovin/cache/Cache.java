@@ -33,7 +33,8 @@ public interface Cache<K, V> {
 
     /**
      * Removes the mapping for a key from the cache by used algorithm.
-     * @return popped out entry
+     * @return popped out entry, returns null entry if the element was not
+     *          found in algorithm queue (empty)
      */
     Map.Entry<K, V> pop();
 

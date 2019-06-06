@@ -26,7 +26,7 @@ class LruAlgorithmTest {
      */
     @BeforeEach
     void setUp() {
-        IntStream.rangeClosed(1,4).forEach(lQueue::shift);
+        IntStream.rangeClosed(1, 4).forEach(lQueue::shift);
     }
 
     /**

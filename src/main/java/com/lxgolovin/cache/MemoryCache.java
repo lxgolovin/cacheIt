@@ -96,7 +96,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
         Map.Entry<K, V> popped = null;
         Map.Entry<K, V> inputEntry = new AbstractMap.SimpleEntry<>(key, value);
-        if (size() == maxSize) {
+        if ((size() == maxSize) && (!contains(key))) {
             // using deletion by algorithm
             popped = pop();
         }
@@ -138,13 +138,17 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     /**
      * Removes the mapping for a key from the cache by used algorithm.
      * To delete {@link Cache#delete(Object)} is used
-     * @return popped out entry
+     * @return popped out entry, returns null entry if the element was not
+     *          found in algorithm queue (empty)
      */
     @Override
     public Map.Entry<K, V> pop() {
-        Map.Entry<K, V> entry;
-
         K key = algo.pop();
+        if (key == null) {
+            return null;
+        }
+
+        Map.Entry<K, V> entry;
         V value = delete(key);
         entry = new AbstractMap.SimpleEntry<>(key, value);
 
