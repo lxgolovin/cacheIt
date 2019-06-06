@@ -129,9 +129,14 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      * Checks if the key is present in cache
      * @param key to check in cache
      * @return true is element found, else false
+     * @throws IllegalArgumentException if key is null
      */
     @Override
     public boolean contains(K key) {
+        if (key == null) {
+            throw new IllegalArgumentException();
+        }
+
         return cacheMap.containsKey(key);
     }
 

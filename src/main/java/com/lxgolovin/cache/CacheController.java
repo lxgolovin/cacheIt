@@ -70,17 +70,14 @@ public class CacheController<K, V> implements Cache<K, V> {
      * Checks if the level is full up or not
      * @param index of the level
      * @return true if full up, else false
+     * @throws IndexOutOfBoundsException if there is now level with such index
      */
     public boolean isLevelFull(int index) {
-        return (ccList.get(index).size() == ccList.get(index).sizeMax());
-    }
+        if ((index < 0) | (index >= levels())) {
+            throw new IndexOutOfBoundsException();
+        }
 
-    /**
-     * Checks if cache controller is empty or not
-     * @return true if not empty, else false
-     */
-    private boolean isCcEmpty() {
-        return levels() < 1;
+        return (ccList.get(index).size() == ccList.get(index).sizeMax());
     }
 
      /**
@@ -136,8 +133,13 @@ public class CacheController<K, V> implements Cache<K, V> {
      * @param key with mapping in cache to value
      * @return the value to which the specified key is mapped, or
      *         {@code null} if this map contains no mapping for the key
+     * @throws IllegalArgumentException if key is null
      */
     public V get(K key) {
+        if (key == null) {
+            throw new IllegalArgumentException();
+        }
+
         // TODO: index can be implemented for searching
         for (Cache<K,V> c: ccList) {
             if (c.contains(key)) {
@@ -168,10 +170,19 @@ public class CacheController<K, V> implements Cache<K, V> {
      * @param key key whose mapping is to be removed from the cache
      * @return the previous value associated with <tt>key</tt>, or
      *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
+     * @throws IllegalArgumentException if key is null
      */
     @Override
     public V delete(K key) {
-        // TODO: not implemented yet
+        if (key == null) {
+            throw new IllegalArgumentException();
+        }
+
+        for (Cache<K,V> c: ccList) {
+            if (c.contains(key)) {
+                return c.delete(key);
+            }
+        }
         return null;
     }
 
@@ -179,9 +190,14 @@ public class CacheController<K, V> implements Cache<K, V> {
      * Checks if the key is present in cache
      * @param key to check in cache
      * @return true is element found, else false
+     * @throws IllegalArgumentException if key is null
      */
     @Override
     public boolean contains(K key) {
+        if (key == null) {
+            throw new IllegalArgumentException();
+        }
+
         for (Cache<K,V> c: ccList) {
             if (c.contains(key)) {
                 return true;
@@ -229,7 +245,7 @@ public class CacheController<K, V> implements Cache<K, V> {
      * @return index of level if the key is present,
      *          else number of levels
      */
-    int getLevel(K key) {
+    private int getLevel(K key) {
         for (int i = 0; i < levels(); i++) {
             if (ccList.get(i).contains(key)) {
                 return i;
