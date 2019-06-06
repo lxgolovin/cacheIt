@@ -2,7 +2,6 @@ package com.lxgolovin.cache;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Abstract class with some methods to define Recently Used (LRU-MRU) algorithms.
@@ -76,7 +75,7 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
 
     /**
      * Deletes element from the queue depending on the algorithm type
-     * @return element that was delete
+     * @return element that was deleted or null if the queue is empty
      */
     @Override
     public abstract E pop();

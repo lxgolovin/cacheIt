@@ -1,19 +1,19 @@
 package com.lxgolovin.cache;
 
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Implementation of abstract class {@link AbstractRuAlgorithm} with methods to define
- * Least Recently Used (LRU) algorithms.
+ * Most Recently Used (MRU) algorithms.
  * Implements {@link CacheAlgorithm} using as a queue of keys with
  * dummy objects as values. Specifies main methods to add values to the queue and delete them
  * if needed. Has a possibility to clear all data and check the algorithm name
  * @param <E>
  * @see CacheAlgorithm
  * @see AbstractRuAlgorithm
- * @see MruAlgorithm
+ * @see LruAlgorithm
  */
-public class LruAlgorithm<E> extends AbstractRuAlgorithm<E>
+public class MruAlgorithm<E> extends AbstractRuAlgorithm<E>
         implements CacheAlgorithm<E> {
 
     /**
@@ -21,18 +21,21 @@ public class LruAlgorithm<E> extends AbstractRuAlgorithm<E>
      */
     @Override
     public String getType() {
-        return LRU_ALGORITHM;
+        return MRU_ALGORITHM;
     }
 
     /**
-     * Deletes element from the queue depending on the LRU algorithm type
+     * Deletes element from the queue depending on the MRU algorithm type
      * @return element that was deleted or null if the queue is empty
      */
     @Override
     public E pop () {
-        Optional<E> elem = queue.keySet().stream().findFirst();
-        elem.ifPresent(queue::remove);
-        return elem.orElse(null);
-
+        if (queue.size() < 1) {
+            return null;
+        }
+        List<E> list = new ArrayList<>(queue.keySet());
+        E elem =list.get(list.size()-1);
+        queue.remove(elem);
+        return elem;
     }
 }

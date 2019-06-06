@@ -55,7 +55,6 @@ class LruAlgorithmTest {
         // {4,1,3}
         assertEquals(4,lQueue.pop());
         lQueue.delete(10);
-
     }
 
     /**
@@ -90,12 +89,12 @@ class LruAlgorithmTest {
         assertEquals(3,lQueue.pop());
         lQueue.delete(4);
         // {}. But if we try to delete more, nothing happens
+        assertNull(lQueue.pop());
         lQueue.delete(5);
         // check null as input
         assertThrows(IllegalArgumentException.class,
                 () -> lQueue.delete(null));
     }
-    //! add methods to test delete() and shift() separately
 
     /**
      * Clear queue
