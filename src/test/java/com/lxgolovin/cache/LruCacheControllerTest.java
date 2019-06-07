@@ -77,6 +77,89 @@ class LruCacheControllerTest {
         assertEquals(36,cc.get(6));
         assertEquals(49,cc.get(7));
     }
+    /**
+     * Simple tests to check pop method
+     * During this task 3 level cache created and pop is done for many cases
+     */
+    @Test
+    void popFor3LevelCacheUntilRemoveAll() {
+        CacheAlgorithm<Integer> lruLev1 = new LruAlgorithm<>();
+        Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(lruLev1);
+        CacheAlgorithm<Integer> lruLev2 = new LruAlgorithm<>();
+        Cache<Integer, Integer> cacheLevel2 = new MemoryCache<>(lruLev2);
+        assertEquals(2,cc.addLevel(cacheLevel1));
+        assertEquals(3,cc.addLevel(cacheLevel2));
+        // now got: level0: {3-9,4-16,5-25,6-36,7-49}; level1: {}; level2" {}
+        // fill in levels:
+        IntStream.rangeClosed(10,18).forEach(x -> cc.cache(x,x*x));
+        // now got: level0: {14,15,16,17,18}; level1: {7,10,11,12,13}; level2: {3,4,5,6}
+        // if use pop LRU level0 "14" goes to level1, "7" goes to level2. Return should be 7->null
+        // size should not change. It will be 14
+        assertEquals(14,cc.size());
+        Map.Entry<Integer, Integer> testEntry = new AbstractMap.SimpleEntry<>(7, null);
+        assertEquals(testEntry, cc.pop());
+        // size should not change. It will be 14
+        assertEquals(14,cc.size());
+        // get for "7" with still return 49!!! But now from level 2
+        // now got: level0: {15,16,17,18}; level1: {10,11,12,13,14}; level2: {3,4,5,6,7}
+        assertEquals(49, cc.get(7));
+
+        // same for other
+        assertEquals(3, cc.pop().getKey()); // 3->9 removed
+        assertEquals(4, cc.pop().getKey()); // 4->16 removed
+        assertEquals(5, cc.pop().getKey()); // 5->25 removed
+        assertEquals(6, cc.pop().getKey()); // 6->36 removed
+        // now: level0: {}; level1: {14,15,16,17,18}; level2: {7,10,11,12,13} and size 10
+        assertEquals(10,cc.size());
+        // now pop to check how it works with empty level0
+        assertEquals(7, cc.pop().getKey()); // 7->49 removed
+
+        // remove all:
+        cc.clear();
+        assertEquals(0,cc.size());
+        // pop for empty should be null
+        assertNull(cc.pop());
+    }
+
+    /**
+     * Simple tests to check delete method
+     */
+    @Test
+    void deleteFor2LevelCacheUntilRemoveAll() {
+        CacheAlgorithm<Integer> lruLev1 = new LruAlgorithm<>();
+        Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(lruLev1);
+
+        // Stream starts with {0..7} cached in level 0: {3,4,5,6,7}
+        // add level. current size not changed, max size doubled
+        assertEquals(2,cc.addLevel(cacheLevel1));
+        // now: level 0: {3,4,5,6,7}; level 1: {}.
+        assertEquals(3, cc.cache(8,64).getKey());
+        // now: level 0: {4,5,6,7,8}; level 1: {3}.
+
+        assertEquals(25, cc.delete(5));
+        assertEquals(36, cc.delete(6));
+        assertEquals(49, cc.delete(7));
+        // now: level 0: {4,8}; level 1: {3}.
+        assertEquals(3,cc.size());
+        assertEquals(10,cc.sizeMax());
+        // try to delete 7 one more time
+        assertNull(cc.delete(7));
+
+        // now: level 0: {4,8}; level 1: {3}.
+        assertEquals(16, cc.delete(4));
+        assertEquals(64, cc.delete(8));
+
+        // now: level 0: {}; level 1: {3}.
+        // change 3->9 to 3->21. Size will be 1 and max size 10 (2 levels
+        assertEquals(9,cc.cache(3,21).getValue());
+        assertEquals(21, cc.get(3));
+        assertEquals(1,cc.size());
+        assertEquals(10,cc.sizeMax());
+
+        // delete last element
+        assertEquals(21, cc.delete(3));
+        assertNull(cc.get(3));
+    }
 
     /**
      * Simple tests to get current size of the cache and maximum available size of cache

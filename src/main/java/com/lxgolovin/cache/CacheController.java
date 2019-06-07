@@ -141,7 +141,7 @@ public class CacheController<K, V> implements Cache<K, V> {
         }
 
         // TODO: index can be implemented for searching
-        for (Cache<K,V> c: ccList) {
+        for (Cache<K, V> c: ccList) {
             if (c.contains(key)) {
                 return c.get(key);
             }
@@ -149,16 +149,40 @@ public class CacheController<K, V> implements Cache<K, V> {
         return null;
     }
 
-    // TODO: Staring from this line, class is not documented. In progress
     /**
      * Removes the mapping for a key from the cache by used algorithm.
-     * @return popped out entry, returns null entry if the element was not
-     *          found in algorithm queue (empty)
+     * In multilevel cache the value is popped from the first level, then trying
+     * to insert it in next level.
+     * @return popped out entry if it was the last available level.
+     *          Returns null entry if the element was not found in algorithm queue (empty) or
+     *          if there are no levels or all levels are empty.
+     *          Returns replaced entry if the popped one from first levels moved to next level
      */
     @Override
     public Map.Entry<K, V> pop() {
-        // TODO: not implemented yet
-        return null;
+        // check if there are no levels or all levels are empty
+        if ((levels() < 1) || (size() < 1)) {
+            return null;
+        }
+
+        Map.Entry<K, V> popped = null;
+        int startIndex = 0;
+        // try to pop from first levels. One by one. If first is empty, try next
+        for (int i = 0; i < levels(); i++) {
+            if (ccList.get(i).size() > 0) {
+                // found first not empty level. key-value are popped and now try to insert into
+                // "startIndex" level
+                popped = ccList.get(i).pop();
+                startIndex = i+1;
+                break;
+            }
+        }
+
+        if (popped == null) {
+            return null;
+        }
+        // enter recursive method to insert popped key-value
+        return load(popped.getKey(), popped.getValue(), startIndex);
     }
 
     /**
@@ -178,7 +202,7 @@ public class CacheController<K, V> implements Cache<K, V> {
             throw new IllegalArgumentException();
         }
 
-        for (Cache<K,V> c: ccList) {
+        for (Cache<K, V> c: ccList) {
             if (c.contains(key)) {
                 return c.delete(key);
             }
@@ -198,7 +222,7 @@ public class CacheController<K, V> implements Cache<K, V> {
             throw new IllegalArgumentException();
         }
 
-        for (Cache<K,V> c: ccList) {
+        for (Cache<K, V> c: ccList) {
             if (c.contains(key)) {
                 return true;
             }
@@ -212,7 +236,9 @@ public class CacheController<K, V> implements Cache<K, V> {
      */
     @Override
     public void clear() {
-        // TODO: not implemented yet
+        for (Cache<K, V> c: ccList) {
+            c.clear();
+        }
     }
 
     /**
@@ -221,7 +247,7 @@ public class CacheController<K, V> implements Cache<K, V> {
     @Override
     public int size() {
         int size = 0;
-        for (Cache<K,V> c: ccList) {
+        for (Cache<K, V> c: ccList) {
             size = size + c.size();
         }
         return size;
@@ -233,7 +259,7 @@ public class CacheController<K, V> implements Cache<K, V> {
     @Override
     public int sizeMax() {
         int size = 0;
-        for (Cache<K,V> c: ccList) {
+        for (Cache<K, V> c: ccList) {
             size = size + c.sizeMax();
         }
         return size;
