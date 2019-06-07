@@ -4,6 +4,9 @@ compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
 
+wrapper {
+    gradleVersion = '5.4.1'
+}
 
 repositories {
     mavenLocal()
@@ -11,15 +14,10 @@ repositories {
     jcenter()
 }
 
-
 dependencies {
     testImplementation('org.junit.jupiter:junit-jupiter:5.4.2')
     testRuntime('org.junit.jupiter:junit-jupiter-engine:5.4.2')
 }
-
-//wrapper {
-//    gradleVersion = '5.4.1'
-//}
 
 test {
     useJUnitPlatform()
