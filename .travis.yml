@@ -4,4 +4,7 @@ jdk:
   - oraclejdk8
 
 install:
-  - gradle5.4.1
+  - TERM=dumb ./gradlew assemble
+
+script:
+  - TERM=dumb ./gradlew check
