@@ -13,6 +13,7 @@ import java.util.*;
  * @see AbstractRuAlgorithm
  * @see LruAlgorithm
  */
+//! measure the complexity
 public class MruAlgorithm<E> extends AbstractRuAlgorithm<E>
         implements CacheAlgorithm<E> {
 
@@ -30,6 +31,7 @@ public class MruAlgorithm<E> extends AbstractRuAlgorithm<E>
      */
     @Override
     public E pop () {
+        //! Much better: isEmpty()
         if (queue.size() < 1) {
             return null;
         }

@@ -33,23 +33,22 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
     /**
      * The default initial capacity - MUST be a power of two.
      */
-    private static final int DEFAULT_INITIAL_CAPACITY = 1 << 4; // aka 16 //! Before constructors
+    private static final int DEFAULT_INITIAL_CAPACITY = 1 << 4;
 
     /**
      * The load factor used when none specified in constructor.
      */
-    private static final float DEFAULT_LOAD_FACTOR = 0.75f; //! before constructors
+    private static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
     /**
      * Dummy value to associate with an Object in the backing Map
      */
-    private static final Object DUMMY = new Object(); //! before constructors
+    private static final Object DUMMY = new Object();
 
     /**
      * Queue to organize algorithm
      */
-    //protected final Map<E, Object> queue; //! final
-    final Map<E, Object> queue; //! final
+    final Map<E, Object> queue;
 
     /**
      * Starts a queue to keep all elements inside and delete according to algorithms
