@@ -6,8 +6,7 @@ jdk:
 before_install:
   - chmod +x gradlew
   -
-install:
-  - ./gradlew assemble
+install: gradle wrapper --gradle-version 5.4.1
 
 script:
   - ./gradlew check
