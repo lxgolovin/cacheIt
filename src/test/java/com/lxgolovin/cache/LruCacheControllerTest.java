@@ -76,7 +76,9 @@ class LruCacheControllerTest {
         assertEquals(16,cc.get(4));
         assertEquals(36,cc.get(6));
         assertEquals(49,cc.get(7));
+        assertNull(cc.get(1));
     }
+
     /**
      * Simple tests to check pop method
      * During this task 3 level cache created and pop is done for many cases
@@ -89,6 +91,7 @@ class LruCacheControllerTest {
         Cache<Integer, Integer> cacheLevel2 = new MemoryCache<>(lruLev2);
         assertEquals(2,cc.addLevel(cacheLevel1));
         assertEquals(3,cc.addLevel(cacheLevel2));
+
         // now got: level0: {3-9,4-16,5-25,6-36,7-49}; level1: {}; level2" {}
         // fill in levels:
         IntStream.rangeClosed(10,18).forEach(x -> cc.cache(x,x*x));
@@ -150,7 +153,7 @@ class LruCacheControllerTest {
         assertEquals(64, cc.delete(8));
 
         // now: level 0: {}; level 1: {3}.
-        // change 3->9 to 3->21. Size will be 1 and max size 10 (2 levels
+        // change 3->9 to 3->21. Size will be 1 and max size 10 (2 levels)
         assertEquals(9,cc.cache(3,21).getValue());
         assertEquals(21, cc.get(3));
         assertEquals(1,cc.size());
@@ -237,7 +240,7 @@ class LruCacheControllerTest {
         assertNull(cc.cache(0,0).getValue());
         // now: level0 {6->36, 7->7, 8->64, 9->81, 0->0}; level1 {4->4, 5->25}
 
-        // add for keys-values to fill level1 totally
+        // add keys-values to fill level1 totally
         assertEquals(6, cc.cache(1,1).getKey());
         assertEquals(7, cc.cache(2,4).getKey());
         assertEquals(8, cc.cache(3,9).getKey());
@@ -246,7 +249,7 @@ class LruCacheControllerTest {
 
         // one more 11->121, it pops out 4->4 from level1!!
         assertEquals(4, cc.cache(11,121).getKey());
-        // if adding key that is not present in cache, got null
+        // if getting key that is not present in cache, got null
         assertNull(cc.get(1000));
     }
 }
