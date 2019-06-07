@@ -1,11 +1,7 @@
 language: java
-#install: true
 
 jdk:
   - oraclejdk8
 
 install:
-  - gradle 5.4.1
-script:
-  - ./gradlew assemble
-  - ./gradlew build --scan -s
+  - gradle5.4.1
