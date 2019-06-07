@@ -17,12 +17,12 @@ dependencies {
     testRuntime('org.junit.jupiter:junit-jupiter-engine:5.4.2')
 }
 
-wrapper {
-    gradleVersion = '5.4.1'
-}
+//wrapper {
+//    gradleVersion = '5.4.1'
+//}
 
 test {
-    //useJUnitPlatform()
+    useJUnitPlatform()
     testLogging {
         events "passed", "skipped", "failed"
         exceptionFormat "full"
