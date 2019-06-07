@@ -14,7 +14,6 @@ public interface CacheAlgorithm<E> {
      * Adds new element to the queue or renews elements order if it is already present in queue
      * @param elem - may not be null
      */
-    //!+ What does it return?
     void shift(E elem);
 
     /**

@@ -47,9 +47,20 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      * Creates memory cache with default size by defined algorithm
      * @param algorithm specifies algorithm type that is used by the cache
      */
-    //! add one more constructor with Map as parameter.
     public MemoryCache(CacheAlgorithm<K> algorithm) {
         this(algorithm, DEFAULT_CACHE_SIZE);
+    }
+
+    /**
+     * Creates memory cache with default size by defined algorithm and by size.
+     * Minimum size value is greater then 1. If you try to use less then 2,
+     * {@link MemoryCache#DEFAULT_CACHE_SIZE} will be used as a size
+     * @param algorithm specifies algorithm type that is used by the cache
+     * @param map incoming with keys-values of empty
+     */
+    // TODO: create tests for the constructor
+    public MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map) {
+        this(algorithm, map, DEFAULT_CACHE_SIZE);
     }
 
     /**
@@ -70,11 +81,26 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      * {@link MemoryCache#DEFAULT_CACHE_SIZE} will be used as a size
      * @param algorithm specifies algorithm type that is used by the cache
      */
-    //! add one more constructor with Map as parameter.
     public MemoryCache(CacheAlgorithm<K> algorithm, int size) {
-        cacheMap = new HashMap<>();
-        algo = algorithm;
+        this(algorithm, new HashMap<>(), size);
+    }
+
+    /**
+     * Creates memory cache with default size by defined algorithm and by size.
+     * Minimum size value is greater then 1. If you try to use less then 2,
+     * {@link MemoryCache#DEFAULT_CACHE_SIZE} will be used as a size
+     * @param algorithm specifies algorithm type that is used by the cache
+     * @param map incoming with keys-values of empty
+     * @param size defining the size for the mapping
+     */
+    // TODO: create tests for this constructor
+    public MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map, int size) {
         maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
+        algo = algorithm;
+        cacheMap = map;
+        if (!map.isEmpty()) {
+            map.keySet().stream().forEach(algo::shift);
+        }
     }
 
     /**
@@ -95,18 +121,24 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
         }
 
         Map.Entry<K, V> popped = null;
-        Map.Entry<K, V> inputEntry = new AbstractMap.SimpleEntry<>(key, value);
+        Map.Entry<K, V> outputEntry;
         if ((size() == maxSize) && (!contains(key))) {
             // using deletion by algorithm
             popped = pop();
         }
 
         algo.shift(key);
-        value = cacheMap.put(key, value); //! Do not mix up the logic in one line
-        inputEntry.setValue(value);
+        value = cacheMap.put(key, value);
+        if (value == null) {
+//            outputEntry = new AbstractMap.SimpleEntry<>(key, value);
+            outputEntry = null;
+        } else {
+            outputEntry = new AbstractMap.SimpleEntry<>(key, value);
+        }
 
         //! Why do you return inputEntry?
-        return (popped == null) ? inputEntry : popped;
+        // Done: was: returns key->null, but now return null
+        return (popped == null) ? outputEntry : popped;
     }
 
     /**
@@ -156,7 +188,8 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
         Map.Entry<K, V> entry;
         V value = delete(key);
-        entry = new AbstractMap.SimpleEntry<>(key, value); //! Map.SimpleImmutableEntry!
+        // TODO: check were can implement SipmleImmutable
+        entry = new AbstractMap.SimpleImmutableEntry<>(key, value);
 
         return entry;
     }
@@ -188,7 +221,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     @Override
     public void clear(){
-        cacheMap.clear(); //! Why is it here clear() and in the next line flash()
+        cacheMap.clear();
         algo.clear();
     }
 

@@ -14,6 +14,7 @@ import java.util.*;
  * @see LruAlgorithm
  */
 //! measure the complexity
+// TODO: measure complexity
 public class MruAlgorithm<E> extends AbstractRuAlgorithm<E>
         implements CacheAlgorithm<E> {
 
@@ -31,10 +32,10 @@ public class MruAlgorithm<E> extends AbstractRuAlgorithm<E>
      */
     @Override
     public E pop () {
-        //! Much better: isEmpty()
-        if (queue.size() < 1) {
+        if (queue.isEmpty()) {
             return null;
         }
+
         List<E> list = new ArrayList<>(queue.keySet());
         E elem =list.get(list.size()-1);
         queue.remove(elem);

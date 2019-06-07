@@ -53,7 +53,6 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
     /**
      * Starts a queue to keep all elements inside and delete according to algorithms
      */
-    //protected AbstractRuAlgorithm() {
     AbstractRuAlgorithm() {
         queue = new LinkedHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, true);
     }

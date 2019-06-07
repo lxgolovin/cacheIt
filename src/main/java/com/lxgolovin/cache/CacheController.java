@@ -119,6 +119,9 @@ public class CacheController<K, V> implements Cache<K, V> {
      */
     private Map.Entry<K, V> load(K key, V value, int index) {
         Map.Entry<K, V> returnEntry = ccList.get(index).cache(key, value);
+        if (returnEntry == null){
+            return null;
+        }
 
         if ((key != returnEntry.getKey()) && (levels() > (++index))) {
             // one more recursive if some entry popped out and there are still more levels

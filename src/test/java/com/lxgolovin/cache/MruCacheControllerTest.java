@@ -100,8 +100,7 @@ class MruCacheControllerTest {
         // if use pop MRU level0 "18" goes to level1, "17" goes to level2. Return should be 17->null
         // size should not change. It will be 14
         assertEquals(14,cc.size());
-        Map.Entry<Integer, Integer> testEntry = new AbstractMap.SimpleEntry<>(17, null);
-        assertEquals(testEntry, cc.pop());
+        assertNull(cc.pop());
         // size should not change. It will be 14
         assertEquals(14,cc.size());
         // get for "17" with still return 289!!! But now from level 2
@@ -137,7 +136,7 @@ class MruCacheControllerTest {
         // add level. current size not changed, max size doubled
         assertEquals(2,cc.addLevel(cacheLevel1));
         // now: level 0: {0,1,2,3,7}; level 1: {}.
-        assertEquals(7, cc.cache(8,64).getKey());
+        assertNull(cc.cache(8,64));
         // now: level 0: {0,1,2,3,8}; level 1: {7}.
 
         assertEquals(1, cc.delete(1));
@@ -188,7 +187,7 @@ class MruCacheControllerTest {
         assertEquals(10,cc.sizeMax());
 
         // now: level 0: {0,1,3,7,2}; level 1: {}; adding one new key-value. Current size increase
-        assertEquals(2, cc.cache(4,16).getKey());
+        assertNull(cc.cache(4,16));
         // now: level 0: {0,1,3,7,4}; level 1: {2};
         assertEquals(6,cc.size());
         assertEquals(10,cc.sizeMax());
@@ -227,7 +226,7 @@ class MruCacheControllerTest {
         assertEquals(1, cc.levels());
         assertEquals(2,cc.addLevel(cacheLevel1));
         // now: level0 {0->0, 1->1, 2->4, 3->9, 8->64}; level1 {}
-        assertEquals(8, cc.cache(9,81).getKey());
+        assertNull(cc.cache(9,81));
         // now: level0 {0->0, 1->1, 2->4, 3->9, 9->81}; level1 {8->64}
         assertEquals(64, cc.get(8));
         // if adding to cache 8->8 again mapping 8->64 should be deleted. Check this out
@@ -238,13 +237,13 @@ class MruCacheControllerTest {
 
         // now: level0 {0->0, 1->1, 2->4, 3->9, 9->81}; level1 {8->8}
         // if adding 5->25, return value should be null!!
-        assertNull(cc.cache(5,25).getValue());
+        assertNull(cc.cache(5,25));
         // now: level0 {0->0, 1->1, 2->4, 3->9, 5->25}; level1 {8->8, 9->81}
 
         // add keys-values to fill level1 totally
-        assertEquals(5, cc.cache(6,36).getKey());
-        assertEquals(6, cc.cache(7,49).getKey());
-        assertEquals(7, cc.cache(4,8).getKey());
+        assertNull(cc.cache(6,36));
+        assertNull(cc.cache(7,49));
+        assertNull(cc.cache(4,8));
         // now: level0 {0->0, 1->1, 2->4, 3->9, 4->8}; level1 {8->8, 9->81, 5->25, 6->36, 7->49}
         assertTrue(cc.isLevelFull(1));
 
