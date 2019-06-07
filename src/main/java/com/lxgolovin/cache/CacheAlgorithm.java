@@ -21,21 +21,19 @@ public interface CacheAlgorithm<E> {
      * Deletes element from the queue depending on the algorithm type
      * @return element that was deleted or null if the queue is empty
      */
-    //! if not success Exception?
     E pop();
 
     /**
      * Removes element from the queue
      * @param elem element to be deleted
      */
-    // TODO: possibly need true/false if the element was is queue
+    // TODO: possibly need true/false if the element was is queue //! good idea
     void delete(E elem);
 
     /**
      * Clears all data from the queue
      * All elements are deleted
      */
-    //! why flash? flush? clearAll? clear?
     void clear();
 
     /**

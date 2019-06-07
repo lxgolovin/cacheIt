@@ -105,6 +105,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
         value = cacheMap.put(key, value); //! Do not mix up the logic in one line
         inputEntry.setValue(value);
 
+        //! Why do you return inputEntry?
         return (popped == null) ? inputEntry : popped;
     }
 
@@ -155,7 +156,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
         Map.Entry<K, V> entry;
         V value = delete(key);
-        entry = new AbstractMap.SimpleEntry<>(key, value);
+        entry = new AbstractMap.SimpleEntry<>(key, value); //! Map.SimpleImmutableEntry!
 
         return entry;
     }
