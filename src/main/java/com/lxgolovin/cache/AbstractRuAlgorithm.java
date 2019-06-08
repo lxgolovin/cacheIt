@@ -85,11 +85,12 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
      */
     @Override
     // TODO: posibly need true/false if the element was is queue
-    public void delete(E elem) {
+    public boolean delete(E elem) {
         if (elem == null) {
             throw new IllegalArgumentException();
         }
-        queue.remove(elem);
+        Object value = queue.remove(elem);
+        return (value == null) ? false : true;
     }
 
     /**

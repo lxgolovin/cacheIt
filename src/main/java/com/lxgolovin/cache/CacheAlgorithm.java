@@ -27,7 +27,7 @@ public interface CacheAlgorithm<E> {
      * @param elem element to be deleted
      */
     // TODO: possibly need true/false if the element was is queue //! good idea
-    void delete(E elem);
+    boolean delete(E elem);
 
     /**
      * Clears all data from the queue
