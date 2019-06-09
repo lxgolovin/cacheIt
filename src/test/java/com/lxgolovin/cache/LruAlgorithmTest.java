@@ -83,7 +83,7 @@ class LruAlgorithmTest {
     @Test
     void delete() {
         // {1,2,3,4} after initialization phase
-        lQueue.delete(1);
+        assertTrue(lQueue.delete(1));
         lQueue.delete(2);
         // {3,4} 3 - should be deleted by pop. Check it:
         assertEquals(3,lQueue.pop());

@@ -25,8 +25,8 @@ public interface CacheAlgorithm<E> {
     /**
      * Removes element from the queue
      * @param elem element to be deleted
+     * @return true if element was present in queue, else false
      */
-    // TODO: possibly need true/false if the element was is queue //! good idea
     boolean delete(E elem);
 
     /**
