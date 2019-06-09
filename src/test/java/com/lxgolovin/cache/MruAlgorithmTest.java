@@ -50,7 +50,7 @@ class MruAlgorithmTest {
         // {1,2,3}
         mQueue.shift(4);
         // {1,2,3,4}
-        mQueue.delete(4);
+        assertTrue(mQueue.delete(4));
         // {1,2,3}
         assertEquals(3, mQueue.pop());
         // {1,2}
@@ -88,14 +88,14 @@ class MruAlgorithmTest {
     @Test
     void delete() {
         // {1,2,3,4} after initialization phase
-        mQueue.delete(1);
-        mQueue.delete(2);
+        assertTrue(mQueue.delete(1));
+        assertTrue(mQueue.delete(2));
         // {3,4} 4 - should be deleted by pop. Check it:
         assertEquals(4,mQueue.pop());
-        mQueue.delete(3);
+        assertTrue(mQueue.delete(3));
         // {}. But if we try to delete more, nothing happens
         assertNull(mQueue.pop());
-        mQueue.delete(5);
+        assertFalse(mQueue.delete(5));
         // check null as input
         assertThrows(IllegalArgumentException.class,
                 () -> mQueue.delete(null));

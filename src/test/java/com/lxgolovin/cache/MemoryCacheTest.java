@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.AbstractMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -61,6 +62,21 @@ class MemoryCacheTest {
         Cache<Integer, String> cache = new MemoryCache<>(lru);
         assertEquals(0, cache.size());
         assertEquals(5, cache.sizeMax());
+    }
+
+    /**
+     * Checks work of setting cache size manually
+     */
+    @Test
+    void constructorWithMaps() {
+        CacheAlgorithm<Integer> algorithm = new LruAlgorithm<>();
+        Map<Integer, String> map = new TreeMap<>();
+        IntStream.rangeClosed(1, 10).forEach(x -> map.put(x,String.valueOf(x*x)));
+
+        Cache<Integer, String> cache = new MemoryCache<>(algorithm,map);
+        assertEquals(1,cache.cache(36, "36").getKey());
+        assertEquals(10, cache.size());
+        assertEquals(10, cache.sizeMax());
     }
 
     /**

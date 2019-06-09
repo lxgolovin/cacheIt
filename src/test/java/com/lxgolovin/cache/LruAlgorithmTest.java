@@ -49,12 +49,12 @@ class LruAlgorithmTest {
         // {2,3,4}
         lQueue.shift(1);
         //{2,3,4,1}
-        lQueue.delete(2);
+        assertTrue(lQueue.delete(2));
         // {3,4,1}
         lQueue.shift(3);
         // {4,1,3}
         assertEquals(4,lQueue.pop());
-        lQueue.delete(10);
+        assertFalse(lQueue.delete(10));
     }
 
     /**
@@ -84,13 +84,13 @@ class LruAlgorithmTest {
     void delete() {
         // {1,2,3,4} after initialization phase
         assertTrue(lQueue.delete(1));
-        lQueue.delete(2);
+        assertTrue(lQueue.delete(2));
         // {3,4} 3 - should be deleted by pop. Check it:
         assertEquals(3,lQueue.pop());
-        lQueue.delete(4);
+        assertTrue(lQueue.delete(4));
         // {}. But if we try to delete more, nothing happens
         assertNull(lQueue.pop());
-        lQueue.delete(5);
+        assertFalse(lQueue.delete(5));
         // check null as input
         assertThrows(IllegalArgumentException.class,
                 () -> lQueue.delete(null));

@@ -53,14 +53,14 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
     /**
      * Creates memory cache with default size by defined algorithm and by size.
-     * Minimum size value is greater then 1. If you try to use less then 2,
+     * If the map is empty, empty cache is created with maxSize {@link MemoryCache#DEFAULT_CACHE_SIZE}.
+     * If the map is not empty, cache is created with maxSize equal to the size of the incoming map.
      * {@link MemoryCache#DEFAULT_CACHE_SIZE} will be used as a size
      * @param algorithm specifies algorithm type that is used by the cache
      * @param map incoming with keys-values of empty
      */
-    // TODO: create tests for the constructor
     public MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map) {
-        this(algorithm, map, DEFAULT_CACHE_SIZE);
+        this(algorithm, map, map.size());
     }
 
     /**
@@ -93,13 +93,12 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      * @param map incoming with keys-values of empty
      * @param size defining the size for the mapping
      */
-    // TODO: create tests for this constructor
-    public MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map, int size) {
+    private MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map, int size) {
         maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
         algo = algorithm;
         cacheMap = map;
         if (!map.isEmpty()) {
-            map.keySet().stream().forEach(algo::shift);
+            map.keySet().forEach(algo::shift);
         }
     }
 
