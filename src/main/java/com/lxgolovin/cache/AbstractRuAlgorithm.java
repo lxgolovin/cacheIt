@@ -60,15 +60,16 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
     /**
      * Adds new element to the queue or renews elements order if it is already present in queue
      * @param elem - may not be null
+     * @return true if element was present in queue, else false
      * @throws IllegalArgumentException if any of the params is null or if some property of
      *          the specified element prevents it from being stored in {@link AbstractRuAlgorithm#queue}
      */
     @Override
-    public void shift(E elem) {
+    public boolean shift(E elem) {
         if (elem == null) {
             throw new IllegalArgumentException();
         }
-        queue.put(elem, DUMMY);
+        return (queue.put(elem, DUMMY) != null);
     }
 
     /**
