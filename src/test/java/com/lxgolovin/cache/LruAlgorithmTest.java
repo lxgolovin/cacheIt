@@ -43,15 +43,15 @@ class LruAlgorithmTest {
      * Here is the main logic of LRU algorithm
      */
     @Test
-    void deleteCandadatesAfterShiftsLru() {
+    void deleteCandidatesAfterShiftsLru() {
         // {1,2,3,4} after initialization phase
         assertEquals(1,lQueue.pop());
         // {2,3,4}
-        lQueue.shift(1);
+        assertFalse(lQueue.shift(1));
         //{2,3,4,1}
         assertTrue(lQueue.delete(2));
         // {3,4,1}
-        lQueue.shift(3);
+        assertTrue(lQueue.shift(3));
         // {4,1,3}
         assertEquals(4,lQueue.pop());
         assertFalse(lQueue.delete(10));
@@ -63,13 +63,13 @@ class LruAlgorithmTest {
     @Test
     void shiftMethodLru() {
         // {1,2,3,4} after initialization phase
-        lQueue.shift(1);
+        assertTrue(lQueue.shift(1));
         // {2,3,4,1}
-        lQueue.shift(5);
+        assertFalse(lQueue.shift(5));
         // {2,3,4,1,5}
-        lQueue.shift(6);
+        assertFalse(lQueue.shift(6));
         // {2,3,4,1,5,6}
-        lQueue.shift(7);
+        assertFalse(lQueue.shift(7));
         // {2,3,4,1,5,6,7}. if use pop, should delete 2 in LRU algorithm. Check this out:
         assertEquals(2,lQueue.pop());
         // check null as input

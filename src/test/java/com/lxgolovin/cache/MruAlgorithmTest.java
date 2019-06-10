@@ -44,17 +44,17 @@ class MruAlgorithmTest {
      * Here is the main logic of MRU algorithm
      */
     @Test
-    void deleteCandadatesAfterShiftsMru() {
+    void deleteCandidatesAfterShiftsMru() {
         // {1,2,3,4} after initialization phase
         assertEquals(4, mQueue.pop());
         // {1,2,3}
-        mQueue.shift(4);
+        assertFalse(mQueue.shift(4));
         // {1,2,3,4}
         assertTrue(mQueue.delete(4));
         // {1,2,3}
         assertEquals(3, mQueue.pop());
         // {1,2}
-        mQueue.shift(1);
+        assertTrue(mQueue.shift(1));
         // {2,1}
         assertEquals(1, mQueue.pop());
         // {2}
@@ -68,13 +68,13 @@ class MruAlgorithmTest {
     @Test
     void shiftMethodLru() {
         // {1,2,3,4} after initialization phase
-        mQueue.shift(1);
+        assertTrue(mQueue.shift(1));
         // {2,3,4,1}
-        mQueue.shift(5);
+        assertFalse(mQueue.shift(5));
         // {2,3,4,1,5}
-        mQueue.shift(6);
+        assertFalse(mQueue.shift(6));
         // {2,3,4,1,5,6}
-        mQueue.shift(7);
+        assertFalse(mQueue.shift(7));
         // {2,3,4,1,5,6,7}. if use pop, should delete 7 in MRU algorithm. Check this out:
         assertEquals(7,mQueue.pop());
         // check null as input
