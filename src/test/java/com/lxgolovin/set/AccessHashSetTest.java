@@ -34,11 +34,10 @@ class AccessHashSetTest {
      */
     @Test
     void addElements() {
-        // Element 1 is present, so true
-        set.put(2);
-//        assertTrue(set.put(1));
+        // Element 2 is present, so true
+        assertTrue(set.put(2));
         // Element 5 is not present, should be false
-//        assertFalse(set.put(5));
+        assertFalse(set.put(5));
     }
 
     /**
@@ -56,11 +55,11 @@ class AccessHashSetTest {
      */
     @Test
     void isEmpty() {
-//        assertFalse(set.isEmpty());
-//        assertTrue(set.remove(1));
-//        assertTrue(set.remove(2));
-//        assertTrue(set.remove(3));
-//        assertTrue(set.remove(4));
-//        assertTrue(set.isEmpty());
+        assertFalse(set.isEmpty());
+        assertTrue(set.remove(1));
+        assertTrue(set.remove(2));
+        assertTrue(set.remove(3));
+        assertTrue(set.remove(4));
+        assertTrue(set.isEmpty());
     }
 }

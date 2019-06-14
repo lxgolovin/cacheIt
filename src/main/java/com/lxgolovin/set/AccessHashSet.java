@@ -3,10 +3,10 @@ package com.lxgolovin.set;
 import java.util.*;
 
 /**
- * Implements doubly linked set based on {@link HashMap}. The elements link each other
+ * Implements doubly linked "set" based on {@link HashMap}. The elements link each other
  * by access order. This set is a kind of implementation of LinkedHashMap with access order
  * set to true
- * @param <E>
+ * @param <E> type for the incoming element
  */
 public class AccessHashSet<E> {
 
@@ -16,20 +16,40 @@ public class AccessHashSet<E> {
     private final Map<E,Node<E>> map;
 
     /**
-     * Dummy value to associate with an Object in the backing Map
+     * Inner class to define values inside map
+     * The class is a structure to get next and previous element
+     * Both elements are <K> type
+     *
+     * @param <K> links to next and previous elements
      */
-    private static final Object DUMMY = new Object();
+    private final class Node<K> {
 
-    private class Node<K> {
-        K next, prev;
+        /**
+         * Pointers to previous and next element
+         */
+        private K next, prev;
 
+        /**
+         * Constructor to set up values
+         * @param next element
+         * @param prev element
+         */
         Node(K next, K prev) {
             this.next = next;
             this.prev = prev;
         }
     }
 
+    /**
+     * Pointer to the first element
+     * Actually it is LRU
+     */
     private E head;
+
+    /**
+     * Pointer to the last element in map
+     * Actually it is MRU
+     */
     private E tail;
 
     /**
@@ -42,7 +62,7 @@ public class AccessHashSet<E> {
 
     /**
      * Adds the specified element to this set if it is not already present.
-     * If this set already contains the element, the call leaves rearranges
+     * If this set already contains the element, the call rearranges
      * the set in access order and returns false
      *
      * @param elem element to be added to this set
@@ -63,9 +83,18 @@ public class AccessHashSet<E> {
         } else {
             return poke(elem);
         }
-        return map.put(elem, newNode) != null;
+        return (map.put(elem, newNode) != null);
     }
 
+    /**
+     * Method to poke the element is it is present in the set
+     * Actaully it works as access ordering algorithm. If the element poked
+     * it moves to the tail. At the same time tail/head are updated if needed.
+     * Also links between elements are updated if the element is poked from the middle
+     *
+     * @param elem poked element
+     * @return false if element is not in the map, else true
+     */
     private boolean poke(E elem) {
         if (!map.containsKey(elem)) {
             return false;
@@ -73,7 +102,8 @@ public class AccessHashSet<E> {
 
         Node<E> pokedNode = map.get(elem);
 
-        // if poke the tail - nothing need to do, just return true. So check if poked not tail
+        // if poke the tail - nothing need to do, just return true.
+        // So check if poked not tail
         if (pokedNode.next != null) {
             // poke the head
             if (pokedNode.prev == null) {
@@ -105,7 +135,7 @@ public class AccessHashSet<E> {
      * @return <tt>true</tt> if the set contained the specified element
      */
     public boolean remove(E e) {
-        return map.remove(e) == DUMMY;
+        return (map.remove(e) != null);
     }
 
     /**
