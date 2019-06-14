@@ -56,12 +56,44 @@ public class AccessHashSet<E> {
         if (map.isEmpty()) {
             head = elem;
             tail = elem;
-        } else {
+        } else if (!map.containsKey(elem)) {
             map.get(tail).next = elem;
             newNode.prev = tail;
             tail = elem;
+        } else {
+            return poke(elem);
         }
         return map.put(elem, newNode) != null;
+    }
+
+    private boolean poke(E elem) {
+        if (!map.containsKey(elem)) {
+            return false;
+        }
+
+        Node<E> pokedNode = map.get(elem);
+
+        // if poke the tail - nothing need to do, just return true. So check if poked not tail
+        if (pokedNode.next != null) {
+            // poke the head
+            if (pokedNode.prev == null) {
+                head = pokedNode.next;
+                map.get(head).prev = null;
+            } else { // poke the middle
+                // relink items between
+                Node<E> nextNode = map.get(pokedNode.next);
+                Node<E> prevNode = map.get(pokedNode.prev);
+                nextNode.prev = pokedNode.prev;
+                prevNode.next = pokedNode.next;
+            }
+
+            // rearrange poked node
+            map.get(tail).next = elem;
+            pokedNode.prev = tail;
+            pokedNode.next = null;
+            tail = elem;
+        }
+        return true;
     }
 
     /**
