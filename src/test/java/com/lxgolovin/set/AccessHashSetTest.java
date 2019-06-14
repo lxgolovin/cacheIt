@@ -13,12 +13,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * @see Set
  * @see AccessHashSet
  */
-class DoubleLinkedHashSetTest {
+class AccessHashSetTest {
 
     /**
      * Defining the set to be tested
      */
-    private final Set<Integer> set = new AccessHashSet<>();
+    private final AccessHashSet<Integer> set = new AccessHashSet<>();
 
     /**
      * Initializes the set with first values
@@ -26,7 +26,18 @@ class DoubleLinkedHashSetTest {
      */
     @BeforeEach
     void setUp() {
-        IntStream.rangeClosed(1, 4).forEach(set::add);
+        IntStream.rangeClosed(1, 4).forEach(set::put);
+    }
+
+    /**
+     * Simple check for adding elements into set
+     */
+    @Test
+    void addElements() {
+        // Element 1 is present, so true
+        assertTrue(set.put(1));
+        // Element 5 is not present, should be false
+        assertFalse(set.put(5));
     }
 
     /**
@@ -35,7 +46,7 @@ class DoubleLinkedHashSetTest {
     @Test
     void size() {
         assertEquals(4, set.size());
-        set.add(5);
+        assertFalse(set.put(5)); // returns false as the element was not present
         assertEquals(5, set.size());
     }
 
