@@ -6,7 +6,9 @@ import java.util.*;
  * Implements doubly linked "set" based on {@link HashMap}. The elements link each other
  * by access order. This set is a kind of implementation of LinkedHashMap with access order
  * set to true
+ *
  * @param <E> type for the incoming element
+ * @see HashMap
  */
 public class AccessHashSet<E> {
 
@@ -31,6 +33,7 @@ public class AccessHashSet<E> {
 
         /**
          * Constructor to set up values
+         *
          * @param next element
          * @param prev element
          */
@@ -152,6 +155,7 @@ public class AccessHashSet<E> {
 
     /**
      * Removes the first element from the set and returns deleted element
+     *
      * @return cut head
      */
     public E cutHead() {
@@ -161,6 +165,7 @@ public class AccessHashSet<E> {
 
     /**
      * Removes the lest element from the set and returns deleted element
+     *
      * @return cut tail
      */
     public E cutTail() {

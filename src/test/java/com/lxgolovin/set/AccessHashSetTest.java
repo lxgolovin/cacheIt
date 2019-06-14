@@ -9,7 +9,8 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Create checks-tests for the {@link Set} implementation {@link AccessHashSet}
+ * Create checks-tests for the {@link AccessHashSet}
+ *
  * @see Set
  * @see AccessHashSet
  */
@@ -40,6 +41,9 @@ class AccessHashSetTest {
         assertFalse(set.put(5));
     }
 
+    /**
+     * Simple tests to remove elements
+     */
     @Test
     void removeElements() {
         // removing head. Init {1,2,3,4}
