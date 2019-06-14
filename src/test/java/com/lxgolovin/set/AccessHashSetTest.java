@@ -40,6 +40,55 @@ class AccessHashSetTest {
         assertFalse(set.put(5));
     }
 
+    @Test
+    void removeElements() {
+        // removing head. Init {1,2,3,4}
+        assertTrue(set.remove(1));
+        // now 2,3,4; Let's remove middle
+        assertTrue(set.remove(3));
+        // now got 2,4. Let's remove tail
+        assertTrue(set.remove(4));
+        // now remove element that is not present
+        assertFalse(set.remove(5));
+        assertFalse(set.remove(4));
+        assertTrue(set.remove(2));
+        assertTrue(set.isEmpty());
+    }
+
+    /**
+     * Check for cutting head of the set
+     * Imitation of LRU algorithm
+     */
+    @Test
+    void cutHead() {
+        // Init set is {1,2,3,4}. cutHead should remove 1
+        assertEquals(1,set.cutHead());
+        // now {2,3,4}
+        assertTrue(set.put(2));
+        // now {3,4,2}
+        assertEquals(3,set.cutHead());
+        assertEquals(4,set.cutHead());
+        assertEquals(2,set.cutHead());
+        assertNull(set.cutHead());
+    }
+
+    /**
+     * Check for cutting tail of the set
+     * Imitation of MRU algorithm
+     */
+    @Test
+    void cutTail() {
+        // Init set is {1,2,3,4}. cutTail should remove 4
+        assertEquals(4,set.cutTail());
+        // now {1,2,3}
+        assertTrue(set.put(2));
+        // now {1,3,2}
+        assertEquals(2,set.cutTail());
+        assertEquals(3,set.cutTail());
+        assertEquals(1,set.cutTail());
+        assertNull(set.cutTail());
+    }
+
     /**
      * Checks size return for the set
      */

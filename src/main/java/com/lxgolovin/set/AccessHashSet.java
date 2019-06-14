@@ -72,7 +72,6 @@ public class AccessHashSet<E> {
     public boolean put(E elem) {
         Node<E> newNode = new Node<>(null, null);
 
-        //TODO: implement access order
         if (map.isEmpty()) {
             head = elem;
             tail = elem;
@@ -129,13 +128,26 @@ public class AccessHashSet<E> {
     /**
      * Removes the specified element from this set if it is present.
      * Returns <tt>true</tt> if this set contained the element.
-     * TODO: The order of the elements should be rearranged after deleting
+     * The order of the elements should be rearranged after deleting
      *
-     * @param e element to be removed from this set, if present
+     * @param elem element to be removed from this set, if present
      * @return <tt>true</tt> if the set contained the specified element
      */
-    public boolean remove(E e) {
-        return (map.remove(e) != null);
+    public boolean remove(E elem) {
+        if (map.containsKey(elem)) {
+            // the element moved to tail if it is present
+            poke(elem);
+
+            E nowLast = map.get(elem).prev;
+            if (nowLast != null) { // not the last element
+                map.get(nowLast).next = null;
+            } else { // the last element
+                head = null;
+            }
+            tail = nowLast;
+        }
+
+        return (map.remove(elem) != null);
     }
 
     /**
@@ -143,7 +155,8 @@ public class AccessHashSet<E> {
      * @return cut head
      */
     public E cutHead() {
-        return null;
+        E elem = head;
+        return (this.remove(head)) ? elem : null;
     }
 
     /**
@@ -151,7 +164,8 @@ public class AccessHashSet<E> {
      * @return cut tail
      */
     public E cutTail() {
-        return null;
+        E elem = tail;
+        return (this.remove(tail)) ? elem : null;
     }
 
     /**
