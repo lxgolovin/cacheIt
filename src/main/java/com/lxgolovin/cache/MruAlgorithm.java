@@ -13,8 +13,6 @@ import java.util.*;
  * @see AbstractRuAlgorithm
  * @see LruAlgorithm
  */
-//! measure the complexity
-// TODO: measure complexity
 public class MruAlgorithm<E> extends AbstractRuAlgorithm<E>
         implements CacheAlgorithm<E> {
 
