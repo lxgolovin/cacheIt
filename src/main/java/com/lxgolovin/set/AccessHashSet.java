@@ -190,4 +190,14 @@ public class AccessHashSet<E> {
     public boolean isEmpty() {
         return map.isEmpty();
     }
+
+    /**
+     * Clears all data from the queue
+     * All elements are deleted.
+     */
+    public void clear() {
+        map.clear();
+        head = null;
+        tail = null;
+    }
 }
