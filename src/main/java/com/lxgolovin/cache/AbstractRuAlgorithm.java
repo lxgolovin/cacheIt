@@ -1,17 +1,16 @@
 package com.lxgolovin.cache;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import com.lxgolovin.set.AccessHashSet;
 
 /**
  * Abstract class with some methods to define Recently Used (LRU-MRU) algorithms.
- * Implements {@link CacheAlgorithm} using {@link LinkedHashMap} as a queue of keys with
- * dummy objects {@link AbstractRuAlgorithm#DUMMY} as values
+ * Implements {@link CacheAlgorithm} using {@link AccessHashSet} as a queue of keys
  * Specifies main methods to add values to the queue and delete them
  * if needed. Has a possibility to clear all data and check the algorithm name
  * @param <E>
  * @see LruAlgorithm
  * @see MruAlgorithm
+ * @see AccessHashSet
  */
 abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
 
@@ -31,30 +30,15 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
     static final String DEFAULT_ALGORITHM_TYPE = "LRU";
 
     /**
-     * The default initial capacity - MUST be a power of two.
-     */
-    private static final int DEFAULT_INITIAL_CAPACITY = 1 << 4;
-
-    /**
-     * The load factor used when none specified in constructor.
-     */
-    private static final float DEFAULT_LOAD_FACTOR = 0.75f;
-
-    /**
-     * Dummy value to associate with an Object in the backing Map
-     */
-    private static final Object DUMMY = new Object();
-
-    /**
      * Queue to organize algorithm
      */
-    final Map<E, Object> queue;
+    final AccessHashSet<E> queue;
 
     /**
      * Starts a queue to keep all elements inside and delete according to algorithms
      */
     AbstractRuAlgorithm() {
-        queue = new LinkedHashMap<>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, true);
+        queue = new AccessHashSet<>();
     }
 
     /**
@@ -69,7 +53,7 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
         if (elem == null) {
             throw new IllegalArgumentException();
         }
-        return (queue.put(elem, DUMMY) != null);
+        return (queue.put(elem));
     }
 
     /**
@@ -90,7 +74,7 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
         if (elem == null) {
             throw new IllegalArgumentException();
         }
-        return (queue.remove(elem) != null);
+        return (queue.remove(elem));
     }
 
     /**
