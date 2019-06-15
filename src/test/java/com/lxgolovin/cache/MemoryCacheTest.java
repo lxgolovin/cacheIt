@@ -92,7 +92,7 @@ class MemoryCacheTest {
         // Now {4,6,7,8,5,9}
         assertEquals(6, lruCache.size());
         // Now {4,6,7,8,5,9} and value for 6 is 6. Change value to 36
-        Map.Entry<Integer, Integer> testEntry = new AbstractMap.SimpleEntry<>(6, 6);
+        Map.Entry<Integer, Integer> testEntry = new AbstractMap.SimpleImmutableEntry<>(6, 6);
         assertEquals(testEntry, lruCache.cache(6, 36));
         // Now {4,7,8,5,9,6} and value for 6 was 6, but it was replaced. Inside cache value now is 36
         assertEquals(36, lruCache.get(6) );
@@ -117,7 +117,7 @@ class MemoryCacheTest {
         // Now {0,1,2,3,9}
         assertEquals(5, mruCache.size());
         // Now {0,1,2,3,9} and value for 2 is 2. Change value to 4
-        Map.Entry<Integer, Integer> testEntry = new AbstractMap.SimpleEntry<>(2, 2);
+        Map.Entry<Integer, Integer> testEntry = new AbstractMap.SimpleImmutableEntry<>(2, 2);
         assertEquals(testEntry, mruCache.cache(2, 4));
         // Now {0,1,3,9,2} and value for 2 was 2, but it was replaced. Inside cache value now is 4
         assertEquals(4, mruCache.get(2) );

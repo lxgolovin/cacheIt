@@ -132,7 +132,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 //            outputEntry = new AbstractMap.SimpleEntry<>(key, value);
             outputEntry = null;
         } else {
-            outputEntry = new AbstractMap.SimpleEntry<>(key, value);
+            outputEntry = new AbstractMap.SimpleImmutableEntry<>(key, value);
         }
 
         //! Why do you return inputEntry?
