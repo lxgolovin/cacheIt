@@ -129,14 +129,11 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
         algo.shift(key);
         value = cacheMap.put(key, value);
         if (value == null) {
-//            outputEntry = new AbstractMap.SimpleEntry<>(key, value);
             outputEntry = null;
         } else {
             outputEntry = new AbstractMap.SimpleImmutableEntry<>(key, value);
         }
 
-        //! Why do you return inputEntry?
-        // Done: was: returns key->null, but now return null
         return (popped == null) ? outputEntry : popped;
     }
 
@@ -187,7 +184,6 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
         Map.Entry<K, V> entry;
         V value = delete(key);
-        // TODO: check were can implement SipmleImmutable
         entry = new AbstractMap.SimpleImmutableEntry<>(key, value);
 
         return entry;
