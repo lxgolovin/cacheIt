@@ -11,17 +11,17 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Create checks-tests for the implementation of memory cache {@link MemoryCache}
+ * Create checks-tests for the implementation of file system cache {@link FileSystemCache}
  * based on interface {@link Cache}. Two algorithms are used for testing: LRU and MRU.
  * Algorithms are defined be interface {@link CacheAlgorithm} with implementations
  * {@link LruAlgorithm} and {@link MruAlgorithm}
  * @see Cache
- * @see MemoryCache
+ * @see FileSystemCache
  * @see CacheAlgorithm
  * @see LruAlgorithm
  * @see MruAlgorithm
  */
-class MemoryCacheTest {
+class FileSystemCacheTest {
 
     /**
      * Algorihtm types use in testing
@@ -37,8 +37,8 @@ class MemoryCacheTest {
     /**
      * caches
      */
-    private final Cache<Integer, Integer> lruCache = new MemoryCache<>(lru, maxSize);
-    private final Cache<Integer, Integer> mruCache = new MemoryCache<>(mru, 0, 0);
+    private final Cache<Integer, Integer> lruCache = new FileSystemCache<>(lru, maxSize);
+    private final Cache<Integer, Integer> mruCache = new FileSystemCache<>(mru, 0, 0);
 
     /**
      * Fill in caches.
@@ -59,7 +59,7 @@ class MemoryCacheTest {
      */
     @Test
     void constructorWithDefaultSize() {
-        Cache<Integer, String> cache = new MemoryCache<>(lru);
+        Cache<Integer, String> cache = new FileSystemCache<>(lru);
         assertEquals(0, cache.size());
         assertEquals(5, cache.sizeMax());
     }
@@ -73,7 +73,7 @@ class MemoryCacheTest {
         Map<Integer, String> map = new TreeMap<>();
         IntStream.rangeClosed(1, 10).forEach(x -> map.put(x,String.valueOf(x*x)));
 
-        Cache<Integer, String> cache = new MemoryCache<>(algorithm,map);
+        Cache<Integer, String> cache = new FileSystemCache<>(algorithm,map);
         assertEquals(1,cache.cache(36, "36").getKey());
         assertEquals(10, cache.size());
         assertEquals(10, cache.sizeMax());

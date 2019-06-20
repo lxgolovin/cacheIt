@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * Implementation of interface {@link Cache}. This class creates realization of memory cache.
  * The implementation is done using {@link HashMap}, where data is stored.
- * Value are stored in memory and removed or kept using different algorithms. As algorithms
+ * Values are stored in memory and removed or kept using different algorithms. As algorithms
  * interface {@link CacheAlgorithm} is used. Also default size is set for the cache, but the
  * size could be set by user. Note that size should by greater then 1, as cache with size 1 has no
  * sense.
@@ -21,27 +21,23 @@ import java.util.Map;
  */
 public class MemoryCache<K, V> implements Cache<K, V>  {
 
-    /**
-     * Default cache size
-     */
-    static final int DEFAULT_CACHE_SIZE = 5;
 
     /**
      * Map to keep data
      */
-    private final Map<K, V> cacheMap;
+    protected final Map<K, V> cacheMap;
 
     /**
      * maximum possible size for the cache. Minimum value is greater then 1.
-     * If you try to use less then 2, {@link MemoryCache#DEFAULT_CACHE_SIZE}
+     * If you try to use less then 2, {@link Cache#DEFAULT_CACHE_SIZE}
      * will be used as a size
      */
-    private final int maxSize;
+    protected final int maxSize;
 
     /**
      * Defines cache algorithm
      */
-    private final CacheAlgorithm<K> algo;
+    protected final CacheAlgorithm<K> algo;
 
     /**
      * Creates memory cache with default size by defined algorithm
@@ -52,10 +48,10 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     }
 
     /**
-     * Creates memory cache with default size by defined algorithm and by size.
-     * If the map is empty, empty cache is created with maxSize {@link MemoryCache#DEFAULT_CACHE_SIZE}.
+     * Creates memory cache with defined algorithm and size. Fills with map key-values
+     * If the map is empty, empty cache is created with maxSize {@link Cache#DEFAULT_CACHE_SIZE}.
      * If the map is not empty, cache is created with maxSize equal to the size of the incoming map.
-     * {@link MemoryCache#DEFAULT_CACHE_SIZE} will be used as a size
+     * {@link Cache#DEFAULT_CACHE_SIZE} will be used as a size
      * @param algorithm specifies algorithm type that is used by the cache
      * @param map incoming with keys-values of empty
      */
@@ -76,9 +72,9 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     }
 
     /**
-     * Creates memory cache with default size by defined algorithm and by size.
+     * Creates memory cache with defined algorithm and size.
      * Minimum size value is greater then 1. If you try to use less then 2,
-     * {@link MemoryCache#DEFAULT_CACHE_SIZE} will be used as a size
+     * {@link Cache#DEFAULT_CACHE_SIZE} will be used as a size
      * @param algorithm specifies algorithm type that is used by the cache
      */
     public MemoryCache(CacheAlgorithm<K> algorithm, int size) {
@@ -86,14 +82,14 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     }
 
     /**
-     * Creates memory cache with default size by defined algorithm and by size.
+     * Creates memory cache with defined algorithm and size. Fills with map key-values
      * Minimum size value is greater then 1. If you try to use less then 2,
-     * {@link MemoryCache#DEFAULT_CACHE_SIZE} will be used as a size
+     * {@link Cache#DEFAULT_CACHE_SIZE} will be used as a size
      * @param algorithm specifies algorithm type that is used by the cache
      * @param map incoming with keys-values of empty
      * @param size defining the size for the mapping
      */
-    private MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map, int size) {
+    MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map, int size) {
         maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
         algo = algorithm;
         cacheMap = map;
