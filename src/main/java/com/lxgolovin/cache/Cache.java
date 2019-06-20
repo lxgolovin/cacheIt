@@ -12,6 +12,11 @@ import java.util.Map;
 public interface Cache<K, V> {
 
     /**
+     * Default cache size
+     */
+    int DEFAULT_CACHE_SIZE = 5;
+
+    /**
      * Caches data into cache by key value. If cache is full up, data is removed (popped out) from
      * cache using some algorithm
      * @param key to define data to be loaded to cache
