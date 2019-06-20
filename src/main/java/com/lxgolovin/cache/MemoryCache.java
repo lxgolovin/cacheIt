@@ -19,7 +19,6 @@ import java.util.Map;
  * @see Cache
  * @see CacheAlgorithm
  */
-<<<<<<< HEAD
 public class MemoryCache<K, V> implements Cache<K, V>  {
 
 
@@ -45,7 +44,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      * @param algorithm specifies algorithm type that is used by the cache
      */
     public MemoryCache(CacheAlgorithm<K> algorithm) {
-        this(algorithm, new HashMap<>(), DEFAULT_CACHE_SIZE);
+        this(algorithm, DEFAULT_CACHE_SIZE);
     }
 
     /**
@@ -61,7 +60,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     }
 
     /**
-     * Creates memory cache with default size and using defined algorithm.
+     * Creates memory cache with default size by defined algorithm.
      * Here key-value for the first element are defined
      * @param algorithm specifies algorithm type that is used by the cache
      * @param key specifies key for the entry
@@ -97,5 +96,139 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
         if (!map.isEmpty()) {
             map.keySet().forEach(algo::shift);
         }
+    }
+
+    /**
+     * Caches data into cache by key value. If cache is full up, data is removed from
+     * cache using some algorithm
+     * @param key to define data to be loaded to cache
+     * @param value to be loaded to cache
+     * @return the previous value associated with <tt>key</tt>, or
+     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
+     *         If any key-value mapping was popped during this task, because of size limit,
+     *         the deleted key-value mapping will be returned.
+     * @throws IllegalArgumentException if any of incoming parameters are null
+     */
+    @Override
+    public Map.Entry<K, V> cache(K key, V value) {
+        if ((key == null) || (value == null)) {
+            throw new IllegalArgumentException();
+        }
+
+        Map.Entry<K, V> popped = null;
+        Map.Entry<K, V> outputEntry;
+        if ((size() == maxSize) && (!contains(key))) {
+            // using deletion by algorithm
+            popped = pop();
+        }
+
+        algo.shift(key);
+        value = cacheMap.put(key, value);
+        if (value == null) {
+            outputEntry = null;
+        } else {
+            outputEntry = new AbstractMap.SimpleImmutableEntry<>(key, value);
+        }
+
+        return (popped == null) ? outputEntry : popped;
+    }
+
+    /**
+     * Gets value by the key
+     * @param key - may not be null
+     * @return the value to which the specified key is mapped, or
+     *         {@code null} if this map contains no mapping for the key
+     * @throws IllegalArgumentException if key is null
+     */
+    @Override
+    public V get(K key){
+        if (key == null) {
+            throw new IllegalArgumentException();
+        }
+        // Need to move key as it was accessed
+        algo.shift(key);
+        return cacheMap.get(key);
+    }
+
+    /**
+     * Checks if the key is present in cache
+     * @param key to check in cache
+     * @return true is element found, else false
+     * @throws IllegalArgumentException if key is null
+     */
+    @Override
+    public boolean contains(K key) {
+        if (key == null) {
+            throw new IllegalArgumentException();
+        }
+
+        return cacheMap.containsKey(key);
+    }
+
+    /**
+     * Removes the mapping for a key from the cache by used algorithm.
+     * To delete {@link Cache#delete(Object)} is used
+     * @return popped out entry, returns null entry if the element was not
+     *          found in algorithm queue (empty)
+     */
+    @Override
+    public Map.Entry<K, V> pop() {
+        K key = algo.pop();
+        if (key == null) {
+            return null;
+        }
+
+        Map.Entry<K, V> entry;
+        V value = delete(key);
+        entry = new AbstractMap.SimpleImmutableEntry<>(key, value);
+
+        return entry;
+    }
+
+    /**
+     * Removes the mapping for a key from this cache. Does not depend on algorithm type
+     *
+     * <p>Returns the value for the associated key,
+     * or <tt>null</tt> if the cache contained no mapping for the key.
+     *
+     * @param key key whose mapping is to be removed from the cache
+     * @return the previous value associated with <tt>key</tt>, or
+     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
+     * @throws IllegalArgumentException if any of the params is null
+     */
+    @Override
+    public V delete(K key) {
+        if (key == null) {
+            throw new IllegalArgumentException();
+        }
+
+        algo.delete(key);
+        return cacheMap.remove(key);
+    }
+
+    /**
+     * Clears all data from the queue
+     * All elements are deleted. Elements in the algorithm queue are also deleted
+     */
+    @Override
+    public void clear(){
+        cacheMap.clear();
+        algo.clear();
+    }
+
+    /**
+     * @return current size of the cache
+     */
+    @Override
+    public int size() {
+        return cacheMap.size();
+    }
+
+    /**
+     * @return maximum possible size of the cache
+     */
+    @Override
+    public int sizeMax() {
+        return maxSize;
     }
 }
