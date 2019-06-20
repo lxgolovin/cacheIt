@@ -55,6 +55,7 @@ class AccessHashSetTest {
         // now remove element that is not present
         assertFalse(set.remove(5));
         assertFalse(set.remove(4));
+        assertFalse(set.remove(null), "Passing null element in false");
         assertTrue(set.remove(2));
         assertTrue(set.isEmpty());
     }

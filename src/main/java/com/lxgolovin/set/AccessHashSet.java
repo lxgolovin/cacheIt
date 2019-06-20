@@ -78,13 +78,18 @@ public class AccessHashSet<E> {
         if (map.isEmpty()) {
             head = elem;
             tail = elem;
-        } else if (!map.containsKey(elem)) {
-            map.get(tail).next = elem;
+        } else if (map.containsKey(elem)) {
+            // if element is present, just poke the element and push to tail
+            return poke(elem);
+        } else {
+            // if element is not in map, put the element to the tail
+            Node<E> tailNode = map.get(tail);
+
+            tailNode.next = elem;
             newNode.prev = tail;
             tail = elem;
-        } else {
-            return poke(elem);
         }
+
         return (map.put(elem, newNode) != null);
     }
 
@@ -137,17 +142,15 @@ public class AccessHashSet<E> {
      * @return <tt>true</tt> if the set contained the specified element
      */
     public boolean remove(E elem) {
-        if (map.containsKey(elem)) {
-            // the element moved to tail if it is present
-            poke(elem);
-
-            E nowLast = map.get(elem).prev;
-            if (nowLast != null) { // not the last element
-                map.get(nowLast).next = null;
-            } else { // the last element
+        // the element moved to tail if it is present
+        if (poke(elem)) {
+            E beforeTail = map.get(elem).prev;
+            if (beforeTail == null) { // the last element in the map
                 head = null;
+            } else { // this is not the last element in map
+                map.get(beforeTail).next = null;
             }
-            tail = nowLast;
+            tail = beforeTail;
         }
 
         return (map.remove(elem) != null);
