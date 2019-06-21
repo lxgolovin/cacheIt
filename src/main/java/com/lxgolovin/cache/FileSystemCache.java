@@ -1,5 +1,10 @@
 package com.lxgolovin.cache;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,7 +23,30 @@ import java.util.Map;
  * @see Cache
  * @see CacheAlgorithm
  */
-public class FileSystemCache<K, V> extends MemoryCache<K,V> implements Cache<K, V>  {
+public class FileSystemCache<K, V> implements Cache<K, V>  {
+    // TODO: much code similar to MemoryCache code. Possibly need AbstractCache class to combine
+
+    /**
+     * Map-index of files to cache data
+     */
+    private final Map<K, Path> indexMap;
+
+    /**
+     * Temporary directory for the cache files
+     */
+    private Path cacheDir;
+
+    /**
+     * maximum possible size for the cache. Minimum value is greater then 1.
+     * If you try to use less then 2, {@link Cache#DEFAULT_CACHE_SIZE}
+     * will be used as a size
+     */
+    private final int maxSize;
+
+    /**
+     * Defines cache algorithm
+     */
+    private final CacheAlgorithm<K> algo;
 
     /**
      * Creates file system cache with default size by defined algorithm
@@ -69,14 +97,250 @@ public class FileSystemCache<K, V> extends MemoryCache<K,V> implements Cache<K, 
      * @param algorithm specifies algorithm type that is used by the cache
      * @param map incoming with keys-values of empty
      * @param size defining the size for the mapping
+     * @throws IllegalAccessError if cannot create temporary directory
      */
     private FileSystemCache(CacheAlgorithm<K> algorithm, Map<K, V> map, int size) {
-        super(algorithm, map, size);
-//        maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
-//        algo = algorithm;
-//        cacheMap = map;
-//        if (!map.isEmpty()) {
-//            map.keySet().forEach(algo::shift);
-//        }
+        maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
+        algo = algorithm;
+        indexMap = new HashMap<>();
+
+        initTempDirectory();
+        putAll(map);
+    }
+
+    /**
+     * Creates temporary directory at initialisation phase
+     */
+    private void initTempDirectory() {
+        try {
+            cacheDir = Files.createTempDirectory("cache");
+            cacheDir.toFile().deleteOnExit(); // TODO: strange behaviour, need to investigate
+        } catch (IOException e) {
+            throw new IllegalAccessError();
+        }
+    }
+
+    /**
+     * Put all values of map into cache
+     * @param map with key-values
+     */
+    private void putAll(Map<K, V> map) {
+        if (!map.isEmpty()) {
+            for (Map.Entry<K, V> entry : map.entrySet()) {
+                this.cache(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    /**
+     * Caches data into cache by key value. If cache is full up, data is removed from
+     * cache using some algorithm
+     * @param key to define data to be loaded to cache
+     * @param value to be loaded to cache
+     * @return the previous value associated with <tt>key</tt>, or
+     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
+     *         If any key-value mapping was popped during this task, because of size limit,
+     *         the deleted key-value mapping will be returned.
+     * @throws IllegalArgumentException if any of incoming parameters are null
+     */
+    @Override
+    public Map.Entry<K, V> cache(K key, V value) {
+        if ((key == null) || (value == null)) {
+            throw new IllegalArgumentException();
+        }
+
+        Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
+        Map.Entry<K, V> popped = null;
+        Map.Entry<K, V> replacedEntry = null;
+        Path tempFile = null;
+
+        if ((size() == maxSize) && (!contains(key))) {
+            // using deletion by algorithm
+            popped = pop();
+        }
+
+        if (algo.shift(key)) {
+            // need to get file, read old value
+            tempFile = indexMap.get(key);
+            replacedEntry = readFromFile(tempFile);
+        }
+        writeToFile(newcomer, tempFile);
+
+        return (popped == null) ? replacedEntry : popped;
+    }
+
+    /**
+     * Gets value by the key
+     * @param key - may not be null
+     * @return the value to which the specified key is mapped, or
+     *         {@code null} if this map contains no mapping for the key
+     * @throws IllegalArgumentException if key is null
+     */
+    @Override
+    public V get(K key){
+        if (key == null) {
+            throw new IllegalArgumentException();
+        }
+
+        // Need to move key as it was accessed. If false, return null
+        if (!algo.shift(key)) {
+            return null;
+        }
+
+        Path path = indexMap.get(key);
+        Map.Entry<K, V> entry = readFromFile(path);
+
+        return (entry != null) ? entry.getValue() : null;
+    }
+
+    /**
+     * Checks if the key is present in cache
+     * @param key to check in cache
+     * @return true is element found, else false
+     * @throws IllegalArgumentException if key is null
+     */
+    @Override
+    public boolean contains(K key) {
+        if (key == null) {
+            throw new IllegalArgumentException();
+        }
+
+        return indexMap.containsKey(key);
+    }
+
+    /**
+     * Removes the mapping for a key from the cache by used algorithm.
+     * To delete {@link Cache#delete(Object)} is used
+     * @return popped out entry, returns null entry if the element was not
+     *          found in algorithm queue (empty)
+     */
+    @Override
+    public Map.Entry<K, V> pop() {
+        K key = algo.pop();
+        if (key == null) {
+            return null;
+        }
+
+        Map.Entry<K, V> entry;
+        V value = delete(key);
+        entry = new AbstractMap.SimpleImmutableEntry<>(key, value);
+
+        return entry;
+    }
+
+    /**
+     * Removes the mapping for a key from this cache. Does not depend on algorithm type
+     *
+     * <p>Returns the value for the associated key,
+     * or <tt>null</tt> if the cache contained no mapping for the key.
+     *
+     * @param key key whose mapping is to be removed from the cache
+     * @return the previous value associated with <tt>key</tt>, or
+     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
+     * @throws IllegalArgumentException if any of the params is null
+     * @throws IllegalAccessError if file was not deleted as not accessible
+     */
+    @Override
+    public V delete(K key) {
+        if (key == null) {
+            throw new IllegalArgumentException();
+        }
+
+        if (!indexMap.containsKey(key)) {
+            return null;
+        }
+
+        algo.delete(key);
+        Path path = indexMap.remove(key);
+        Map.Entry<K, V> entry = readFromFile(path);
+        deleteFile(path);
+
+        return (entry != null) ? entry.getValue() : null;
+    }
+
+    /**
+     * Clears all data from the queue
+     * All elements are deleted. Elements in the algorithm queue are also deleted
+     * @throws IllegalAccessError if file was not
+     */
+    @Override
+    public void clear(){
+        indexMap.clear();
+        algo.clear();
+        for (Path file: indexMap.values()) {
+            deleteFile(file);
+        }
+    }
+
+    /**
+     * Deletes file by path
+     * @param path to file
+     * @throws IllegalAccessError if the file was not deleted as not accessible
+     */
+    private void deleteFile(Path path) {
+        if (!path.toFile().delete()) {
+            throw new IllegalAccessError();
+        }
+    }
+
+    /**
+     * @return current size of the cache
+     */
+    @Override
+    public int size() {
+        return indexMap.size();
+    }
+
+    /**
+     * @return maximum possible size of the cache
+     */
+    @Override
+    public int sizeMax() {
+        return maxSize;
+    }
+
+    /**
+     * Gets entry from the specified path.
+     *
+     * @param path to the file with entry
+     * @return entry stored in file by the path if present, else null
+     * @throws IllegalAccessError if cannot access file by path or if class
+     * of a serialized object cannot be found.
+     */
+    @SuppressWarnings("unchecked")
+    private Map.Entry<K, V> readFromFile(Path path) {
+        try {
+            InputStream fileInputStream = Files.newInputStream(path);
+            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+            return  (Map.Entry<K, V>) objectInputStream.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            throw new IllegalAccessError();
+        }
+    }
+
+    /**
+     * Writes entry to the temporary file. If path is set, entry is written to the file.
+     * If path is not set, a temporary file is created, using
+     * {@link Files#createTempFile(String, String, FileAttribute[])}
+     *
+     * @param entry entry to be written to file
+     * @param path for the temporary file. If null, file is created
+     * @throws IllegalAccessError if the path is not accessible and entry was not written to file
+     */
+    private void writeToFile(Map.Entry<K, V> entry, Path path) {
+        try {
+            if (path == null)  {
+                path = Files.createTempFile(cacheDir, entry.toString(), null);
+            }
+
+            OutputStream outputStream = Files.newOutputStream(path);
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+            objectOutputStream.writeObject(entry);
+            objectOutputStream.flush();
+
+            indexMap.put(entry.getKey(), path);
+        } catch (IOException e) {
+            throw new IllegalAccessError();
+        }
     }
 }

@@ -21,23 +21,22 @@ import java.util.Map;
  */
 public class MemoryCache<K, V> implements Cache<K, V>  {
 
-
     /**
      * Map to keep data
      */
-    protected final Map<K, V> cacheMap;
+    private final Map<K, V> cacheMap;
 
     /**
      * maximum possible size for the cache. Minimum value is greater then 1.
      * If you try to use less then 2, {@link Cache#DEFAULT_CACHE_SIZE}
      * will be used as a size
      */
-    protected final int maxSize;
+    private final int maxSize;
 
     /**
      * Defines cache algorithm
      */
-    protected final CacheAlgorithm<K> algo;
+    private final CacheAlgorithm<K> algo;
 
     /**
      * Creates memory cache with default size by defined algorithm
@@ -89,10 +88,18 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      * @param map incoming with keys-values of empty
      * @param size defining the size for the mapping
      */
-    MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map, int size) {
+    private MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map, int size) {
         maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
         algo = algorithm;
         cacheMap = map;
+        putAll(map);
+    }
+
+    /**
+     * Put all values of map into cache
+     * @param map with key-values
+     */
+    private void putAll(Map<K, V> map) {
         if (!map.isEmpty()) {
             map.keySet().forEach(algo::shift);
         }
@@ -116,7 +123,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
         }
 
         Map.Entry<K, V> popped = null;
-        Map.Entry<K, V> outputEntry;
+        Map.Entry<K, V> replacedEntry = null;
         if ((size() == maxSize) && (!contains(key))) {
             // using deletion by algorithm
             popped = pop();
@@ -124,13 +131,11 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
 
         algo.shift(key);
         value = cacheMap.put(key, value);
-        if (value == null) {
-            outputEntry = null;
-        } else {
-            outputEntry = new AbstractMap.SimpleImmutableEntry<>(key, value);
+        if (value != null) {
+            replacedEntry = new AbstractMap.SimpleImmutableEntry<>(key, value);
         }
 
-        return (popped == null) ? outputEntry : popped;
+        return (popped == null) ? replacedEntry : popped;
     }
 
     /**
