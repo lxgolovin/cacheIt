@@ -111,26 +111,59 @@ public class AccessHashSet<E> {
 
         // if poke the tail - nothing need to do, just return true.
         // So check if poked not tail
-        if (pokedNode.next != null) {
-            // poke the head
-            if (pokedNode.prev == null) {
-                head = pokedNode.next;
-                map.get(head).prev = null;
-            } else { // poke the middle
-                // relink items between
-                Node<E> nextNode = map.get(pokedNode.next);
-                Node<E> prevNode = map.get(pokedNode.prev);
-                nextNode.prev = pokedNode.prev;
-                prevNode.next = pokedNode.next;
-            }
-
-            // rearrange poked node
-            map.get(tail).next = elem;
-            pokedNode.prev = tail;
-            pokedNode.next = null;
-            tail = elem;
+        if (isTail(pokedNode)) {
+            return true;
         }
+
+        // poke the head
+        if (isHead(pokedNode)) {
+            head = pokedNode.next;
+            map.get(head).prev = null;
+        }
+
+        // poke the middle
+        if (isMiddle(pokedNode)) {
+            // relink items between
+            Node<E> nextNode = map.get(pokedNode.next);
+            Node<E> prevNode = map.get(pokedNode.prev);
+            nextNode.prev = pokedNode.prev;
+            prevNode.next = pokedNode.next;
+        }
+
+        // rearrange poked node
+        map.get(tail).next = elem;
+        pokedNode.prev = tail;
+        pokedNode.next = null;
+        tail = elem;
+
         return true;
+    }
+
+    /**
+     *
+     * @param node
+     * @return
+     */
+    private boolean isTail(Node<E> node) {
+        return (node.next == null);
+    }
+
+    /**
+     *
+     * @param node
+     * @return
+     */
+    private boolean isHead(Node<E> node) {
+        return (node.prev == null);
+    }
+
+    /**
+     *
+     * @param node
+     * @return
+     */
+    private boolean isMiddle(Node<E> node) {
+        return ((node.next != null) && (node.prev != null));
     }
 
     /**
