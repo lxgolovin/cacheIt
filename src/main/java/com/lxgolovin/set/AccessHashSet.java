@@ -29,17 +29,17 @@ public class AccessHashSet<E> {
         /**
          * Pointers to previous and next element
          */
-        private K next, prev;
+        private K nextElem, prevElem;
 
         /**
          * Constructor to set up values
          *
-         * @param next element
-         * @param prev element
+         * @param nextElement next element
+         * @param prevElement previous element
          */
-        Node(K next, K prev) {
-            this.next = next;
-            this.prev = prev;
+        Node(K nextElement, K prevElement) {
+            this.nextElem = nextElement;
+            this.prevElem = prevElement;
         }
     }
 
@@ -85,8 +85,8 @@ public class AccessHashSet<E> {
             // if element is not in map, put the element to the tail
             Node<E> tailNode = map.get(tail);
 
-            tailNode.next = elem;
-            newNode.prev = tail;
+            tailNode.nextElem = elem;
+            newNode.prevElem = tail;
             tail = elem;
         }
 
@@ -117,53 +117,51 @@ public class AccessHashSet<E> {
 
         // poke the head
         if (isHead(pokedNode)) {
-            head = pokedNode.next;
-            map.get(head).prev = null;
-        }
-
-        // poke the middle
-        if (isMiddle(pokedNode)) {
+            head = pokedNode.nextElem;
+            map.get(head).prevElem = null;
+        } else if (isMiddle(pokedNode)) {
+            // poke the middle
             // relink items between
-            Node<E> nextNode = map.get(pokedNode.next);
-            Node<E> prevNode = map.get(pokedNode.prev);
-            nextNode.prev = pokedNode.prev;
-            prevNode.next = pokedNode.next;
+            Node<E> nextNode = map.get(pokedNode.nextElem);
+            Node<E> prevNode = map.get(pokedNode.prevElem);
+            nextNode.prevElem = pokedNode.prevElem;
+            prevNode.nextElem = pokedNode.nextElem;
         }
 
         // rearrange poked node
-        map.get(tail).next = elem;
-        pokedNode.prev = tail;
-        pokedNode.next = null;
+        map.get(tail).nextElem = elem;
+        pokedNode.prevElem = tail;
+        pokedNode.nextElem = null;
         tail = elem;
 
         return true;
     }
 
     /**
-     *
-     * @param node
-     * @return
+     * Checks if the node-element is a tail
+     * @param node to be checked
+     * @return true if tail, else false
      */
     private boolean isTail(Node<E> node) {
-        return (node.next == null);
+        return (node.nextElem == null);
     }
 
     /**
-     *
-     * @param node
-     * @return
+     * Checks if the node-element is a head
+     * @param node to be checked
+     * @return true if the node is a head, else false
      */
     private boolean isHead(Node<E> node) {
-        return (node.prev == null);
+        return (node.prevElem == null);
     }
 
     /**
-     *
-     * @param node
-     * @return
+     * Checks if the node is in the middle. If both next and prev elements are present
+     * @param node to be checked
+     * @return true if middle, else false
      */
     private boolean isMiddle(Node<E> node) {
-        return ((node.next != null) && (node.prev != null));
+        return ((node.nextElem != null) && (node.prevElem != null));
     }
 
     /**
@@ -177,11 +175,11 @@ public class AccessHashSet<E> {
     public boolean remove(E elem) {
         // the element moved to tail if it is present
         if (poke(elem)) {
-            E beforeTail = map.get(elem).prev;
+            E beforeTail = map.get(elem).prevElem;
             if (beforeTail == null) { // the last element in the map
                 head = null;
             } else { // this is not the last element in map
-                map.get(beforeTail).next = null;
+                map.get(beforeTail).nextElem = null;
             }
             tail = beforeTail;
         }
