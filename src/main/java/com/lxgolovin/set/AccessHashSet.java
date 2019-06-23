@@ -73,29 +73,29 @@ public class AccessHashSet<E> {
      * element
      */
     public boolean put(E elem) {
-        Node<E> newNode = new Node<>(null, null);
-
-        if (map.isEmpty()) {
-            head = elem;
-            tail = elem;
-        } else if (map.containsKey(elem)) {
+        if (map.containsKey(elem)) {
             // if element is present, just poke the element and push to tail
             return poke(elem);
-        } else {
-            // if element is not in map, put the element to the tail
-            Node<E> tailNode = map.get(tail);
+        }
 
-            tailNode.nextElem = elem;
-            newNode.prevElem = tail;
+        Node<E> newNode;
+
+        if (map.isEmpty()) {
+            // create first element
+            head = elem;
             tail = elem;
+            newNode = new Node<>(null, null);
+        } else {
+            // if element is not in map, push the element to the tail
+            newNode = linkElementToTail(elem);
         }
 
         return (map.put(elem, newNode) != null);
     }
 
     /**
-     * Method to poke the element is it is present in the set
-     * Actaully it works as access ordering algorithm. If the element poked
+     * Method to poke the element if it is present in the set
+     * Actually it works as access ordering algorithm. If the element poked
      * it moves to the tail. At the same time tail/head are updated if needed.
      * Also links between elements are updated if the element is poked from the middle
      *
@@ -107,61 +107,19 @@ public class AccessHashSet<E> {
             return false;
         }
 
-        Node<E> pokedNode = map.get(elem);
-
-        // if poke the tail - nothing need to do, just return true.
-        // So check if poked not tail
-        if (isTail(pokedNode)) {
+        // if poke the tail (the element is already tail) - nothing need to do, just return true.
+        if (isTail(elem)) {
             return true;
         }
 
-        // poke the head
-        if (isHead(pokedNode)) {
-            head = pokedNode.nextElem;
-            map.get(head).prevElem = null;
-        } else if (isMiddle(pokedNode)) {
-            // poke the middle
-            // relink items between
-            Node<E> nextNode = map.get(pokedNode.nextElem);
-            Node<E> prevNode = map.get(pokedNode.prevElem);
-            nextNode.prevElem = pokedNode.prevElem;
-            prevNode.nextElem = pokedNode.nextElem;
+        if (isHead(elem)) {
+            unlinkElementFromHead(elem);
+        } else if (isMiddle(elem)) {
+            unlinkElementFromMiddle(elem);
         }
-
-        // rearrange poked node
-        map.get(tail).nextElem = elem;
-        pokedNode.prevElem = tail;
-        pokedNode.nextElem = null;
-        tail = elem;
+        linkElementToTail(elem);
 
         return true;
-    }
-
-    /**
-     * Checks if the node-element is a tail
-     * @param node to be checked
-     * @return true if tail, else false
-     */
-    private boolean isTail(Node<E> node) {
-        return (node.nextElem == null);
-    }
-
-    /**
-     * Checks if the node-element is a head
-     * @param node to be checked
-     * @return true if the node is a head, else false
-     */
-    private boolean isHead(Node<E> node) {
-        return (node.prevElem == null);
-    }
-
-    /**
-     * Checks if the node is in the middle. If both next and prev elements are present
-     * @param node to be checked
-     * @return true if middle, else false
-     */
-    private boolean isMiddle(Node<E> node) {
-        return ((node.nextElem != null) && (node.prevElem != null));
     }
 
     /**
@@ -233,5 +191,92 @@ public class AccessHashSet<E> {
         map.clear();
         head = null;
         tail = null;
+    }
+
+    /**
+     * Checks if the element is a tail
+     * @param elem to be checked
+     * @return true if tail, else false
+     */
+    private boolean isTail(E elem) {
+        Node<E> node = map.get(elem);
+        return ((node.nextElem == null) & (elem == tail));
+    }
+
+    /**
+     * Checks if the element is a head
+     * @param elem to be checked
+     * @return true if the node is a head, else false
+     */
+    private boolean isHead(E elem) {
+        Node<E> node = map.get(elem);
+        return ((node.prevElem == null) & (elem == head));
+    }
+
+    /**
+     * Checks if the node is in the middle. If both next and prev elements are present
+     * @param elem to be checked
+     * @return true if middle, else false
+     */
+    private boolean isMiddle(E elem) {
+        Node<E> node = map.get(elem);
+        return ((node.nextElem != null) && (node.prevElem != null));
+    }
+
+    /**
+     * This method links existing element or creates new and also link it
+     * as a tail element. The method returns new node with new links. After this method
+     * is finished current element becomes a tail of the map
+     *
+     * @param elem element to create ne node with links
+     * @return the node with relinked pointers to next and previous elements.
+     */
+    private Node<E> linkElementToTail(E elem) {
+        Node<E> pokedNode;
+
+        if (map.containsKey(elem)) {
+            // if the element is present, link to tail
+            pokedNode = map.get(elem);
+        } else {
+            // if no such element in map, create empty and link to tail
+            pokedNode = new Node<>(null, null);
+        }
+
+        map.get(tail).nextElem = elem;
+        pokedNode.prevElem = tail;
+        pokedNode.nextElem = null;
+        tail = elem;
+
+        return pokedNode;
+    }
+
+    /**
+     * If the element is a middle, it is unlinked from the middle.
+     * The idea is, that previous and next elements after the method should link each other.
+     * At the same time, current element becomes unlinked from the map!
+     *
+     * @param elem to be unlinked from the middle of the map
+     */
+    private void unlinkElementFromMiddle(E elem) {
+        Node<E> pokedNode = map.get(elem);
+
+        Node<E> nextNode = map.get(pokedNode.nextElem);
+        Node<E> prevNode = map.get(pokedNode.prevElem);
+        nextNode.prevElem = pokedNode.prevElem;
+        prevNode.nextElem = pokedNode.nextElem;
+    }
+
+    /**
+     * If the element is a head, it is unlinked from the head.
+     * The idea is, that next element after the method should unlink the current.
+     * At the same time, current element becomes unlinked from the map!
+     *
+     * @param elem to be unlinked from the middle of the map
+     */
+    private void unlinkElementFromHead(E elem) {
+        Node<E> pokedNode = map.get(elem);
+
+        head = pokedNode.nextElem;
+        map.get(head).prevElem = null;
     }
 }
