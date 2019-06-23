@@ -102,16 +102,17 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
     private FileSystemCache(CacheAlgorithm<K> algorithm, Map<K, V> map, int size) {
         maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
         algo = algorithm;
-        indexMap = new HashMap<>();
 
-        initTempDirectory();
+        createTempDirectory();
+
+        indexMap = new HashMap<>();
         putAll(map);
     }
 
     /**
      * Creates temporary directory at initialisation phase
      */
-    private void initTempDirectory() {
+    private void createTempDirectory() {
         try {
             cacheDir = Files.createTempDirectory("cache");
             cacheDir.toFile().deleteOnExit(); // TODO: strange behaviour, need to investigate
