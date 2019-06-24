@@ -27,6 +27,11 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
     // TODO: much code similar to MemoryCache code. Possibly need AbstractCache class to combine
 
     /**
+     * Prefix for the cache directories that are created temporary
+     */
+    private final String CACHE_TEMP_DIR_PREFIX = "fscache";
+
+    /**
      * Map-index of files to cache data
      */
     private final Map<K, Path> indexMap;
@@ -114,7 +119,7 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
      */
     private void createTempDirectory() {
         try {
-            cacheDir = Files.createTempDirectory("cache");
+            cacheDir = Files.createTempDirectory(CACHE_TEMP_DIR_PREFIX);
             cacheDir.toFile().deleteOnExit(); // TODO: strange behaviour, need to investigate
         } catch (IOException e) {
             throw new IllegalAccessError();
@@ -311,8 +316,8 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
     @SuppressWarnings("unchecked")
     private Map.Entry<K, V> readFromFile(Path path) {
         try {
-            InputStream fileInputStream = Files.newInputStream(path);
-            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+            InputStream inputStream = Files.newInputStream(path);
+            ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
             return  (Map.Entry<K, V>) objectInputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
             throw new IllegalAccessError();

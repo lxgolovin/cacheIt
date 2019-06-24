@@ -1,14 +1,10 @@
-plugins.apply('java')
+plugins {
+    id 'java'
+}
 
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
-
-wrapper {
-    distributionUrl='https://services.gradle.org/distributions/gradle-5.4.1-all.zip'
-    distributionType = Wrapper.DistributionType.ALL
-    gradleVersion = '5.4.1'
-}
 
 repositories {
     mavenLocal()
@@ -32,4 +28,10 @@ test {
 
 tasks.withType(JavaCompile) {
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+wrapper {
+    distributionUrl='https://services.gradle.org/distributions/gradle-5.4.1-all.zip'
+    distributionType = Wrapper.DistributionType.ALL
+    gradleVersion = '5.4.1'
 }
