@@ -5,13 +5,30 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * This class creates tests for the {@link EntryFileKeeper}
+ * The idea is to create a directory and store files inside. The files are serialized {@link java.util.Map.Entry}
+ * Directory could be created as temporary or defined by user.
+ *
+ * If not directory is specified, a temporary one is used.
+ *
+ * Class gives a possibility to store data in files and get data back.
+ */
 class EntryFileKeeperTest {
 
+    /**
+     * Directory for testing
+     */
     private String directoryPath = "./TEMP/";
+
+    /**
+     *
+     */
     private EntryFileKeeper<Integer, String> entryFileKeeper = new EntryFileKeeper<>(Paths.get(directoryPath));
 
     @Test
@@ -41,8 +58,8 @@ class EntryFileKeeperTest {
         Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(1, "String");
         assertTrue(entryFileKeeper.writeToFile(entry, path));
 
-        assertThrows(IllegalArgumentException.class, () -> entryFileKeeper.writeToFile(entry, null));
-        assertThrows(IllegalArgumentException.class, () -> entryFileKeeper.writeToFile(null, path));
+        assertFalse(entryFileKeeper.writeToFile(entry, null));
+        assertFalse(entryFileKeeper.writeToFile(null, path));
     }
 
     @Test
@@ -67,10 +84,12 @@ class EntryFileKeeperTest {
         assertThrows(IllegalArgumentException.class, () -> entryFileKeeperWrong.readFromFile(null));
     }
 
-    @Test
-    void readAllFromDirectory() {
+    // TODO: need to implement
+     @Test
+     void readAllFromDirectory() {
         Map<Integer, String> map = entryFileKeeper.readAllFromDirectory();
-    }
+        assertEquals("String", map.get(1));
+     }
 
     @Test
     void deleteFile() {
@@ -80,5 +99,12 @@ class EntryFileKeeperTest {
 
         assertTrue(entryFileKeeper.deleteFile(path));
         assertFalse(entryFileKeeper.deleteFile(path));
+    }
+
+    @Test
+    void WouldEmptyDirectory() {
+        Map<Integer, String> map = new HashMap<>();
+        EntryFileKeeper<Integer, String> entryFileKeeperDeleteDir = new EntryFileKeeper<>(Paths.get(directoryPath), true);
+        assertEquals(map, entryFileKeeperDeleteDir.readAllFromDirectory());
     }
 }

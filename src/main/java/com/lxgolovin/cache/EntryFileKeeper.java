@@ -4,15 +4,17 @@ package com.lxgolovin.cache;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 
 /**
  * This class creates directory and stores files inside. The files are serialized {@link java.util.Map.Entry}
- * Directory could be created as temporary or defined by user
+ * Directory could be created as temporary or defined by user.
+ *
+ * If not directory is specified, a temporary one is used. The prefix for the temporary directory is
+ * {@link EntryFileKeeper#TEMP_DIR_PREFIX}
+ *
+ * Class gives a possibility to store data in files and get data back.
  */
 public class EntryFileKeeper<K extends Serializable, V extends Serializable> {
 
@@ -27,7 +29,7 @@ public class EntryFileKeeper<K extends Serializable, V extends Serializable> {
     private Path directory;
 
     /**
-     * Creates temporary directory to keep data
+     * Empty constructor creates temporary directory to keep data
      */
     EntryFileKeeper() {
         this(null);
@@ -40,15 +42,26 @@ public class EntryFileKeeper<K extends Serializable, V extends Serializable> {
      * @param path defined to keep data files
      */
     EntryFileKeeper(Path path) {
+        this(path, false);
+    }
+
+    /**
+     * Creates directory to keep data. If path parameter is null, the temporary one is used with
+     * prefix, defined in {@link EntryFileKeeper#TEMP_DIR_PREFIX}
+     *
+     * @param path defined to keep data files
+     * @param deleteFilesInDirectory true if need to delete the directory if exists, else false
+     */
+    EntryFileKeeper(Path path, boolean deleteFilesInDirectory) {
         if (path == null) {
             createTempDirectory();
         } else {
-            createDirectory(path);
+            createDirectory(path, deleteFilesInDirectory);
         }
     }
 
     /**
-     * Returns directory path
+     * Returns directory path where all files are kept
      *
      * @return path where data files kept
      */
@@ -58,32 +71,55 @@ public class EntryFileKeeper<K extends Serializable, V extends Serializable> {
 
     /**
      * Creates temporary directory at initialisation phase
+     *
+     * @throws IllegalAccessError if cannot create temporary directory
      */
     private void createTempDirectory() {
         try {
             directory = Files.createTempDirectory(TEMP_DIR_PREFIX);
-            directory.toFile().deleteOnExit(); // TODO: strange behaviour, need to investigate
+            directory.toFile().deleteOnExit();
         } catch (IOException e) {
             throw new IllegalAccessError();
         }
     }
 
     /**
-     * Creates directory, defined at initialisation phase
+     * Creates directory by path and stores the value in {@link EntryFileKeeper#directory}, which could be
+     * got by {@link EntryFileKeeper#getDirectory()}
+     *
+     * @param path of the directory to be created
+     * @param deleteFilesInDirectory true if need to delete the directory if exists, else false
+     * @throws IllegalAccessError if the path is a file, but not a directory and
+     *          if the the directory could not be created.
      */
-    private void createDirectory(Path pathName) {
-        File dir = new File(pathName.toString());
+    private void createDirectory(Path path, boolean deleteFilesInDirectory) {
+        File dir = new File(path.toString());
 
-        if (dir.exists() && !dir.isDirectory()) {
+        // if path is present and not a directory
+        if (dir.exists() & !dir.isDirectory()) {
             throw new IllegalAccessError();
         }
 
+
+        if (dir.exists() & dir.isDirectory() && deleteFilesInDirectory) {
+            File[] directoryListing = dir.listFiles();
+            if (directoryListing != null) {
+                for (File f : directoryListing) {
+                    if ((f != null) && f.isFile()) {
+                        f.delete();
+                    }
+                }
+            }
+        }
+
+        // create the directory if doesn't exist
         if (!dir.exists()) {
             boolean created = dir.mkdir();
             if (!created) {
                 throw new IllegalAccessError();
             }
         }
+
         directory = dir.toPath();
     }
 
@@ -96,16 +132,14 @@ public class EntryFileKeeper<K extends Serializable, V extends Serializable> {
     }
 
     /**
-     * Writes entry to the temporary file. If path is set, entry is written to the file.
-     * If path is not set, a temporary file is created, using
-     * {@link Files#createTempFile(String, String, FileAttribute[])}
+     * Writes entry to the file by path. Returns false if not success, else true.
      *
-     * @param entry entry to be written to file
-     * @param path for the temporary file. If null, file is created
+     * @param entry entry to be written to file, cannot be null
+     * @param path for the temporary file. Cannot be null
      */
     boolean writeToFile(Map.Entry<K, V> entry, Path path) {
         if ((path == null) | (entry == null)) {
-            throw new IllegalArgumentException();
+            return false;
         }
 
         try (OutputStream outputStream = Files.newOutputStream(path);
@@ -123,10 +157,9 @@ public class EntryFileKeeper<K extends Serializable, V extends Serializable> {
     /**
      * Gets entry from the specified path.
      *
-     * @param path to the file with entry
-     * @return entry stored in file by the path if present, else null
-     * @throws IllegalAccessError if cannot access file by path or if class
-     * of a serialized object cannot be found.
+     * @param path to the file with entry. Path cannot be null
+     * @return entry stored in file by the path if present, else null.
+     * @throws IllegalArgumentException if path is null.
      */
     @SuppressWarnings("unchecked")
     Map.Entry<K, V> readFromFile(Path path) {
@@ -138,19 +171,15 @@ public class EntryFileKeeper<K extends Serializable, V extends Serializable> {
                 ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
             return (Map.Entry<K, V>) objectInputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            throw new IllegalAccessError();
+            return null;
         }
     }
 
     /**
-     * Gets entry from the specified path.
+     * Reads all files in the directory and tries to deserialize objects. The result is a map with key-values
      *
-     * @param path to the file with entry
-     * @return entry stored in file by the path if present, else null
-     * @throws IllegalAccessError if cannot access file by path or if class
-     * of a serialized object cannot be found.
+     * @return map with all deserialized objects. If the directory is empty or not present, the return would be null
      */
-    @SuppressWarnings("unchecked")
     Map<K, V> readAllFromDirectory() {
         File dir = directory.toFile();
 
@@ -161,13 +190,11 @@ public class EntryFileKeeper<K extends Serializable, V extends Serializable> {
             }
 
             Map<K, V> mapFromFiles = new HashMap<>();
-            for (File f : dir.listFiles()) {
-                if ( f!=null && f.isFile()) {
-                    try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(f))) {
-                        Map.Entry<K, V> entry = (Map.Entry<K, V>) objectInputStream.readObject();
+            for (File f : directoryListing) {
+                if ((f != null) && f.isFile()) {
+                    Map.Entry<K, V> entry = this.readFromFile(f.toPath());
+                    if (entry != null) {
                         mapFromFiles.put(entry.getKey(), entry.getValue());
-                    } catch (IOException | ClassNotFoundException e) {
-                        // File is empty or not readable. For the current case ignore it
                     }
                 }
             }
@@ -178,7 +205,7 @@ public class EntryFileKeeper<K extends Serializable, V extends Serializable> {
     }
 
     /**
-     * Creates file and returns path to the file
+     * Creates file and returns path to the file. The file is created in the directory {@link EntryFileKeeper#directory}
      *
      * @return path to newly created file
      * @throws IllegalAccessError if there was a error creating the file
