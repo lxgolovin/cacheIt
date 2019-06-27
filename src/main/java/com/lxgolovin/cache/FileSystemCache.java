@@ -91,9 +91,6 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
 
         algo = algorithm;
         maxSize = DEFAULT_CACHE_SIZE;
-        // check the files in the directory
-        // read all files from the directory and get data
-        // put data to the map
         indexMap = new HashMap<>();
     }
 
@@ -179,8 +176,6 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
             throw new IllegalArgumentException();
         }
 
-        Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
-
         Map.Entry<K, V> poppedEntry = null;
         if ((size() == maxSize) && (!contains(key))) {
             // using deletion by algorithm
@@ -188,13 +183,18 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
         }
 
         Map.Entry<K, V> replacedEntry = null;
-        Path filePath = null;
+        Path filePath;
         if (algo.shift(key)) {
             // need to get file, read old value
             filePath = indexMap.get(key);
             replacedEntry = readFromFile(filePath);
+        } else {
+            filePath = createTempFile();
         }
+
+        Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
         writeToFile(newcomer, filePath);
+        indexMap.put(key, filePath);
 
         return (poppedEntry == null) ? replacedEntry : poppedEntry;
     }
@@ -357,17 +357,12 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
      * @throws IllegalAccessError if the path is not accessible and entry was not written to file
      */
     private void writeToFile(Map.Entry<K, V> entry, Path path) {
-        if (path == null) {
-            path = createTempFile();
-        }
-
         try ( OutputStream outputStream = Files.newOutputStream(path);
                 ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream)) {
 
             objectOutputStream.writeObject(entry);
             objectOutputStream.flush();
 
-            indexMap.put(entry.getKey(), path);
         } catch (IOException e) {
             throw new IllegalAccessError();
         }
