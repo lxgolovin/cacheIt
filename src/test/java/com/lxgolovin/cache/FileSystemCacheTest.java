@@ -3,6 +3,8 @@ package com.lxgolovin.cache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -202,5 +204,22 @@ class FileSystemCacheTest {
         assertEquals(0, lruCache.size());
         assertNull(lruCache.delete(5));
         assertNull(lruCache.get(5));
+    }
+
+    @Test
+    void constructorWithPathDefined() {
+        String directory = "./TEMP/";
+        Path directoryPath = Paths.get(directory);
+
+        EntryFileKeeper<Integer, String> entryFileKeeper = new EntryFileKeeper<>(directoryPath);
+        // create 4 files with some data
+        for (int i=0; i<5; i++) {
+            Path path = entryFileKeeper.createTempFile();
+            Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(i, String.valueOf(i));
+            assertTrue(entryFileKeeper.writeToFile(entry, path));
+        }
+
+        Cache<Integer, String> fsCache = new FileSystemCache<>(lru, directoryPath);
+        assertEquals("1", fsCache.get(1));
     }
 }

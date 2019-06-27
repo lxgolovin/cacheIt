@@ -16,7 +16,7 @@ import java.util.Map;
  *
  * Class gives a possibility to store data in files and get data back.
  */
-public class EntryFileKeeper<K extends Serializable, V extends Serializable> {
+public class EntryFileKeeper<K, V> {
 
     /**
      * If the directory is created temporary this prefix is used

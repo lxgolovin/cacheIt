@@ -1,9 +1,6 @@
 package com.lxgolovin.cache;
 
-import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,11 +25,6 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
     // TODO: move file handling methods to separate class
 
     /**
-     * Prefix for the cache directories that are created temporary
-     */
-    private final String CACHE_TEMP_DIR_PREFIX = "fscache";
-
-    /**
      * Map-index of files to cache data
      */
     private final Map<K, Path> indexMap;
@@ -40,7 +32,7 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
     /**
      * Temporary directory for the cache files
      */
-    private Path cacheDir;
+    private final EntryFileKeeper<K, V> fileKeeper;
 
     /**
      * maximum possible size for the cache. Minimum value is greater then 1.
@@ -72,26 +64,6 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
      */
     public FileSystemCache(CacheAlgorithm<K> algorithm, Map<K, V> map) {
         this(algorithm, map, map.size());
-    }
-
-    /**
-     * Creates file system cache with defined algorithm. Key-values are got from the directory.
-     * If the directory is empty, creates an empty cache with default size {@link Cache#DEFAULT_CACHE_SIZE}.
-     * If the directory is not empty, cache is created with maxSize equal to number of cache files in the directory.
-     *
-     * @param algorithm specifies algorithm type that is used by the cache
-     * @param path to the directory to check files
-     */
-    public FileSystemCache(CacheAlgorithm<K> algorithm, Path path) {
-        if (path.toFile().exists() && path.toFile().isDirectory()) {
-            cacheDir = path;
-        } else {
-            createTempDirectory();
-        }
-
-        algo = algorithm;
-        maxSize = DEFAULT_CACHE_SIZE;
-        indexMap = new HashMap<>();
     }
 
     /**
@@ -129,21 +101,30 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
         maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
         algo = algorithm;
 
-        createTempDirectory();
-
+        fileKeeper = new EntryFileKeeper<>();
         indexMap = new HashMap<>();
         putAll(map);
     }
 
     /**
-     * Creates temporary directory at initialisation phase
+     * Creates file system cache with defined algorithm and size and fills it with map key-values
+     * Minimum size value is greater then 1. If you try to use less then 2,
+     * {@link Cache#DEFAULT_CACHE_SIZE} will be used as a size
+     * @param algorithm specifies algorithm type that is used by the cache
+     * @throws IllegalAccessError if cannot create temporary directory
      */
-    private void createTempDirectory() {
-        try {
-            cacheDir = Files.createTempDirectory(CACHE_TEMP_DIR_PREFIX);
-            cacheDir.toFile().deleteOnExit(); // TODO: strange behaviour, need to investigate
-        } catch (IOException e) {
-            throw new IllegalAccessError();
+    public FileSystemCache(CacheAlgorithm<K> algorithm, Path path) {
+        algo = algorithm;
+        indexMap = new HashMap<>();
+
+        fileKeeper = new EntryFileKeeper<>(path);
+        Map<K, V> mapFromFiles = fileKeeper.readAllFromDirectory();
+
+        if (mapFromFiles.isEmpty()) {
+            maxSize = Cache.DEFAULT_CACHE_SIZE;
+        } else {
+            maxSize = mapFromFiles.size();
+            putAll(mapFromFiles);
         }
     }
 
@@ -187,13 +168,13 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
         if (algo.shift(key)) {
             // need to get file, read old value
             filePath = indexMap.get(key);
-            replacedEntry = readFromFile(filePath);
+            replacedEntry = fileKeeper.readFromFile(filePath);
         } else {
-            filePath = createTempFile();
+            filePath = fileKeeper.createTempFile();
         }
 
         Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
-        writeToFile(newcomer, filePath);
+        fileKeeper.writeToFile(newcomer, filePath);
         indexMap.put(key, filePath);
 
         return (poppedEntry == null) ? replacedEntry : poppedEntry;
@@ -218,7 +199,7 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
         }
 
         Path path = indexMap.get(key);
-        Map.Entry<K, V> entry = readFromFile(path);
+        Map.Entry<K, V> entry = fileKeeper.readFromFile(path);
 
         return (entry != null) ? entry.getValue() : null;
     }
@@ -282,8 +263,8 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
 
         algo.delete(key);
         Path path = indexMap.remove(key);
-        Map.Entry<K, V> entry = readFromFile(path);
-        deleteFile(path);
+        Map.Entry<K, V> entry = fileKeeper.readFromFile(path);
+        fileKeeper.deleteFile(path);
 
         return (entry != null) ? entry.getValue() : null;
     }
@@ -298,18 +279,7 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
         indexMap.clear();
         algo.clear();
         for (Path file: indexMap.values()) {
-            deleteFile(file);
-        }
-    }
-
-    /**
-     * Deletes file by path
-     * @param path to file
-     * @throws IllegalAccessError if the file was not deleted as not accessible
-     */
-    private void deleteFile(Path path) {
-        if (!path.toFile().delete()) {
-            throw new IllegalAccessError();
+            fileKeeper.deleteFile(file);
         }
     }
 
@@ -327,58 +297,5 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
     @Override
     public int sizeMax() {
         return maxSize;
-    }
-
-    /**
-     * Gets entry from the specified path.
-     *
-     * @param path to the file with entry
-     * @return entry stored in file by the path if present, else null
-     * @throws IllegalAccessError if cannot access file by path or if class
-     * of a serialized object cannot be found.
-     */
-    @SuppressWarnings("unchecked")
-    private Map.Entry<K, V> readFromFile(Path path) {
-        try (InputStream inputStream = Files.newInputStream(path);
-                ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
-            return  (Map.Entry<K, V>) objectInputStream.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            throw new IllegalAccessError();
-        }
-    }
-
-    /**
-     * Writes entry to the temporary file. If path is set, entry is written to the file.
-     * If path is not set, a temporary file is created, using
-     * {@link Files#createTempFile(String, String, FileAttribute[])}
-     *
-     * @param entry entry to be written to file
-     * @param path for the temporary file. If null, file is created
-     * @throws IllegalAccessError if the path is not accessible and entry was not written to file
-     */
-    private void writeToFile(Map.Entry<K, V> entry, Path path) {
-        try ( OutputStream outputStream = Files.newOutputStream(path);
-                ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream)) {
-
-            objectOutputStream.writeObject(entry);
-            objectOutputStream.flush();
-
-        } catch (IOException e) {
-            throw new IllegalAccessError();
-        }
-    }
-
-    /**
-     * Creates file and returns path to the file
-     *
-     * @return path to newly created file
-     * @throws IllegalAccessError if there was a error creating the file
-     */
-    private Path createTempFile() {
-        try {
-            return Files.createTempFile(cacheDir, null, null);
-        } catch (IOException e) {
-            throw new IllegalAccessError();
-        }
     }
 }
