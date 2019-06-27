@@ -79,7 +79,6 @@ public class AccessHashSet<E> {
         }
 
         Node<E> newNode;
-
         if (map.isEmpty()) {
             // create first element
             head = elem;
@@ -261,8 +260,9 @@ public class AccessHashSet<E> {
         Node<E> pokedNode = map.get(elem);
 
         Node<E> nextNode = map.get(pokedNode.nextElem);
-        Node<E> prevNode = map.get(pokedNode.prevElem);
         nextNode.prevElem = pokedNode.prevElem;
+
+        Node<E> prevNode = map.get(pokedNode.prevElem);
         prevNode.nextElem = pokedNode.nextElem;
     }
 

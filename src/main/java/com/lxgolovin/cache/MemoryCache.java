@@ -122,20 +122,20 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
             throw new IllegalArgumentException();
         }
 
-        Map.Entry<K, V> popped = null;
-        Map.Entry<K, V> replacedEntry = null;
+        Map.Entry<K, V> poppedEntry = null;
         if ((size() == maxSize) && (!contains(key))) {
             // using deletion by algorithm
-            popped = pop();
+            poppedEntry = pop();
         }
 
         algo.shift(key);
         value = cacheMap.put(key, value);
+        Map.Entry<K, V> replacedEntry = null;
         if (value != null) {
             replacedEntry = new AbstractMap.SimpleImmutableEntry<>(key, value);
         }
 
-        return (popped == null) ? replacedEntry : popped;
+        return (poppedEntry == null) ? replacedEntry : poppedEntry;
     }
 
     /**

@@ -25,6 +25,7 @@ import java.util.Map;
  */
 public class FileSystemCache<K, V> implements Cache<K, V>  {
     // TODO: much code similar to MemoryCache code. Possibly need AbstractCache class to combine
+    // TODO: move file handling methods to separate class
 
     /**
      * Prefix for the cache directories that are created temporary
@@ -71,6 +72,29 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
      */
     public FileSystemCache(CacheAlgorithm<K> algorithm, Map<K, V> map) {
         this(algorithm, map, map.size());
+    }
+
+    /**
+     * Creates file system cache with defined algorithm. Key-values are got from the directory.
+     * If the directory is empty, creates an empty cache with default size {@link Cache#DEFAULT_CACHE_SIZE}.
+     * If the directory is not empty, cache is created with maxSize equal to number of cache files in the directory.
+     *
+     * @param algorithm specifies algorithm type that is used by the cache
+     * @param path to the directory to check files
+     */
+    public FileSystemCache(CacheAlgorithm<K> algorithm, Path path) {
+        if (path.toFile().exists() && path.toFile().isDirectory()) {
+            cacheDir = path;
+        } else {
+            createTempDirectory();
+        }
+
+        algo = algorithm;
+        maxSize = DEFAULT_CACHE_SIZE;
+        // check the files in the directory
+        // read all files from the directory and get data
+        // put data to the map
+        indexMap = new HashMap<>();
     }
 
     /**
@@ -156,23 +180,23 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
         }
 
         Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
-        Map.Entry<K, V> popped = null;
-        Map.Entry<K, V> replacedEntry = null;
-        Path tempFile = null;
 
+        Map.Entry<K, V> poppedEntry = null;
         if ((size() == maxSize) && (!contains(key))) {
             // using deletion by algorithm
-            popped = pop();
+            poppedEntry = pop();
         }
 
+        Map.Entry<K, V> replacedEntry = null;
+        Path filePath = null;
         if (algo.shift(key)) {
             // need to get file, read old value
-            tempFile = indexMap.get(key);
-            replacedEntry = readFromFile(tempFile);
+            filePath = indexMap.get(key);
+            replacedEntry = readFromFile(filePath);
         }
-        writeToFile(newcomer, tempFile);
+        writeToFile(newcomer, filePath);
 
-        return (popped == null) ? replacedEntry : popped;
+        return (poppedEntry == null) ? replacedEntry : poppedEntry;
     }
 
     /**
@@ -315,9 +339,8 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
      */
     @SuppressWarnings("unchecked")
     private Map.Entry<K, V> readFromFile(Path path) {
-        try {
-            InputStream inputStream = Files.newInputStream(path);
-            ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+        try (InputStream inputStream = Files.newInputStream(path);
+                ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
             return  (Map.Entry<K, V>) objectInputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
             throw new IllegalAccessError();
@@ -334,17 +357,31 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
      * @throws IllegalAccessError if the path is not accessible and entry was not written to file
      */
     private void writeToFile(Map.Entry<K, V> entry, Path path) {
-        try {
-            if (path == null)  {
-                path = Files.createTempFile(cacheDir, entry.toString(), null);
-            }
+        if (path == null) {
+            path = createTempFile();
+        }
 
-            OutputStream outputStream = Files.newOutputStream(path);
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        try ( OutputStream outputStream = Files.newOutputStream(path);
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream)) {
+
             objectOutputStream.writeObject(entry);
             objectOutputStream.flush();
 
             indexMap.put(entry.getKey(), path);
+        } catch (IOException e) {
+            throw new IllegalAccessError();
+        }
+    }
+
+    /**
+     * Creates file and returns path to the file
+     *
+     * @return path to newly created file
+     * @throws IllegalAccessError if there was a error creating the file
+     */
+    private Path createTempFile() {
+        try {
+            return Files.createTempFile(cacheDir, null, null);
         } catch (IOException e) {
             throw new IllegalAccessError();
         }
