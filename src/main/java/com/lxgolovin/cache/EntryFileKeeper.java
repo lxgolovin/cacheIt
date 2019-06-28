@@ -4,11 +4,12 @@ package com.lxgolovin.cache;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
- * This class creates directory and stores files inside. The files are serialized {@link java.util.Map.Entry}
+ * This class creates directory and stores files inside.
  * Directory could be created as temporary or defined by user.
  *
  * If not directory is specified, a temporary one is used. The prefix for the temporary directory is
@@ -16,7 +17,7 @@ import java.util.Map;
  *
  * Class gives a possibility to store data in files and get data back.
  */
-public class EntryFileKeeper<K, V> {
+class EntryFileKeeper<K, V> {
 
     /**
      * If the directory is created temporary this prefix is used
@@ -48,15 +49,16 @@ public class EntryFileKeeper<K, V> {
     /**
      * Creates directory to keep data. If path parameter is null, the temporary one is used with
      * prefix, defined in {@link EntryFileKeeper#TEMP_DIR_PREFIX}
+     * Additional flag added to clean directory at initialization phase
      *
      * @param path defined to keep data files
-     * @param deleteFilesInDirectory true if need to delete the directory if exists, else false
+     * @param cleanDirectory true if need to delete the directory if exists, else false
      */
-    EntryFileKeeper(Path path, boolean deleteFilesInDirectory) {
+    EntryFileKeeper(Path path, boolean cleanDirectory) {
         if (path == null) {
             createTempDirectory();
         } else {
-            createDirectory(path, deleteFilesInDirectory);
+            createDirectory(path, cleanDirectory);
         }
     }
 
@@ -99,7 +101,6 @@ public class EntryFileKeeper<K, V> {
         if (dir.exists() & !dir.isDirectory()) {
             throw new IllegalAccessError();
         }
-
 
         if (dir.exists() & dir.isDirectory() && deleteFilesInDirectory) {
             File[] directoryListing = dir.listFiles();
@@ -180,7 +181,7 @@ public class EntryFileKeeper<K, V> {
      *
      * @return map with all deserialized objects. If the directory is empty or not present, the return would be null
      */
-    Map<K, V> readAllFromDirectory() {
+    List<OutputNode<Path>> readAllFromDirectory() {
         File dir = directory.toFile();
 
         if (dir.exists() && dir.isDirectory()) {
@@ -189,16 +190,17 @@ public class EntryFileKeeper<K, V> {
                 return null;
             }
 
-            Map<K, V> mapFromFiles = new HashMap<>();
+            List<OutputNode<Path>> dataReadFromFiles = new LinkedList<>();
             for (File f : directoryListing) {
                 if ((f != null) && f.isFile()) {
                     Map.Entry<K, V> entry = this.readFromFile(f.toPath());
                     if (entry != null) {
-                        mapFromFiles.put(entry.getKey(), entry.getValue());
+                        OutputNode<Path> node = new OutputNode<>(entry.getKey(), entry.getValue(), f.toPath());
+                        dataReadFromFiles.add(node);
                     }
                 }
             }
-            return mapFromFiles;
+            return dataReadFromFiles;
         } else {
             return null;
         }
@@ -215,6 +217,52 @@ public class EntryFileKeeper<K, V> {
             return Files.createTempFile(directory, null, null);
         } catch (IOException e) {
             throw new IllegalAccessError();
+        }
+    }
+
+    /**
+     * Inner class to create a node for the output during reading all data files
+     * in one directory. During this step you need 3 parameters: key-value-path of the file.
+     * As the class is only a helping class, all parameters are immutable
+     *
+     * @param <P> path of the file, were data is stored
+     */
+    class OutputNode<P> {
+        private final K key;
+        private final V value;
+        private final P path;
+
+        OutputNode(K key, V value, P path){
+            this.key = key;
+            this.value = value;
+            this.path = path;
+        }
+
+        /**
+         * Returns the key corresponding to this entry.
+         *
+         * @return the key corresponding to this entry
+         */
+        K getKey() {
+            return key;
+        }
+
+        /**
+         * Returns the value corresponding to this entry.
+         *
+         * @return the value corresponding to this entry
+         */
+        V getValue() {
+            return value;
+        }
+
+        /**
+         * Returns the value of path corresponding to this entry.
+         *
+         * @return the value of path corresponding to this entry
+         */
+        P getPath() {
+            return path;
         }
     }
 }

@@ -1,8 +1,10 @@
 package com.lxgolovin.cache;
 
+import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,9 +22,10 @@ import java.util.Map;
  * @see Cache
  * @see CacheAlgorithm
  */
-public class FileSystemCache<K, V> implements Cache<K, V>  {
+public class FileSystemCache<K extends Serializable, V extends Serializable> implements Cache<K, V>  {
     // TODO: much code similar to MemoryCache code. Possibly need AbstractCache class to combine
     // TODO: move file handling methods to separate class
+    // TODO: K, V should be serializable
 
     /**
      * Map-index of files to cache data
@@ -118,14 +121,13 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
         indexMap = new HashMap<>();
 
         fileKeeper = new EntryFileKeeper<>(path);
-        Map<K, V> mapFromFiles = fileKeeper.readAllFromDirectory();
 
-        if (mapFromFiles.isEmpty()) {
-            maxSize = Cache.DEFAULT_CACHE_SIZE;
-        } else {
-            maxSize = mapFromFiles.size();
-            putAll(mapFromFiles);
-        }
+        List<EntryFileKeeper<K, V>.OutputNode<Path>> listNodesFromFiles = fileKeeper.readAllFromDirectory();
+        int size = listNodesFromFiles.size();
+        maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
+
+        putAll(listNodesFromFiles);
+
     }
 
     /**
@@ -136,6 +138,20 @@ public class FileSystemCache<K, V> implements Cache<K, V>  {
         if (!map.isEmpty()) {
             for (Map.Entry<K, V> entry : map.entrySet()) {
                 this.cache(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    /**
+     * Put all values of list into cache.
+     * This is a list of {@link com.lxgolovin.cache.EntryFileKeeper.OutputNode}
+     * @param list with key-values-paths
+     */
+    private void putAll(List<EntryFileKeeper<K, V>.OutputNode<Path>> list) {
+        if (!list.isEmpty()) {
+            for (EntryFileKeeper<K, V>.OutputNode<Path> node : list) {
+                indexMap.put(node.getKey(), node.getPath());
+                cache(node.getKey(), node.getValue());
             }
         }
     }

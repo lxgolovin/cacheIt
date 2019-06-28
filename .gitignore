@@ -51,3 +51,6 @@ local.properties
 # thumbnails
 Thumbs.db
 *.bat
+
+# Current project tests
+TEMP/

@@ -206,6 +206,9 @@ class FileSystemCacheTest {
         assertNull(lruCache.get(5));
     }
 
+    /**
+     * Testing constructor with defining path at initialization phase
+     */
     @Test
     void constructorWithPathDefined() {
         String directory = "./TEMP/";
@@ -219,7 +222,8 @@ class FileSystemCacheTest {
             assertTrue(entryFileKeeper.writeToFile(entry, path));
         }
 
-        Cache<Integer, String> fsCache = new FileSystemCache<>(lru, directoryPath);
+        CacheAlgorithm<Integer> fsLru = new LruAlgorithm<>();
+        Cache<Integer, String> fsCache = new FileSystemCache<>(fsLru, directoryPath);
         assertEquals("1", fsCache.get(1));
     }
 }

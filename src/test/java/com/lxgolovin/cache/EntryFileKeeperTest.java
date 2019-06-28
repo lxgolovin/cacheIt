@@ -4,9 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,19 +22,25 @@ class EntryFileKeeperTest {
     /**
      * Directory for testing
      */
-    private String directoryPath = "./TEMP/";
+    private final String directoryPath = "./TEMP/";
 
     /**
-     *
+     * create object to work with files
      */
-    private EntryFileKeeper<Integer, String> entryFileKeeper = new EntryFileKeeper<>(Paths.get(directoryPath));
+    private final EntryFileKeeper<Integer, String> entryFileKeeper = new EntryFileKeeper<>(Paths.get(directoryPath));
 
+    /**
+     * Check creating temporary directory
+     */
     @Test
     void createTempDirectory() {
         EntryFileKeeper<Integer, Integer> entryFileKeeperTemp = new EntryFileKeeper<>();
         assertTrue(entryFileKeeperTemp.getDirectory().toFile().exists());
     }
 
+    /**
+     * Checking user defined directory is present
+     */
     @Test
     void createUserDefinedDirectory() {
         assertTrue(entryFileKeeper.getDirectory().toFile().exists());
@@ -44,6 +48,9 @@ class EntryFileKeeperTest {
         assertEquals(Paths.get(directoryPath), entryFileKeeper.getDirectory());
     }
 
+    /**
+     * Check creating file to keep data
+     */
     @Test
     void createTempFile() {
         Path path = entryFileKeeper.createTempFile();
@@ -52,6 +59,9 @@ class EntryFileKeeperTest {
         assertTrue(path.toFile().isFile());
     }
 
+    /**
+     * Test writing to file
+     */
     @Test
     void writeEntryToFile() {
         Path path = entryFileKeeper.createTempFile();
@@ -62,6 +72,9 @@ class EntryFileKeeperTest {
         assertFalse(entryFileKeeper.writeToFile(null, path));
     }
 
+    /**
+     * Testing reading from file
+     */
     @Test
     void readEntryFromFile() {
         Path path = entryFileKeeper.createTempFile();
@@ -72,6 +85,9 @@ class EntryFileKeeperTest {
         assertThrows(IllegalArgumentException.class, () -> entryFileKeeper.readFromFile(null));
     }
 
+    /**
+     * This test is created to get the situation when data stored in files got different types
+     */
     @Test
     void readWrongEntryFromFile() {
         EntryFileKeeper<String, String> entryFileKeeperWrong = new EntryFileKeeper<>(Paths.get(directoryPath));
@@ -84,13 +100,20 @@ class EntryFileKeeperTest {
         assertThrows(IllegalArgumentException.class, () -> entryFileKeeperWrong.readFromFile(null));
     }
 
-    // TODO: need to implement
+    /**
+     * reading data from all files.
+     * TODO: need to check the issue with different types
+     */
      @Test
      void readAllFromDirectory() {
-        Map<Integer, String> map = entryFileKeeper.readAllFromDirectory();
-        assertEquals("String", map.get(1));
+        List<EntryFileKeeper<Integer, String>.OutputNode<Path>> list =
+                entryFileKeeper.readAllFromDirectory();
+        assertFalse(list.isEmpty());
      }
 
+    /**
+     * testing deleting files
+     */
     @Test
     void deleteFile() {
         Path path = entryFileKeeper.createTempFile();
@@ -99,12 +122,16 @@ class EntryFileKeeperTest {
 
         assertTrue(entryFileKeeper.deleteFile(path));
         assertFalse(entryFileKeeper.deleteFile(path));
+        assertFalse(path.toFile().exists());
     }
 
+    /**
+     * tests the possibility to clear directory at initialization phase
+     */
     @Test
     void WouldEmptyDirectory() {
-        Map<Integer, String> map = new HashMap<>();
-        EntryFileKeeper<Integer, String> entryFileKeeperDeleteDir = new EntryFileKeeper<>(Paths.get(directoryPath), true);
-        assertEquals(map, entryFileKeeperDeleteDir.readAllFromDirectory());
+        EntryFileKeeper<Integer, String> entryFileKeeperDeleteDir =
+                new EntryFileKeeper<>(Paths.get(directoryPath), true);
+        assertTrue(entryFileKeeperDeleteDir.readAllFromDirectory().isEmpty());
     }
 }
