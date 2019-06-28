@@ -53,7 +53,7 @@ class EntryFileKeeperTest {
      */
     @Test
     void createTempFile() {
-        Path path = entryFileKeeper.createTempFile();
+        Path path = entryFileKeeper.createFile();
 
         assertTrue(path.toFile().exists());
         assertTrue(path.toFile().isFile());
@@ -64,7 +64,7 @@ class EntryFileKeeperTest {
      */
     @Test
     void writeEntryToFile() {
-        Path path = entryFileKeeper.createTempFile();
+        Path path = entryFileKeeper.createFile();
         Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(1, "String");
         assertTrue(entryFileKeeper.writeToFile(entry, path));
 
@@ -77,7 +77,7 @@ class EntryFileKeeperTest {
      */
     @Test
     void readEntryFromFile() {
-        Path path = entryFileKeeper.createTempFile();
+        Path path = entryFileKeeper.createFile();
         Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(2, "String");
         assertTrue(entryFileKeeper.writeToFile(entry, path));
 
@@ -92,7 +92,7 @@ class EntryFileKeeperTest {
     void readWrongEntryFromFile() {
         EntryFileKeeper<String, String> entryFileKeeperWrong = new EntryFileKeeper<>(Paths.get(directoryPath));
 
-        Path path = entryFileKeeperWrong.createTempFile();
+        Path path = entryFileKeeperWrong.createFile();
         Map.Entry<String, String> entry = new AbstractMap.SimpleImmutableEntry<>("String", "String");
         assertTrue(entryFileKeeperWrong.writeToFile(entry, path));
 
@@ -116,7 +116,7 @@ class EntryFileKeeperTest {
      */
     @Test
     void deleteFile() {
-        Path path = entryFileKeeper.createTempFile();
+        Path path = entryFileKeeper.createFile();
         Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(3, "String");
         assertTrue(entryFileKeeper.writeToFile(entry, path));
 

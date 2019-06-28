@@ -212,7 +212,7 @@ class EntryFileKeeper<K, V> {
      * @return path to newly created file
      * @throws IllegalAccessError if there was a error creating the file
      */
-    Path createTempFile() {
+    Path createFile() {
         try {
             return Files.createTempFile(directory, null, null);
         } catch (IOException e) {

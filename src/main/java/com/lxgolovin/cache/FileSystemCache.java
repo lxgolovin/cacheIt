@@ -186,7 +186,7 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
             filePath = indexMap.get(key);
             replacedEntry = fileKeeper.readFromFile(filePath);
         } else {
-            filePath = fileKeeper.createTempFile();
+            filePath = fileKeeper.createFile();
         }
 
         Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);

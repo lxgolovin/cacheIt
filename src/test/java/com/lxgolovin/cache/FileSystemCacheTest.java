@@ -217,7 +217,7 @@ class FileSystemCacheTest {
         EntryFileKeeper<Integer, String> entryFileKeeper = new EntryFileKeeper<>(directoryPath);
         // create 4 files with some data
         for (int i=0; i<5; i++) {
-            Path path = entryFileKeeper.createTempFile();
+            Path path = entryFileKeeper.createFile();
             Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(i, String.valueOf(i));
             assertTrue(entryFileKeeper.writeToFile(entry, path));
         }
