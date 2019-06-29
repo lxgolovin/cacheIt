@@ -1,4 +1,4 @@
-package com.lxgolovin.cache;
+package com.lxgolovin.cache.file;
 
 import org.junit.jupiter.api.Test;
 
@@ -9,7 +9,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * This class creates tests for the {@link EntryFileKeeper}
+ * This class creates tests for the {@link Storage}
  * The idea is to create a directory and store files inside. The files are serialized {@link java.util.Map.Entry}
  * Directory could be created as temporary or defined by user.
  *
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * Class gives a possibility to store data in files and get data back.
  */
-class EntryFileKeeperTest {
+class StorageTest {
 
     /**
      * Directory for testing
@@ -27,15 +27,15 @@ class EntryFileKeeperTest {
     /**
      * create object to work with files
      */
-    private final EntryFileKeeper<Integer, String> entryFileKeeper = new EntryFileKeeper<>(Paths.get(directoryPath));
+    private final Storage<Integer, String> storage = new Storage<>(Paths.get(directoryPath));
 
     /**
      * Check creating temporary directory
      */
     @Test
     void createTempDirectory() {
-        EntryFileKeeper<Integer, Integer> entryFileKeeperTemp = new EntryFileKeeper<>();
-        assertTrue(entryFileKeeperTemp.getDirectory().toFile().exists());
+        Storage<Integer, Integer> storageTemp = new Storage<>();
+        assertTrue(storageTemp.getDirectory().toFile().exists());
     }
 
     /**
@@ -43,9 +43,9 @@ class EntryFileKeeperTest {
      */
     @Test
     void createUserDefinedDirectory() {
-        assertTrue(entryFileKeeper.getDirectory().toFile().exists());
-        assertTrue(entryFileKeeper.getDirectory().toFile().isDirectory());
-        assertEquals(Paths.get(directoryPath), entryFileKeeper.getDirectory());
+        assertTrue(storage.getDirectory().toFile().exists());
+        assertTrue(storage.getDirectory().toFile().isDirectory());
+        assertEquals(Paths.get(directoryPath), storage.getDirectory());
     }
 
     /**
@@ -53,7 +53,7 @@ class EntryFileKeeperTest {
      */
     @Test
     void createTempFile() {
-        Path path = entryFileKeeper.createFile();
+        Path path = storage.createFile();
 
         assertTrue(path.toFile().exists());
         assertTrue(path.toFile().isFile());
@@ -64,12 +64,12 @@ class EntryFileKeeperTest {
      */
     @Test
     void writeEntryToFile() {
-        Path path = entryFileKeeper.createFile();
+        Path path = storage.createFile();
         Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(1, "String");
-        assertTrue(entryFileKeeper.writeToFile(entry, path));
+        assertTrue(storage.writeToFile(entry, path));
 
-        assertFalse(entryFileKeeper.writeToFile(entry, null));
-        assertFalse(entryFileKeeper.writeToFile(null, path));
+        assertFalse(storage.writeToFile(entry, null));
+        assertFalse(storage.writeToFile(null, path));
     }
 
     /**
@@ -77,12 +77,12 @@ class EntryFileKeeperTest {
      */
     @Test
     void readEntryFromFile() {
-        Path path = entryFileKeeper.createFile();
+        Path path = storage.createFile();
         Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(2, "String");
-        assertTrue(entryFileKeeper.writeToFile(entry, path));
+        assertTrue(storage.writeToFile(entry, path));
 
-        assertEquals(entry, entryFileKeeper.readFromFile(path));
-        assertThrows(IllegalArgumentException.class, () -> entryFileKeeper.readFromFile(null));
+        assertEquals(entry, storage.readFromFile(path));
+        assertThrows(IllegalArgumentException.class, () -> storage.readFromFile(null));
     }
 
     /**
@@ -90,14 +90,14 @@ class EntryFileKeeperTest {
      */
     @Test
     void readWrongEntryFromFile() {
-        EntryFileKeeper<String, String> entryFileKeeperWrong = new EntryFileKeeper<>(Paths.get(directoryPath));
+        Storage<String, String> storageWrong = new Storage<>(Paths.get(directoryPath));
 
-        Path path = entryFileKeeperWrong.createFile();
+        Path path = storageWrong.createFile();
         Map.Entry<String, String> entry = new AbstractMap.SimpleImmutableEntry<>("String", "String");
-        assertTrue(entryFileKeeperWrong.writeToFile(entry, path));
+        assertTrue(storageWrong.writeToFile(entry, path));
 
-        assertEquals(entry, entryFileKeeperWrong.readFromFile(path));
-        assertThrows(IllegalArgumentException.class, () -> entryFileKeeperWrong.readFromFile(null));
+        assertEquals(entry, storageWrong.readFromFile(path));
+        assertThrows(IllegalArgumentException.class, () -> storageWrong.readFromFile(null));
     }
 
     /**
@@ -106,8 +106,8 @@ class EntryFileKeeperTest {
      */
      @Test
      void readAllFromDirectory() {
-        List<EntryFileKeeper<Integer, String>.OutputNode<Path>> list =
-                entryFileKeeper.readAllFromDirectory();
+        List<Storage<Integer, String>.OutputNode<Path>> list =
+                storage.readAllFromDirectory();
         assertFalse(list.isEmpty());
      }
 
@@ -116,12 +116,12 @@ class EntryFileKeeperTest {
      */
     @Test
     void deleteFile() {
-        Path path = entryFileKeeper.createFile();
+        Path path = storage.createFile();
         Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(3, "String");
-        assertTrue(entryFileKeeper.writeToFile(entry, path));
+        assertTrue(storage.writeToFile(entry, path));
 
-        assertTrue(entryFileKeeper.deleteFile(path));
-        assertFalse(entryFileKeeper.deleteFile(path));
+        assertTrue(storage.deleteFile(path));
+        assertFalse(storage.deleteFile(path));
         assertFalse(path.toFile().exists());
     }
 
@@ -130,8 +130,8 @@ class EntryFileKeeperTest {
      */
     @Test
     void WouldEmptyDirectory() {
-        EntryFileKeeper<Integer, String> entryFileKeeperDeleteDir =
-                new EntryFileKeeper<>(Paths.get(directoryPath), true);
-        assertTrue(entryFileKeeperDeleteDir.readAllFromDirectory().isEmpty());
+        Storage<Integer, String> storageDeleteDir =
+                new Storage<>(Paths.get(directoryPath), true);
+        assertTrue(storageDeleteDir.readAllFromDirectory().isEmpty());
     }
 }

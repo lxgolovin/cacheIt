@@ -1,4 +1,4 @@
-package com.lxgolovin.cache;
+package com.lxgolovin.cache.file;
 
 
 import java.io.*;
@@ -13,11 +13,11 @@ import java.util.Map;
  * Directory could be created as temporary or defined by user.
  *
  * If not directory is specified, a temporary one is used. The prefix for the temporary directory is
- * {@link EntryFileKeeper#TEMP_DIR_PREFIX}
+ * {@link Storage#TEMP_DIR_PREFIX}
  *
  * Class gives a possibility to store data in files and get data back.
  */
-class EntryFileKeeper<K, V> {
+class Storage<K, V> {
 
     /**
      * If the directory is created temporary this prefix is used
@@ -32,29 +32,29 @@ class EntryFileKeeper<K, V> {
     /**
      * Empty constructor creates temporary directory to keep data
      */
-    EntryFileKeeper() {
+    Storage() {
         this(null);
     }
 
     /**
      * Creates directory to keep data. If path parameter is null, the temporary one is used with
-     * prefix, defined in {@link EntryFileKeeper#TEMP_DIR_PREFIX}
+     * prefix, defined in {@link Storage#TEMP_DIR_PREFIX}
      *
      * @param path defined to keep data files
      */
-    EntryFileKeeper(Path path) {
+    Storage(Path path) {
         this(path, false);
     }
 
     /**
      * Creates directory to keep data. If path parameter is null, the temporary one is used with
-     * prefix, defined in {@link EntryFileKeeper#TEMP_DIR_PREFIX}
+     * prefix, defined in {@link Storage#TEMP_DIR_PREFIX}
      * Additional flag added to clean directory at initialization phase
      *
      * @param path defined to keep data files
      * @param cleanDirectory true if need to delete the directory if exists, else false
      */
-    EntryFileKeeper(Path path, boolean cleanDirectory) {
+    Storage(Path path, boolean cleanDirectory) {
         if (path == null) {
             createTempDirectory();
         } else {
@@ -86,8 +86,8 @@ class EntryFileKeeper<K, V> {
     }
 
     /**
-     * Creates directory by path and stores the value in {@link EntryFileKeeper#directory}, which could be
-     * got by {@link EntryFileKeeper#getDirectory()}
+     * Creates directory by path and stores the value in {@link Storage#directory}, which could be
+     * got by {@link Storage#getDirectory()}
      *
      * @param path of the directory to be created
      * @param deleteFilesInDirectory true if need to delete the directory if exists, else false
@@ -207,7 +207,7 @@ class EntryFileKeeper<K, V> {
     }
 
     /**
-     * Creates file and returns path to the file. The file is created in the directory {@link EntryFileKeeper#directory}
+     * Creates file and returns path to the file. The file is created in the directory {@link Storage#directory}
      *
      * @return path to newly created file
      * @throws IllegalAccessError if there was a error creating the file

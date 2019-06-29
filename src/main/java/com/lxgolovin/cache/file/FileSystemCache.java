@@ -1,4 +1,7 @@
-package com.lxgolovin.cache;
+package com.lxgolovin.cache.file;
+
+import com.lxgolovin.cache.Cache;
+import com.lxgolovin.cache.CacheAlgorithm;
 
 import java.io.Serializable;
 import java.nio.file.Path;
@@ -35,7 +38,7 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
     /**
      * Temporary directory for the cache files
      */
-    private final EntryFileKeeper<K, V> fileKeeper;
+    private final Storage<K, V> fileStorage;
 
     /**
      * maximum possible size for the cache. Minimum value is greater then 1.
@@ -104,7 +107,7 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
         maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
         algo = algorithm;
 
-        fileKeeper = new EntryFileKeeper<>();
+        fileStorage = new Storage<>();
         indexMap = new HashMap<>();
         putAll(map);
     }
@@ -120,9 +123,9 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
         algo = algorithm;
         indexMap = new HashMap<>();
 
-        fileKeeper = new EntryFileKeeper<>(path);
+        fileStorage = new Storage<>(path);
 
-        List<EntryFileKeeper<K, V>.OutputNode<Path>> listNodesFromFiles = fileKeeper.readAllFromDirectory();
+        List<Storage<K, V>.OutputNode<Path>> listNodesFromFiles = fileStorage.readAllFromDirectory();
         int size = listNodesFromFiles.size();
         maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
 
@@ -144,12 +147,12 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
 
     /**
      * Put all values of list into cache.
-     * This is a list of {@link com.lxgolovin.cache.EntryFileKeeper.OutputNode}
+     * This is a list of {@link Storage.OutputNode}
      * @param list with key-values-paths
      */
-    private void putAll(List<EntryFileKeeper<K, V>.OutputNode<Path>> list) {
+    private void putAll(List<Storage<K, V>.OutputNode<Path>> list) {
         if (!list.isEmpty()) {
-            for (EntryFileKeeper<K, V>.OutputNode<Path> node : list) {
+            for (Storage<K, V>.OutputNode<Path> node : list) {
                 indexMap.put(node.getKey(), node.getPath());
                 cache(node.getKey(), node.getValue());
             }
@@ -184,13 +187,13 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
         if (algo.shift(key)) {
             // need to get file, read old value
             filePath = indexMap.get(key);
-            replacedEntry = fileKeeper.readFromFile(filePath);
+            replacedEntry = fileStorage.readFromFile(filePath);
         } else {
-            filePath = fileKeeper.createFile();
+            filePath = fileStorage.createFile();
         }
 
         Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
-        fileKeeper.writeToFile(newcomer, filePath);
+        fileStorage.writeToFile(newcomer, filePath);
         indexMap.put(key, filePath);
 
         return (poppedEntry == null) ? replacedEntry : poppedEntry;
@@ -215,7 +218,7 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
         }
 
         Path path = indexMap.get(key);
-        Map.Entry<K, V> entry = fileKeeper.readFromFile(path);
+        Map.Entry<K, V> entry = fileStorage.readFromFile(path);
 
         return (entry != null) ? entry.getValue() : null;
     }
@@ -279,8 +282,8 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
 
         algo.delete(key);
         Path path = indexMap.remove(key);
-        Map.Entry<K, V> entry = fileKeeper.readFromFile(path);
-        fileKeeper.deleteFile(path);
+        Map.Entry<K, V> entry = fileStorage.readFromFile(path);
+        fileStorage.deleteFile(path);
 
         return (entry != null) ? entry.getValue() : null;
     }
@@ -295,7 +298,7 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
         indexMap.clear();
         algo.clear();
         for (Path file: indexMap.values()) {
-            fileKeeper.deleteFile(file);
+            fileStorage.deleteFile(file);
         }
     }
 

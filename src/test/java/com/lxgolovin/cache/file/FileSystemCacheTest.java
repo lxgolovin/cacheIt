@@ -1,5 +1,9 @@
-package com.lxgolovin.cache;
+package com.lxgolovin.cache.file;
 
+import com.lxgolovin.cache.Cache;
+import com.lxgolovin.cache.CacheAlgorithm;
+import com.lxgolovin.cache.LruAlgorithm;
+import com.lxgolovin.cache.MruAlgorithm;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -214,12 +218,12 @@ class FileSystemCacheTest {
         String directory = "./TEMP/";
         Path directoryPath = Paths.get(directory);
 
-        EntryFileKeeper<Integer, String> entryFileKeeper = new EntryFileKeeper<>(directoryPath);
+        Storage<Integer, String> storage = new Storage<>(directoryPath);
         // create 4 files with some data
         for (int i=0; i<5; i++) {
-            Path path = entryFileKeeper.createFile();
+            Path path = storage.createFile();
             Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(i, String.valueOf(i));
-            assertTrue(entryFileKeeper.writeToFile(entry, path));
+            assertTrue(storage.writeToFile(entry, path));
         }
 
         CacheAlgorithm<Integer> fsLru = new LruAlgorithm<>();
