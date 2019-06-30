@@ -65,10 +65,9 @@ class StorageTest {
     @Test
     void writeEntryToFile() {
         Path path = storage.createFile();
-        Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(1, "String");
-        assertTrue(storage.writeToFile(entry, path));
+        assertTrue(storage.writeToFile(1, "String", path));
 
-        assertFalse(storage.writeToFile(entry, null));
+        assertFalse(storage.writeToFile(1, "String", null));
         assertFalse(storage.writeToFile(null, path));
     }
 

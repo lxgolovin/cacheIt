@@ -222,8 +222,7 @@ class FileSystemCacheTest {
         // create 4 files with some data
         for (int i=0; i<5; i++) {
             Path path = storage.createFile();
-            Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(i, String.valueOf(i));
-            assertTrue(storage.writeToFile(entry, path));
+            assertTrue(storage.writeToFile(i, String.valueOf(i), path));
         }
 
         CacheAlgorithm<Integer> fsLru = new LruAlgorithm<>();

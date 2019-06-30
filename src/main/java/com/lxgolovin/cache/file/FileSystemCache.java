@@ -188,15 +188,29 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
             // need to get file, read old value
             filePath = indexMap.get(key);
             replacedEntry = fileStorage.readFromFile(filePath);
+
         } else {
             filePath = fileStorage.createFile();
         }
 
-        Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
-        fileStorage.writeToFile(newcomer, filePath);
-        indexMap.put(key, filePath);
+        if (needToStoreNewcomer(replacedEntry, value)) {
+            fileStorage.writeToFile(key, value, filePath);
+            indexMap.put(key, filePath);
+        }
 
         return (poppedEntry == null) ? replacedEntry : poppedEntry;
+    }
+
+    /**
+     * Checks if new key-value are really new. If they are alreafy present in storage
+     * you do not need to update the file storage. This saves time.
+     *
+     * @param entry entry, that is possibly kept in storage
+     * @param newValue to be checked with entry
+     * @return true, if need to update storage, else false
+     */
+    private boolean needToStoreNewcomer(Map.Entry<K, V> entry, V newValue) {
+        return ((entry == null) || ((entry.getValue() != null) && (!entry.getValue().equals(newValue))));
     }
 
     /**

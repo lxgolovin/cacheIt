@@ -4,6 +4,7 @@ package com.lxgolovin.cache.file;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.AbstractMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -130,6 +131,23 @@ class Storage<K, V> {
      */
     boolean deleteFile(Path path) {
         return path.toFile().delete();
+    }
+
+    /**
+     * Writes entry to the file by path. Returns false if not success, else true.
+     *
+     * @param key for the value to be stored
+     * @param value mapping for the key to be stored
+     * @param path for the temporary file. Cannot be null
+     * @return true if written to file, else false
+     */
+    boolean writeToFile(K key, V value, Path path) {
+        if ((key == null) | (value == null)) {
+            return false;
+        }
+
+        Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
+        return  this.writeToFile(newcomer, path);
     }
 
     /**
