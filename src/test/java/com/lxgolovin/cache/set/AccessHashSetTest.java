@@ -1,4 +1,4 @@
-package com.lxgolovin.set;
+package com.lxgolovin.cache.set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,6 @@
-package com.lxgolovin.cache;
+package com.lxgolovin.cache.algorithm;
 
-import com.lxgolovin.set.AccessHashSet;
+import com.lxgolovin.cache.set.AccessHashSet;
 
 /**
  * Abstract class with some methods to define Recently Used (LRU-MRU) algorithms.
@@ -8,11 +8,11 @@ import com.lxgolovin.set.AccessHashSet;
  * Specifies main methods to add values to the queue and delete them
  * if needed. Has a possibility to clear all data and check the algorithm name
  * @param <E>
- * @see LruAlgorithm
- * @see MruAlgorithm
+ * @see Lru
+ * @see Mru
  * @see AccessHashSet
  */
-abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
+abstract class AbstractRu<E> implements CacheAlgorithm<E> {
 
     /**
      * LRU algorithm
@@ -37,7 +37,7 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
     /**
      * Starts a queue to keep all elements inside and delete according to algorithms
      */
-    AbstractRuAlgorithm() {
+    AbstractRu() {
         queue = new AccessHashSet<>();
     }
 
@@ -46,7 +46,7 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
      * @param elem - may not be null
      * @return true if element was present in queue, else false
      * @throws IllegalArgumentException if any of the params is null or if some property of
-     *          the specified element prevents it from being stored in {@link AbstractRuAlgorithm#queue}
+     *          the specified element prevents it from being stored in {@link AbstractRu#queue}
      */
     @Override
     public boolean shift(E elem) {
@@ -92,7 +92,7 @@ abstract class AbstractRuAlgorithm<E> implements CacheAlgorithm<E> {
     public abstract String getType();
 
     /**
-     * Clears all data from the queue {@link AbstractRuAlgorithm#queue}
+     * Clears all data from the queue {@link AbstractRu#queue}
      * All elements are deleted
      */
     @Override

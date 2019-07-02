@@ -1,7 +1,7 @@
-package com.lxgolovin.cache.file;
+package com.lxgolovin.cache.type;
 
 import com.lxgolovin.cache.Cache;
-import com.lxgolovin.cache.CacheAlgorithm;
+import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 
 import java.io.Serializable;
 import java.nio.file.Path;
@@ -38,7 +38,7 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
     /**
      * Temporary directory for the cache files
      */
-    private final Storage<K, V> fileStorage;
+    private final FileStorage<K, V> fileStorage;
 
     /**
      * maximum possible size for the cache. Minimum value is greater then 1.
@@ -107,7 +107,7 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
         maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
         algo = algorithm;
 
-        fileStorage = new Storage<>();
+        fileStorage = new FileStorage<>();
         indexMap = new HashMap<>();
         putAll(map);
     }
@@ -123,9 +123,9 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
         algo = algorithm;
         indexMap = new HashMap<>();
 
-        fileStorage = new Storage<>(path);
+        fileStorage = new FileStorage<>(path);
 
-        List<Storage<K, V>.OutputNode<Path>> listNodesFromFiles = fileStorage.readAllFromDirectory();
+        List<FileStorage<K, V>.OutputNode<Path>> listNodesFromFiles = fileStorage.readAllFromDirectory();
         int size = listNodesFromFiles.size();
         maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
 
@@ -147,12 +147,12 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
 
     /**
      * Put all values of list into cache.
-     * This is a list of {@link Storage.OutputNode}
+     * This is a list of {@link FileStorage.OutputNode}
      * @param list with key-values-paths
      */
-    private void putAll(List<Storage<K, V>.OutputNode<Path>> list) {
+    private void putAll(List<FileStorage<K, V>.OutputNode<Path>> list) {
         if (!list.isEmpty()) {
-            for (Storage<K, V>.OutputNode<Path> node : list) {
+            for (FileStorage<K, V>.OutputNode<Path> node : list) {
                 indexMap.put(node.getKey(), node.getPath());
                 cache(node.getKey(), node.getValue());
             }

@@ -1,5 +1,10 @@
 package com.lxgolovin.cache;
 
+import com.lxgolovin.cache.algorithm.CacheAlgorithm;
+import com.lxgolovin.cache.algorithm.Lru;
+import com.lxgolovin.cache.algorithm.Mru;
+import com.lxgolovin.cache.type.MemoryCache;
+
 import java.util.*;
 
 /**
@@ -13,8 +18,8 @@ import java.util.*;
  * @see Cache
  * @see CacheAlgorithm
  * @see MemoryCache
- * @see LruAlgorithm
- * @see MruAlgorithm
+ * @see Lru
+ * @see Mru
  */
 public class CacheController<K, V> implements Cache<K, V> {
 

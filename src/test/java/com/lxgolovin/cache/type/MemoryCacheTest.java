@@ -1,5 +1,10 @@
-package com.lxgolovin.cache;
+package com.lxgolovin.cache.type;
 
+import com.lxgolovin.cache.Cache;
+import com.lxgolovin.cache.algorithm.CacheAlgorithm;
+import com.lxgolovin.cache.algorithm.Lru;
+import com.lxgolovin.cache.algorithm.Mru;
+import com.lxgolovin.cache.type.MemoryCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,20 +19,20 @@ import static org.junit.jupiter.api.Assertions.*;
  * Create checks-tests for the implementation of memory cache {@link MemoryCache}
  * based on interface {@link Cache}. Two algorithms are used for testing: LRU and MRU.
  * Algorithms are defined be interface {@link CacheAlgorithm} with implementations
- * {@link LruAlgorithm} and {@link MruAlgorithm}
+ * {@link Lru} and {@link Mru}
  * @see Cache
  * @see MemoryCache
  * @see CacheAlgorithm
- * @see LruAlgorithm
- * @see MruAlgorithm
+ * @see Lru
+ * @see Mru
  */
 class MemoryCacheTest {
 
     /**
      * Algorihtm types use in testing
      */
-    private final CacheAlgorithm<Integer> lru = new LruAlgorithm<>();
-    private final CacheAlgorithm<Integer> mru = new MruAlgorithm<>();
+    private final CacheAlgorithm<Integer> lru = new Lru<>();
+    private final CacheAlgorithm<Integer> mru = new Mru<>();
 
     /**
      * LRU cache will be initialised with size 6
@@ -69,7 +74,7 @@ class MemoryCacheTest {
      */
     @Test
     void constructorWithMaps() {
-        CacheAlgorithm<Integer> algorithm = new LruAlgorithm<>();
+        CacheAlgorithm<Integer> algorithm = new Lru<>();
         Map<Integer, String> map = new TreeMap<>();
         IntStream.rangeClosed(1, 10).forEach(x -> map.put(x,String.valueOf(x*x)));
 

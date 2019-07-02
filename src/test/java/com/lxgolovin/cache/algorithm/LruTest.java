@@ -1,4 +1,4 @@
-package com.lxgolovin.cache;
+package com.lxgolovin.cache.algorithm;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,17 +9,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Create checks-tests to get if LRU algorithm based on interface {@link CacheAlgorithm}
- * with implementation {@link AbstractRuAlgorithm} and {@link LruAlgorithm} is working
+ * with implementation {@link AbstractRu} and {@link Lru} is working
  * @see CacheAlgorithm
- * @see AbstractRuAlgorithm
- * @see LruAlgorithm
+ * @see AbstractRu
+ * @see Lru
  */
-class LruAlgorithmTest {
+class LruTest {
 
     /**
      * defining algorithm queue to keep values
      */
-    private final CacheAlgorithm<Integer> lQueue = new LruAlgorithm<>();
+    private final CacheAlgorithm<Integer> lQueue = new Lru<>();
 
     /**
      * Init queue with LRU algorithm and start queue with first 4 values to check
@@ -34,8 +34,8 @@ class LruAlgorithmTest {
      */
     @Test
     void getTypeDefault() {
-        assertEquals(AbstractRuAlgorithm.DEFAULT_ALGORITHM_TYPE, lQueue.getType());
-        assertEquals(AbstractRuAlgorithm.LRU_ALGORITHM, lQueue.toString());
+        assertEquals(AbstractRu.DEFAULT_ALGORITHM_TYPE, lQueue.getType());
+        assertEquals(AbstractRu.LRU_ALGORITHM, lQueue.toString());
     }
 
     /**

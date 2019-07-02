@@ -1,4 +1,4 @@
-package com.lxgolovin.cache;
+package com.lxgolovin.cache.algorithm;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,17 +10,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Create checks-tests to get if MRU algorithm based on interface {@link CacheAlgorithm}
- * with implementation {@link AbstractRuAlgorithm} and {@link MruAlgorithm} is working
+ * with implementation {@link AbstractRu} and {@link Mru} is working
  * @see CacheAlgorithm
- * @see AbstractRuAlgorithm
- * @see MruAlgorithm
+ * @see AbstractRu
+ * @see Mru
  */
-class MruAlgorithmTest {
+class MruTest {
 
     /**
      * defining algorithm queue to keep values
      */
-    private final CacheAlgorithm<Integer> mQueue = new MruAlgorithm<>();
+    private final CacheAlgorithm<Integer> mQueue = new Mru<>();
 
     /**
      * Init queue with MRU algorithm and start queue with first 4 values to check
@@ -35,8 +35,8 @@ class MruAlgorithmTest {
      */
     @Test
     void getTypeMRU() {
-        assertEquals(MruAlgorithm.MRU_ALGORITHM, mQueue.getType());
-        assertEquals(MruAlgorithm.MRU_ALGORITHM, mQueue.toString());
+        assertEquals(Mru.MRU_ALGORITHM, mQueue.getType());
+        assertEquals(Mru.MRU_ALGORITHM, mQueue.toString());
     }
 
     /**
