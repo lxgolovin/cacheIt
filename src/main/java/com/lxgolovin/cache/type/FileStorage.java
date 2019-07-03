@@ -1,23 +1,20 @@
-package com.lxgolovin.cache.file;
-
+package com.lxgolovin.cache.type;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class creates directory and stores files inside.
  * Directory could be created as temporary or defined by user.
  *
  * If not directory is specified, a temporary one is used. The prefix for the temporary directory is
- * {@link Storage#TEMP_DIR_PREFIX}
+ * {@link FileStorage#TEMP_DIR_PREFIX}
  *
  * Class gives a possibility to store data in files and get data back.
  */
-class Storage<K, V> {
+final class FileStorage<K, V> {
 
     /**
      * If the directory is created temporary this prefix is used
@@ -32,29 +29,29 @@ class Storage<K, V> {
     /**
      * Empty constructor creates temporary directory to keep data
      */
-    Storage() {
+    FileStorage() {
         this(null);
     }
 
     /**
      * Creates directory to keep data. If path parameter is null, the temporary one is used with
-     * prefix, defined in {@link Storage#TEMP_DIR_PREFIX}
+     * prefix, defined in {@link FileStorage#TEMP_DIR_PREFIX}
      *
      * @param path defined to keep data files
      */
-    Storage(Path path) {
+    FileStorage(Path path) {
         this(path, false);
     }
 
     /**
      * Creates directory to keep data. If path parameter is null, the temporary one is used with
-     * prefix, defined in {@link Storage#TEMP_DIR_PREFIX}
+     * prefix, defined in {@link FileStorage#TEMP_DIR_PREFIX}
      * Additional flag added to clean directory at initialization phase
      *
      * @param path defined to keep data files
      * @param cleanDirectory true if need to delete the directory if exists, else false
      */
-    Storage(Path path, boolean cleanDirectory) {
+    FileStorage(Path path, boolean cleanDirectory) {
         if (path == null) {
             createTempDirectory();
         } else {
@@ -86,8 +83,8 @@ class Storage<K, V> {
     }
 
     /**
-     * Creates directory by path and stores the value in {@link Storage#directory}, which could be
-     * got by {@link Storage#getDirectory()}
+     * Creates directory by path and stores the value in {@link FileStorage#directory}, which could be
+     * got by {@link FileStorage#getDirectory()}
      *
      * @param path of the directory to be created
      * @param deleteFilesInDirectory true if need to delete the directory if exists, else false
@@ -105,11 +102,9 @@ class Storage<K, V> {
         if (dir.exists() & dir.isDirectory() && deleteFilesInDirectory) {
             File[] directoryListing = dir.listFiles();
             if (directoryListing != null) {
-                for (File f : directoryListing) {
-                    if ((f != null) && f.isFile()) {
-                        f.delete();
-                    }
-                }
+            Arrays.stream(directoryListing)
+                        .filter(File::isFile)
+                        .forEach(File::delete);
             }
         }
 
@@ -130,6 +125,23 @@ class Storage<K, V> {
      */
     boolean deleteFile(Path path) {
         return path.toFile().delete();
+    }
+
+    /**
+     * Writes entry to the file by path. Returns false if not success, else true.
+     *
+     * @param key for the value to be stored
+     * @param value mapping for the key to be stored
+     * @param path for the temporary file. Cannot be null
+     * @return true if written to file, else false
+     */
+    boolean writeToFile(K key, V value, Path path) {
+        if ((key == null) | (value == null)) {
+            return false;
+        }
+
+        Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
+        return  this.writeToFile(newcomer, path);
     }
 
     /**
@@ -210,7 +222,7 @@ class Storage<K, V> {
     }
 
     /**
-     * Creates file and returns path to the file. The file is created in the directory {@link Storage#directory}
+     * Creates file and returns path to the file. The file is created in the directory {@link FileStorage#directory}
      *
      * @return path to newly created file
      * @throws IllegalAccessError if there was a error creating the file
@@ -230,7 +242,7 @@ class Storage<K, V> {
      *
      * @param <P> path of the file, were data is stored
      */
-    class OutputNode<P> {
+    final class OutputNode<P> {
         private final K key;
         private final V value;
         private final P path;

@@ -1,5 +1,10 @@
 package com.lxgolovin.cache;
 
+import com.lxgolovin.cache.algorithm.CacheAlgorithm;
+import com.lxgolovin.cache.algorithm.Lru;
+import com.lxgolovin.cache.algorithm.Mru;
+import com.lxgolovin.cache.type.MemoryCache;
+
 import java.util.*;
 
 /**
@@ -13,8 +18,8 @@ import java.util.*;
  * @see Cache
  * @see CacheAlgorithm
  * @see MemoryCache
- * @see LruAlgorithm
- * @see MruAlgorithm
+ * @see Lru
+ * @see Mru
  */
 public class CacheController<K, V> implements Cache<K, V> {
 
@@ -143,13 +148,11 @@ public class CacheController<K, V> implements Cache<K, V> {
             throw new IllegalArgumentException();
         }
 
-        // TODO: index can be implemented for searching
-        for (Cache<K, V> c: ccList) {
-            if (c.contains(key)) {
-                return c.get(key);
-            }
-        }
-        return null;
+        return ccList.stream()
+                .filter(c -> c.contains(key))
+                .findAny()
+                .map(c -> c.get(key))
+                .orElse(null);
     }
 
     /**
@@ -205,12 +208,11 @@ public class CacheController<K, V> implements Cache<K, V> {
             throw new IllegalArgumentException();
         }
 
-        for (Cache<K, V> c: ccList) {
-            if (c.contains(key)) {
-                return c.delete(key);
-            }
-        }
-        return null;
+        return ccList.stream()
+                .filter(c -> c.contains(key))
+                .findAny()
+                .map(c -> c.delete(key))
+                .orElse(null);
     }
 
     /**
@@ -225,12 +227,7 @@ public class CacheController<K, V> implements Cache<K, V> {
             throw new IllegalArgumentException();
         }
 
-        for (Cache<K, V> c: ccList) {
-            if (c.contains(key)) {
-                return true;
-            }
-        }
-        return false;
+        return ccList.stream().anyMatch(c -> c.contains(key));
     }
 
     /**
@@ -239,9 +236,7 @@ public class CacheController<K, V> implements Cache<K, V> {
      */
     @Override
     public void clear() {
-        for (Cache<K, V> c: ccList) {
-            c.clear();
-        }
+        ccList.forEach(Cache::clear);
     }
 
     /**

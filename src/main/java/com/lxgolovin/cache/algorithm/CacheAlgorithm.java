@@ -1,12 +1,12 @@
-package com.lxgolovin.cache;
+package com.lxgolovin.cache.algorithm;
 
 /**
  * Defined cache algorithm. Specifies main methods to add values to the queue and delete them
  * if needed. Has a possibility to clear all data and check the algorithm name
  * @param <E>
- * @see AbstractRuAlgorithm
- * @see LruAlgorithm
- * @see MruAlgorithm
+ * @see AbstractRu
+ * @see Lru
+ * @see Mru
  */
 public interface CacheAlgorithm<E> {
 

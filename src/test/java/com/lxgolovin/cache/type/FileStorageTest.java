@@ -1,5 +1,6 @@
-package com.lxgolovin.cache.file;
+package com.lxgolovin.cache.type;
 
+import com.lxgolovin.cache.type.FileStorage;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
@@ -9,7 +10,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * This class creates tests for the {@link Storage}
+ * This class creates tests for the {@link FileStorage}
  * The idea is to create a directory and store files inside. The files are serialized {@link java.util.Map.Entry}
  * Directory could be created as temporary or defined by user.
  *
@@ -17,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * Class gives a possibility to store data in files and get data back.
  */
-class StorageTest {
+class FileStorageTest {
 
     /**
      * Directory for testing
@@ -27,15 +28,15 @@ class StorageTest {
     /**
      * create object to work with files
      */
-    private final Storage<Integer, String> storage = new Storage<>(Paths.get(directoryPath));
+    private final FileStorage<Integer, String> fileStorage = new FileStorage<>(Paths.get(directoryPath));
 
     /**
      * Check creating temporary directory
      */
     @Test
     void createTempDirectory() {
-        Storage<Integer, Integer> storageTemp = new Storage<>();
-        assertTrue(storageTemp.getDirectory().toFile().exists());
+        FileStorage<Integer, Integer> fileStorageTemp = new FileStorage<>();
+        assertTrue(fileStorageTemp.getDirectory().toFile().exists());
     }
 
     /**
@@ -43,9 +44,9 @@ class StorageTest {
      */
     @Test
     void createUserDefinedDirectory() {
-        assertTrue(storage.getDirectory().toFile().exists());
-        assertTrue(storage.getDirectory().toFile().isDirectory());
-        assertEquals(Paths.get(directoryPath), storage.getDirectory());
+        assertTrue(fileStorage.getDirectory().toFile().exists());
+        assertTrue(fileStorage.getDirectory().toFile().isDirectory());
+        assertEquals(Paths.get(directoryPath), fileStorage.getDirectory());
     }
 
     /**
@@ -53,7 +54,7 @@ class StorageTest {
      */
     @Test
     void createTempFile() {
-        Path path = storage.createFile();
+        Path path = fileStorage.createFile();
 
         assertTrue(path.toFile().exists());
         assertTrue(path.toFile().isFile());
@@ -64,12 +65,11 @@ class StorageTest {
      */
     @Test
     void writeEntryToFile() {
-        Path path = storage.createFile();
-        Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(1, "String");
-        assertTrue(storage.writeToFile(entry, path));
+        Path path = fileStorage.createFile();
+        assertTrue(fileStorage.writeToFile(1, "String", path));
 
-        assertFalse(storage.writeToFile(entry, null));
-        assertFalse(storage.writeToFile(null, path));
+        assertFalse(fileStorage.writeToFile(1, "String", null));
+        assertFalse(fileStorage.writeToFile(null, path));
     }
 
     /**
@@ -77,12 +77,12 @@ class StorageTest {
      */
     @Test
     void readEntryFromFile() {
-        Path path = storage.createFile();
+        Path path = fileStorage.createFile();
         Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(2, "String");
-        assertTrue(storage.writeToFile(entry, path));
+        assertTrue(fileStorage.writeToFile(entry, path));
 
-        assertEquals(entry, storage.readFromFile(path));
-        assertThrows(IllegalArgumentException.class, () -> storage.readFromFile(null));
+        assertEquals(entry, fileStorage.readFromFile(path));
+        assertThrows(IllegalArgumentException.class, () -> fileStorage.readFromFile(null));
     }
 
     /**
@@ -90,14 +90,14 @@ class StorageTest {
      */
     @Test
     void readWrongEntryFromFile() {
-        Storage<String, String> storageWrong = new Storage<>(Paths.get(directoryPath));
+        FileStorage<String, String> fileStorageWrong = new FileStorage<>(Paths.get(directoryPath));
 
-        Path path = storageWrong.createFile();
+        Path path = fileStorageWrong.createFile();
         Map.Entry<String, String> entry = new AbstractMap.SimpleImmutableEntry<>("String", "String");
-        assertTrue(storageWrong.writeToFile(entry, path));
+        assertTrue(fileStorageWrong.writeToFile(entry, path));
 
-        assertEquals(entry, storageWrong.readFromFile(path));
-        assertThrows(IllegalArgumentException.class, () -> storageWrong.readFromFile(null));
+        assertEquals(entry, fileStorageWrong.readFromFile(path));
+        assertThrows(IllegalArgumentException.class, () -> fileStorageWrong.readFromFile(null));
     }
 
     /**
@@ -106,8 +106,8 @@ class StorageTest {
      */
      @Test
      void readAllFromDirectory() {
-        List<Storage<Integer, String>.OutputNode<Path>> list =
-                storage.readAllFromDirectory();
+        List<FileStorage<Integer, String>.OutputNode<Path>> list =
+                fileStorage.readAllFromDirectory();
         assertFalse(list.isEmpty());
      }
 
@@ -116,12 +116,12 @@ class StorageTest {
      */
     @Test
     void deleteFile() {
-        Path path = storage.createFile();
+        Path path = fileStorage.createFile();
         Map.Entry<Integer, String> entry = new AbstractMap.SimpleImmutableEntry<>(3, "String");
-        assertTrue(storage.writeToFile(entry, path));
+        assertTrue(fileStorage.writeToFile(entry, path));
 
-        assertTrue(storage.deleteFile(path));
-        assertFalse(storage.deleteFile(path));
+        assertTrue(fileStorage.deleteFile(path));
+        assertFalse(fileStorage.deleteFile(path));
         assertFalse(path.toFile().exists());
     }
 
@@ -130,8 +130,8 @@ class StorageTest {
      */
     @Test
     void WouldEmptyDirectory() {
-        Storage<Integer, String> storageDeleteDir =
-                new Storage<>(Paths.get(directoryPath), true);
-        assertTrue(storageDeleteDir.readAllFromDirectory().isEmpty());
+        FileStorage<Integer, String> fileStorageDeleteDir =
+                new FileStorage<>(Paths.get(directoryPath), true);
+        assertTrue(fileStorageDeleteDir.readAllFromDirectory().isEmpty());
     }
 }

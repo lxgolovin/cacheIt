@@ -1,4 +1,7 @@
-package com.lxgolovin.cache;
+package com.lxgolovin.cache.type;
+
+import com.lxgolovin.cache.Cache;
+import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 
 import java.util.AbstractMap;
 import java.util.HashMap;
@@ -36,7 +39,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     /**
      * Defines cache algorithm
      */
-    private final CacheAlgorithm<K> algo;
+    private final CacheAlgorithm<K> algorithm;
 
     /**
      * Creates memory cache with default size by defined algorithm
@@ -90,7 +93,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     private MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map, int size) {
         maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
-        algo = algorithm;
+        this.algorithm = algorithm;
         cacheMap = map;
         putAll(map);
     }
@@ -101,7 +104,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     private void putAll(Map<K, V> map) {
         if (!map.isEmpty()) {
-            map.keySet().forEach(algo::shift);
+            map.keySet().forEach(algorithm::shift);
         }
     }
 
@@ -128,7 +131,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
             poppedEntry = pop();
         }
 
-        algo.shift(key);
+        algorithm.shift(key);
         value = cacheMap.put(key, value);
         Map.Entry<K, V> replacedEntry = null;
         if (value != null) {
@@ -151,7 +154,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
             throw new IllegalArgumentException();
         }
         // Need to move key as it was accessed
-        algo.shift(key);
+        algorithm.shift(key);
         return cacheMap.get(key);
     }
 
@@ -178,7 +181,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      */
     @Override
     public Map.Entry<K, V> pop() {
-        K key = algo.pop();
+        K key = algorithm.pop();
         if (key == null) {
             return null;
         }
@@ -207,7 +210,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
             throw new IllegalArgumentException();
         }
 
-        algo.delete(key);
+        algorithm.delete(key);
         return cacheMap.remove(key);
     }
 
@@ -218,7 +221,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     @Override
     public void clear(){
         cacheMap.clear();
-        algo.clear();
+        algorithm.clear();
     }
 
     /**

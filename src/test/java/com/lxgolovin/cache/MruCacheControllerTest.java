@@ -1,5 +1,8 @@
 package com.lxgolovin.cache;
 
+import com.lxgolovin.cache.algorithm.CacheAlgorithm;
+import com.lxgolovin.cache.algorithm.Mru;
+import com.lxgolovin.cache.type.MemoryCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +25,7 @@ class MruCacheControllerTest {
     /**
      * Cache algorithm for level 0
      */
-    private final CacheAlgorithm<Integer> mruLev0 = new MruAlgorithm<>();
+    private final CacheAlgorithm<Integer> mruLev0 = new Mru<>();
 
     /**
      * Init CacheController with MRU algorithm with one level
@@ -44,7 +47,7 @@ class MruCacheControllerTest {
      */
     @Test
     void addRemoveCacheLevels() {
-        CacheAlgorithm<Integer> mruLev1 = new MruAlgorithm<>();
+        CacheAlgorithm<Integer> mruLev1 = new Mru<>();
         Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(mruLev1);
 
         assertEquals(2,cc.addLevel(cacheLevel1));
@@ -86,9 +89,9 @@ class MruCacheControllerTest {
     @Test
     void popFor3LevelCacheUntilRemoveAll() {
         // Stream starts with {0..7} cached in level 0: {0->0, 1->1, 2->4, 3->9, 7->49}
-        CacheAlgorithm<Integer> mruLev1 = new MruAlgorithm<>();
+        CacheAlgorithm<Integer> mruLev1 = new Mru<>();
         Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(mruLev1);
-        CacheAlgorithm<Integer> mruLev2 = new MruAlgorithm<>();
+        CacheAlgorithm<Integer> mruLev2 = new Mru<>();
         Cache<Integer, Integer> cacheLevel2 = new MemoryCache<>(mruLev2);
         assertEquals(2,cc.addLevel(cacheLevel1));
         assertEquals(3,cc.addLevel(cacheLevel2));
@@ -129,7 +132,7 @@ class MruCacheControllerTest {
      */
     @Test
     void deleteFor2LevelCacheUntilRemoveAll() {
-        CacheAlgorithm<Integer> mruLev1 = new MruAlgorithm<>();
+        CacheAlgorithm<Integer> mruLev1 = new Mru<>();
         Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(mruLev1);
 
         // Stream starts with {0..7} cached in level 0: {0->0, 1->1, 2->4, 3->9, 7->49}
@@ -169,7 +172,7 @@ class MruCacheControllerTest {
      */
     @Test
     void sizeAndMaxSize() {
-        CacheAlgorithm<Integer> mruLev1 = new MruAlgorithm<>();
+        CacheAlgorithm<Integer> mruLev1 = new Mru<>();
         Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(mruLev1);
 
         // Stream starts with {0..7} cached in level 0: {0->0, 1->1, 2->4, 3->9, 7->49}
@@ -214,7 +217,7 @@ class MruCacheControllerTest {
      */
     @Test
     void loadDataAdding2Levels() {
-        CacheAlgorithm<Integer> mruLev1 = new MruAlgorithm<>();
+        CacheAlgorithm<Integer> mruLev1 = new Mru<>();
         Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(mruLev1);
 
         // Stream starts with {0..7} cached in level 0: {0->0, 1->1, 2->4, 3->9, 7->49}
