@@ -1,13 +1,9 @@
 package com.lxgolovin.cache.type;
 
-
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.AbstractMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class creates directory and stores files inside.
@@ -106,11 +102,9 @@ final class FileStorage<K, V> {
         if (dir.exists() & dir.isDirectory() && deleteFilesInDirectory) {
             File[] directoryListing = dir.listFiles();
             if (directoryListing != null) {
-                for (File f : directoryListing) {
-                    if ((f != null) && f.isFile()) {
-                        f.delete();
-                    }
-                }
+            Arrays.stream(directoryListing)
+                        .filter(File::isFile)
+                        .forEach(File::delete);
             }
         }
 

@@ -148,13 +148,11 @@ public class CacheController<K, V> implements Cache<K, V> {
             throw new IllegalArgumentException();
         }
 
-        // TODO: index can be implemented for searching
-        for (Cache<K, V> c: ccList) {
-            if (c.contains(key)) {
-                return c.get(key);
-            }
-        }
-        return null;
+        return ccList.stream()
+                .filter(c -> c.contains(key))
+                .findAny()
+                .map(c -> c.get(key))
+                .orElse(null);
     }
 
     /**
@@ -210,12 +208,11 @@ public class CacheController<K, V> implements Cache<K, V> {
             throw new IllegalArgumentException();
         }
 
-        for (Cache<K, V> c: ccList) {
-            if (c.contains(key)) {
-                return c.delete(key);
-            }
-        }
-        return null;
+        return ccList.stream()
+                .filter(c -> c.contains(key))
+                .findAny()
+                .map(c -> c.delete(key))
+                .orElse(null);
     }
 
     /**
@@ -230,12 +227,7 @@ public class CacheController<K, V> implements Cache<K, V> {
             throw new IllegalArgumentException();
         }
 
-        for (Cache<K, V> c: ccList) {
-            if (c.contains(key)) {
-                return true;
-            }
-        }
-        return false;
+        return ccList.stream().anyMatch(c -> c.contains(key));
     }
 
     /**
@@ -244,9 +236,7 @@ public class CacheController<K, V> implements Cache<K, V> {
      */
     @Override
     public void clear() {
-        for (Cache<K, V> c: ccList) {
-            c.clear();
-        }
+        ccList.forEach(Cache::clear);
     }
 
     /**

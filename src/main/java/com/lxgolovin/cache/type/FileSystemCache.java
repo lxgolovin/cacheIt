@@ -139,9 +139,11 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
      */
     private void putAll(Map<K, V> map) {
         if (!map.isEmpty()) {
-            for (Map.Entry<K, V> entry : map.entrySet()) {
-                this.cache(entry.getKey(), entry.getValue());
-            }
+            map.entrySet().stream()
+                    .forEach(x -> this.cache(x.getKey(), x.getValue()));
+//            for (Map.Entry<K, V> entry : map.entrySet()) {
+//                this.cache(entry.getKey(), entry.getValue());
+//            }
         }
     }
 
