@@ -22,7 +22,7 @@ class Storage<K, V> {
     /**
      * If the directory is created temporary this prefix is used
      */
-    private final String TEMP_DIR_PREFIX = "fskeeper";
+    private final String TEMP_DIR_PREFIX = "fsStorage";
 
     /**
      * Defining the directory to keep all data
@@ -185,6 +185,7 @@ class Storage<K, V> {
         File dir = directory.toFile();
 
         if (dir.exists() && dir.isDirectory()) {
+
             File[] directoryListing = dir.listFiles();
             if (directoryListing == null) {
                 return null;
@@ -193,6 +194,7 @@ class Storage<K, V> {
             List<OutputNode<Path>> dataReadFromFiles = new LinkedList<>();
             for (File f : directoryListing) {
                 if ((f != null) && f.isFile()) {
+
                     Map.Entry<K, V> entry = this.readFromFile(f.toPath());
                     if (entry != null) {
                         OutputNode<Path> node = new OutputNode<>(entry.getKey(), entry.getValue(), f.toPath());
@@ -200,10 +202,11 @@ class Storage<K, V> {
                     }
                 }
             }
+            
             return dataReadFromFiles;
-        } else {
-            return null;
         }
+
+        return null;
     }
 
     /**
