@@ -103,9 +103,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      * @param map with key-values
      */
     private void putAll(Map<K, V> map) {
-        if (!map.isEmpty()) {
-            map.keySet().forEach(algorithm::shift);
-        }
+        map.keySet().forEach(algorithm::shift);
     }
 
     /**

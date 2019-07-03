@@ -73,6 +73,22 @@ class MemoryCacheTest {
      * Checks work of setting cache size manually
      */
     @Test
+    void constructorWithEmptyMap() {
+        CacheAlgorithm<Integer> algorithm = new Lru<>();
+//        Cache<Integer, String> cacheNull = new MemoryCache<>(algorithm,null);
+
+        Map<Integer, String> map = new TreeMap<>();
+
+        Cache<Integer, String> cache = new MemoryCache<>(algorithm,map);
+        assertNull(cache.cache(36, "36"));
+        assertEquals(1, cache.size());
+//        assertEquals(10, cache.sizeMax());
+    }
+
+    /**
+     * Checks work of setting cache size manually
+     */
+    @Test
     void constructorWithMaps() {
         CacheAlgorithm<Integer> algorithm = new Lru<>();
         Map<Integer, String> map = new TreeMap<>();

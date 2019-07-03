@@ -102,7 +102,7 @@ final class FileStorage<K, V> {
         if (dir.exists() & dir.isDirectory() && deleteFilesInDirectory) {
             File[] directoryListing = dir.listFiles();
             if (directoryListing != null) {
-            Arrays.stream(directoryListing)
+                Arrays.stream(directoryListing)
                         .filter(File::isFile)
                         .forEach(File::delete);
             }

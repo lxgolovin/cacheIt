@@ -6,6 +6,7 @@ import com.lxgolovin.cache.algorithm.Mru;
 import com.lxgolovin.cache.type.MemoryCache;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 /**
  * Cache controller creates several levels of cache with different algorithms to get
@@ -171,18 +172,16 @@ public class CacheController<K, V> implements Cache<K, V> {
             return null;
         }
 
-        Map.Entry<K, V> popped = null;
-        int startIndex = 0;
         // try to pop from first levels. One by one. If first is empty, try next
-        for (int i = 0; i < levels(); i++) {
-            if (ccList.get(i).size() > 0) {
-                // found first not empty level. key-value are popped and now try to insert into
-                // "startIndex" level
-                popped = ccList.get(i).pop();
-                startIndex = i+1;
-                break;
-            }
-        }
+        int startIndex = IntStream.range(0, levels())
+                .filter(i -> (ccList.get(i).size() > 0))
+                .findFirst()
+                .orElse(0);
+
+        // found first not empty level. key-value are popped and now try to insert into
+        // "startIndex" level
+        Map.Entry<K, V> popped = ccList.get(startIndex).pop();
+        startIndex++;
 
         if (popped == null) {
             return null;
@@ -244,11 +243,7 @@ public class CacheController<K, V> implements Cache<K, V> {
      */
     @Override
     public int size() {
-        int size = 0;
-        for (Cache<K, V> c: ccList) {
-            size = size + c.size();
-        }
-        return size;
+        return ccList.stream().mapToInt(Cache::size).sum();
     }
 
     /**
@@ -256,11 +251,7 @@ public class CacheController<K, V> implements Cache<K, V> {
      */
     @Override
     public int sizeMax() {
-        int size = 0;
-        for (Cache<K, V> c: ccList) {
-            size = size + c.sizeMax();
-        }
-        return size;
+        return ccList.stream().mapToInt(Cache::sizeMax).sum();
     }
 
     /**
@@ -270,11 +261,9 @@ public class CacheController<K, V> implements Cache<K, V> {
      *          else number of levels
      */
     private int getLevel(K key) {
-        for (int i = 0; i < levels(); i++) {
-            if (ccList.get(i).contains(key)) {
-                return i;
-            }
-        }
-        return levels();
+        return IntStream.range(0, levels())
+                .filter(i -> (ccList.get(i).contains(key)))
+                .findAny()
+                .orElse(levels());
     }
 }

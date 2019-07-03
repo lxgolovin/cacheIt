@@ -28,7 +28,6 @@ import java.util.Map;
 public class FileSystemCache<K extends Serializable, V extends Serializable> implements Cache<K, V>  {
     // TODO: much code similar to MemoryCache code. Possibly need AbstractCache class to combine
     // TODO: move file handling methods to separate class
-    // TODO: K, V should be serializable
 
     /**
      * Map-index of files to cache data
@@ -138,13 +137,7 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
      * @param map with key-values
      */
     private void putAll(Map<K, V> map) {
-        if (!map.isEmpty()) {
-            map.entrySet().stream()
-                    .forEach(x -> this.cache(x.getKey(), x.getValue()));
-//            for (Map.Entry<K, V> entry : map.entrySet()) {
-//                this.cache(entry.getKey(), entry.getValue());
-//            }
-        }
+        map.forEach(this::cache);
     }
 
     /**
@@ -153,12 +146,12 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
      * @param list with key-values-paths
      */
     private void putAll(List<FileStorage<K, V>.OutputNode<Path>> list) {
-        if (!list.isEmpty()) {
-            for (FileStorage<K, V>.OutputNode<Path> node : list) {
-                indexMap.put(node.getKey(), node.getPath());
-                cache(node.getKey(), node.getValue());
-            }
-        }
+        list.forEach(this::cache);
+    }
+
+    private void cache(FileStorage<K, V>.OutputNode<Path> n) {
+        indexMap.put(n.getKey(), n.getPath());
+        cache(n.getKey(), n.getValue());
     }
 
     /**
@@ -313,9 +306,7 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
     public void clear(){
         indexMap.clear();
         algo.clear();
-        for (Path file: indexMap.values()) {
-            fileStorage.deleteFile(file);
-        }
+        indexMap.values().forEach(fileStorage::deleteFile);
     }
 
     /**
