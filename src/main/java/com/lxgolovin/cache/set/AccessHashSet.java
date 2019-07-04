@@ -68,13 +68,17 @@ public class AccessHashSet<E> {
      * If this set already contains the element, the call rearranges
      * the set in access order and returns false
      *
-     * @param elem element to be added to this set
+     * @param elem element to be added to this set. elem cannot be null.
      * @return <tt>true</tt> if this set did already contain the specified
-     * element
+     *          element. Return false if elem is null
      */
     public boolean put(E elem) {
+        if (elem == null) {
+            return false;
+        }
+
+        // if element is present, just poke the element and push to tail
         if (map.containsKey(elem)) {
-            // if element is present, just poke the element and push to tail
             return poke(elem);
         }
 
@@ -128,8 +132,13 @@ public class AccessHashSet<E> {
      *
      * @param elem element to be removed from this set, if present
      * @return <tt>true</tt> if the set contained the specified element
+     * @throws IllegalArgumentException if elem is null
      */
     public boolean remove(E elem) {
+        if (elem == null) {
+            return false;
+        }
+
         // the element moved to tail if it is present
         if (poke(elem)) {
             E beforeTail = map.get(elem).prevElem;
@@ -260,9 +269,9 @@ public class AccessHashSet<E> {
         Node<E> pokedNode = map.get(elem);
 
         Node<E> nextNode = map.get(pokedNode.nextElem);
-        nextNode.prevElem = pokedNode.prevElem;
-
         Node<E> prevNode = map.get(pokedNode.prevElem);
+
+        nextNode.prevElem = pokedNode.prevElem;
         prevNode.nextElem = pokedNode.nextElem;
     }
 

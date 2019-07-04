@@ -4,11 +4,11 @@ import com.lxgolovin.cache.Cache;
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.algorithm.Lru;
 import com.lxgolovin.cache.algorithm.Mru;
-import com.lxgolovin.cache.type.MemoryCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.AbstractMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.IntStream;
@@ -75,14 +75,12 @@ class MemoryCacheTest {
     @Test
     void constructorWithEmptyMap() {
         CacheAlgorithm<Integer> algorithm = new Lru<>();
-//        Cache<Integer, String> cacheNull = new MemoryCache<>(algorithm,null);
-
         Map<Integer, String> map = new TreeMap<>();
 
         Cache<Integer, String> cache = new MemoryCache<>(algorithm,map);
         assertNull(cache.cache(36, "36"));
         assertEquals(1, cache.size());
-//        assertEquals(10, cache.sizeMax());
+        assertEquals(5, cache.sizeMax());
     }
 
     /**
@@ -223,5 +221,22 @@ class MemoryCacheTest {
         assertEquals(0, lruCache.size());
         assertNull(lruCache.delete(5));
         assertNull(lruCache.get(5));
+    }
+
+    /**
+     * Testing behaviour is null is on input
+     */
+    @Test
+    void nullInputs() {
+        CacheAlgorithm<Integer> algorithm = new Lru<>();
+        assertThrows(IllegalArgumentException.class, () -> new MemoryCache<>(null));
+        assertThrows(IllegalArgumentException.class, () -> new MemoryCache<>(algorithm,null));
+        assertThrows(IllegalArgumentException.class, () -> new MemoryCache<>(algorithm,null, null));
+        assertThrows(IllegalArgumentException.class, () -> new MemoryCache<>(null,new HashMap<>()));
+
+        Cache<Integer, Integer> memoryCache =  new MemoryCache<>(algorithm);
+        assertThrows(IllegalArgumentException.class, () -> memoryCache.delete(null));
+        assertThrows(IllegalArgumentException.class, () -> memoryCache.get(null));
+        assertFalse(memoryCache.contains(null));
     }
 }

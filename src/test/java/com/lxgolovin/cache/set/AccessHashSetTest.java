@@ -39,6 +39,7 @@ class AccessHashSetTest {
         assertTrue(set.put(2));
         // Element 5 is not present, should be false
         assertFalse(set.put(5));
+        assertFalse(set.put(null));
     }
 
     /**

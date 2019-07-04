@@ -1,5 +1,6 @@
 package com.lxgolovin.cache.type;
 
+import com.lxgolovin.cache.AbstractCache;
 import com.lxgolovin.cache.Cache;
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 
@@ -22,24 +23,12 @@ import java.util.Map;
  * @see Cache
  * @see CacheAlgorithm
  */
-public class MemoryCache<K, V> implements Cache<K, V>  {
+public class MemoryCache<K, V> extends AbstractCache<K, V> implements Cache<K, V> {
 
     /**
      * Map to keep data
      */
     private final Map<K, V> cacheMap;
-
-    /**
-     * maximum possible size for the cache. Minimum value is greater then 1.
-     * If you try to use less then 2, {@link Cache#DEFAULT_CACHE_SIZE}
-     * will be used as a size
-     */
-    private final int maxSize;
-
-    /**
-     * Defines cache algorithm
-     */
-    private final CacheAlgorithm<K> algorithm;
 
     /**
      * Creates memory cache with default size by defined algorithm
@@ -58,7 +47,7 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      * @param map incoming with keys-values of empty
      */
     public MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map) {
-        this(algorithm, map, map.size());
+        this(algorithm, map, DEFAULT_CACHE_SIZE);
     }
 
     /**
@@ -92,7 +81,16 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
      * @param size defining the size for the mapping
      */
     private MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map, int size) {
-        maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
+        if ((algorithm == null) | (map == null)) {
+            throw new IllegalArgumentException();
+        }
+
+        if (!map.isEmpty()) {
+            maxSize = map.size();
+        } else {
+            maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
+        }
+        
         this.algorithm = algorithm;
         cacheMap = map;
         putAll(map);
@@ -159,36 +157,11 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     /**
      * Checks if the key is present in cache
      * @param key to check in cache
-     * @return true is element found, else false
-     * @throws IllegalArgumentException if key is null
+     * @return true is element found, else false. Returns false if key is null
      */
     @Override
     public boolean contains(K key) {
-        if (key == null) {
-            throw new IllegalArgumentException();
-        }
-
-        return cacheMap.containsKey(key);
-    }
-
-    /**
-     * Removes the mapping for a key from the cache by used algorithm.
-     * To delete {@link Cache#delete(Object)} is used
-     * @return popped out entry, returns null entry if the element was not
-     *          found in algorithm queue (empty)
-     */
-    @Override
-    public Map.Entry<K, V> pop() {
-        K key = algorithm.pop();
-        if (key == null) {
-            return null;
-        }
-
-        Map.Entry<K, V> entry;
-        V value = delete(key);
-        entry = new AbstractMap.SimpleImmutableEntry<>(key, value);
-
-        return entry;
+        return ((key != null) && cacheMap.containsKey(key));
     }
 
     /**
@@ -228,13 +201,5 @@ public class MemoryCache<K, V> implements Cache<K, V>  {
     @Override
     public int size() {
         return cacheMap.size();
-    }
-
-    /**
-     * @return maximum possible size of the cache
-     */
-    @Override
-    public int sizeMax() {
-        return maxSize;
     }
 }

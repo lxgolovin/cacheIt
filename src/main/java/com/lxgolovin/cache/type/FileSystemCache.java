@@ -1,11 +1,11 @@
 package com.lxgolovin.cache.type;
 
+import com.lxgolovin.cache.AbstractCache;
 import com.lxgolovin.cache.Cache;
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 
 import java.io.Serializable;
 import java.nio.file.Path;
-import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +25,8 @@ import java.util.Map;
  * @see Cache
  * @see CacheAlgorithm
  */
-public class FileSystemCache<K extends Serializable, V extends Serializable> implements Cache<K, V>  {
+public class FileSystemCache<K extends Serializable, V extends Serializable>
+        extends AbstractCache<K, V> implements Cache<K, V>  {
     // TODO: much code similar to MemoryCache code. Possibly need AbstractCache class to combine
     // TODO: move file handling methods to separate class
 
@@ -38,18 +39,6 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
      * Temporary directory for the cache files
      */
     private final FileStorage<K, V> fileStorage;
-
-    /**
-     * maximum possible size for the cache. Minimum value is greater then 1.
-     * If you try to use less then 2, {@link Cache#DEFAULT_CACHE_SIZE}
-     * will be used as a size
-     */
-    private final int maxSize;
-
-    /**
-     * Defines cache algorithm
-     */
-    private final CacheAlgorithm<K> algo;
 
     /**
      * Creates file system cache with default size by defined algorithm
@@ -104,7 +93,7 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
      */
     private FileSystemCache(CacheAlgorithm<K> algorithm, Map<K, V> map, int size) {
         maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
-        algo = algorithm;
+        this.algorithm = algorithm;
 
         fileStorage = new FileStorage<>();
         indexMap = new HashMap<>();
@@ -119,7 +108,7 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
      * @throws IllegalAccessError if cannot create temporary directory
      */
     public FileSystemCache(CacheAlgorithm<K> algorithm, Path path) {
-        algo = algorithm;
+        this.algorithm = algorithm;
         indexMap = new HashMap<>();
 
         fileStorage = new FileStorage<>(path);
@@ -177,18 +166,42 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
             poppedEntry = pop();
         }
 
+
+        // shift
+        // get from index
+        // readFromFile old value
+        // store new value
+        // return popped-replaced
+/*
+        Map.Entry<K, V> replacedEntry = null;
+        Path filePath = null;
+        if (contains(key)) {
+            filePath = indexMap.get(key);
+            replacedEntry = fileStorage.readFromFile(filePath);
+        }
+
+        if (needToStoreNewcomer(replacedEntry, value)) {
+//            filePath = fileStorage.add(key, value, filePath).orElse(null);
+            fileStorage.writeToFile(key, value, filePath);
+            indexMap.put(key, filePath);
+        }
+
+*/
+
+
+
         Map.Entry<K, V> replacedEntry = null;
         Path filePath;
-        if (algo.shift(key)) {
+        if (algorithm.shift(key)) {
             // need to get file, read old value
             filePath = indexMap.get(key);
             replacedEntry = fileStorage.readFromFile(filePath);
-
         } else {
             filePath = fileStorage.createFile();
         }
 
         if (needToStoreNewcomer(replacedEntry, value)) {
+//            filePath = fileStorage.add(key, value, filePath).orElse(null);
             fileStorage.writeToFile(key, value, filePath);
             indexMap.put(key, filePath);
         }
@@ -222,49 +235,25 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
         }
 
         // Need to move key as it was accessed. If false, return null
-        if (!algo.shift(key)) {
+        boolean keyIsPresent = algorithm.shift(key);
+        if (!keyIsPresent) {
             return null;
         }
 
         Path path = indexMap.get(key);
         Map.Entry<K, V> entry = fileStorage.readFromFile(path);
 
-        return (entry != null) ? entry.getValue() : null;
+        return entry.getValue();
     }
 
     /**
      * Checks if the key is present in cache
      * @param key to check in cache
-     * @return true is element found, else false
-     * @throws IllegalArgumentException if key is null
+     * @return true is element found, else false. Returns false if key is null
      */
     @Override
     public boolean contains(K key) {
-        if (key == null) {
-            throw new IllegalArgumentException();
-        }
-
-        return indexMap.containsKey(key);
-    }
-
-    /**
-     * Removes the mapping for a key from the cache by used algorithm.
-     * To delete {@link Cache#delete(Object)} is used
-     * @return popped out entry, returns null entry if the element was not
-     *          found in algorithm queue (empty)
-     */
-    @Override
-    public Map.Entry<K, V> pop() {
-        K key = algo.pop();
-        if (key == null) {
-            return null;
-        }
-
-        Map.Entry<K, V> entry;
-        V value = delete(key);
-        entry = new AbstractMap.SimpleImmutableEntry<>(key, value);
-
-        return entry;
+        return ((key != null) && indexMap.containsKey(key));
     }
 
     /**
@@ -289,12 +278,12 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
             return null;
         }
 
-        algo.delete(key);
+        algorithm.delete(key);
         Path path = indexMap.remove(key);
-        Map.Entry<K, V> entry = fileStorage.readFromFile(path);
+        Map.Entry<K, V> deletedEntry = fileStorage.readFromFile(path);
         fileStorage.deleteFile(path);
 
-        return (entry != null) ? entry.getValue() : null;
+        return (deletedEntry != null) ? deletedEntry.getValue() : null;
     }
 
     /**
@@ -305,7 +294,7 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
     @Override
     public void clear(){
         indexMap.clear();
-        algo.clear();
+        algorithm.clear();
         indexMap.values().forEach(fileStorage::deleteFile);
     }
 
@@ -315,13 +304,5 @@ public class FileSystemCache<K extends Serializable, V extends Serializable> imp
     @Override
     public int size() {
         return indexMap.size();
-    }
-
-    /**
-     * @return maximum possible size of the cache
-     */
-    @Override
-    public int sizeMax() {
-        return maxSize;
     }
 }

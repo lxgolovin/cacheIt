@@ -144,6 +144,11 @@ final class FileStorage<K, V> {
         return  this.writeToFile(newcomer, path);
     }
 
+    Optional<Path> add(K key, V value, Path path) {
+        Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
+        return this.add(newcomer, path);
+    }
+
     /**
      * Writes entry to the file by path. Returns false if not success, else true.
      *
@@ -166,6 +171,25 @@ final class FileStorage<K, V> {
 
         return true;
     }
+    Optional<Path> add(Map.Entry<K, V> entry, Path path) {
+        if (entry == null) {
+            return Optional.empty();
+        }
+
+        if (path == null) {
+            path = createFile();
+        }
+
+        try (OutputStream outputStream = Files.newOutputStream(path);
+             ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream)) {
+
+            objectOutputStream.writeObject(entry);
+            objectOutputStream.flush();
+            return Optional.of(path);
+        } catch (IOException e) {
+            return Optional.empty();
+        }
+    }
 
     /**
      * Gets entry from the specified path.
@@ -184,7 +208,7 @@ final class FileStorage<K, V> {
                 ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
             return (Map.Entry<K, V>) objectInputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            return null;
+            return new AbstractMap.SimpleImmutableEntry<>(null, null);
         }
     }
 
