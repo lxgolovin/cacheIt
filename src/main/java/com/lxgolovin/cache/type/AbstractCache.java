@@ -1,5 +1,6 @@
-package com.lxgolovin.cache;
+package com.lxgolovin.cache.type;
 
+import com.lxgolovin.cache.Cache;
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 
 import java.util.AbstractMap;

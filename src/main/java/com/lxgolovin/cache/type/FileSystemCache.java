@@ -1,6 +1,5 @@
 package com.lxgolovin.cache.type;
 
-import com.lxgolovin.cache.AbstractCache;
 import com.lxgolovin.cache.Cache;
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 
@@ -27,7 +26,7 @@ import java.util.Map;
  */
 public class FileSystemCache<K extends Serializable, V extends Serializable>
         extends AbstractCache<K, V> implements Cache<K, V>  {
-    // TODO: much code similar to MemoryCache code. Possibly need AbstractCache class to combine
+    // TODO: much code similar to SwCache code. Possibly need AbstractCache class to combine
     // TODO: move file handling methods to separate class
 
     /**

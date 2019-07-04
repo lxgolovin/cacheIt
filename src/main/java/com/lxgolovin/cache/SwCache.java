@@ -1,6 +1,5 @@
-package com.lxgolovin.cache.type;
+package com.lxgolovin.cache;
 
-import com.lxgolovin.cache.Cache;
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.storage.FileSystem;
 import com.lxgolovin.cache.storage.Memory;
@@ -11,12 +10,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Implementation of interface {@link Cache}. This class creates realization of memory cache.
- * The implementation is done using {@link HashMap}, where data is stored.
- * Values are stored in memory and removed or kept using different algorithms. As algorithms
+ * Implementation of interface {@link Cache}. This class creates realization of cache.
+ * The default implementation is done using {@link Storage}, where data is stored.
+ * Values are stored in storage and removed or kept using different algorithms. As algorithms
  * interface {@link CacheAlgorithm} is used. Also default size is set for the cache, but the
  * size could be set by user. Note that size should by greater then 1, as cache with size 1 has no
  * sense.
+ * By default the size of the cache is {@link Cache#DEFAULT_CACHE_SIZE} and the implementation is memory
+ * cache {@link Memory}. But these parameters could be defined during initialization phase
  *
  * Here got methods to cache, delete, pop data by key. Has a possibility to clean data,
  * get maximum available size to current size.
@@ -24,8 +25,12 @@ import java.util.Map;
  * @param <V>
  * @see Cache
  * @see CacheAlgorithm
+ * @see Storage
+ * @see Memory
+ * @see FileSystem
  */
-public class MemoryCache<K, V> implements Cache<K, V> {
+public class SwCache<K, V> implements Cache<K, V> {
+    
     /**
      * maximum possible size for the cache. Minimum value is greater then 1.
      * If you try to use less then 2, {@link Cache#DEFAULT_CACHE_SIZE}
@@ -39,17 +44,20 @@ public class MemoryCache<K, V> implements Cache<K, V> {
     private final CacheAlgorithm<K> algorithm;
 
     /**
-     * Map to keep data
+     * Storage to keep key-values
      */
-//    private final Map<K, V> cacheMap;
-    private final Storage<K, V> cacheMap;
+    private final Storage<K, V> storage;
 
     /**
      * Creates memory cache with default size by defined algorithm
      * @param algorithm specifies algorithm type that is used by the cache
      */
-    public MemoryCache(CacheAlgorithm<K> algorithm) {
-        this(algorithm, DEFAULT_CACHE_SIZE);
+    public SwCache(CacheAlgorithm<K> algorithm) {
+        this(algorithm, new Memory<>(), null, Cache.DEFAULT_CACHE_SIZE);
+    }
+
+    public SwCache(CacheAlgorithm<K> algorithm, Storage<K, V> storage) {
+        this(algorithm, storage, new HashMap<>(), Cache.DEFAULT_CACHE_SIZE);
     }
 
     /**
@@ -60,8 +68,8 @@ public class MemoryCache<K, V> implements Cache<K, V> {
      * @param algorithm specifies algorithm type that is used by the cache
      * @param map incoming with keys-values of empty
      */
-    public MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map) {
-        this(algorithm, map, DEFAULT_CACHE_SIZE);
+    public SwCache(CacheAlgorithm<K> algorithm, Map<K, V> map) {
+        this(algorithm, null, map, Cache.DEFAULT_CACHE_SIZE);
     }
 
     /**
@@ -71,8 +79,8 @@ public class MemoryCache<K, V> implements Cache<K, V> {
      * @param key specifies key for the entry
      * @param value defined value inside entry
      */
-    public MemoryCache(CacheAlgorithm<K> algorithm, K key, V value) {
-        this(algorithm, DEFAULT_CACHE_SIZE);
+    public SwCache(CacheAlgorithm<K> algorithm, K key, V value) {
+        this(algorithm, null, new HashMap<>(), Cache.DEFAULT_CACHE_SIZE);
         cache(key, value);
     }
 
@@ -82,8 +90,8 @@ public class MemoryCache<K, V> implements Cache<K, V> {
      * {@link Cache#DEFAULT_CACHE_SIZE} will be used as a size
      * @param algorithm specifies algorithm type that is used by the cache
      */
-    public MemoryCache(CacheAlgorithm<K> algorithm, int size) {
-        this(algorithm, new HashMap<>(), size);
+    public SwCache(CacheAlgorithm<K> algorithm, int size) {
+        this(algorithm, null, new HashMap<>(), size);
     }
 
     /**
@@ -94,10 +102,13 @@ public class MemoryCache<K, V> implements Cache<K, V> {
      * @param map incoming with keys-values of empty
      * @param size defining the size for the mapping
      */
-    private MemoryCache(CacheAlgorithm<K> algorithm, Map<K, V> map, int size) {
+    private SwCache(CacheAlgorithm<K> algorithm, Storage<K, V> storage, Map<K, V> map, int size) {
         if ((algorithm == null) | (map == null)) {
             throw new IllegalArgumentException();
         }
+
+        this.algorithm = algorithm;
+        this.storage = (storage == null) ? new Memory<>() : storage;
 
         if (!map.isEmpty()) {
             maxSize = map.size();
@@ -105,11 +116,7 @@ public class MemoryCache<K, V> implements Cache<K, V> {
             maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
         }
         
-        this.algorithm = algorithm;
-//        cacheMap = map;
-//        cacheMap = new Memory<>(map);
-        cacheMap = new FileSystem<>(map);
-//        map.forEach(cacheMap::put);
+        map.forEach((k, v) -> storage.put(k, v));
         putAll(map);
     }
 
@@ -145,7 +152,7 @@ public class MemoryCache<K, V> implements Cache<K, V> {
         }
 
         algorithm.shift(key);
-        value = cacheMap.put(key, value);
+        value = storage.put(key, value);
         Map.Entry<K, V> replacedEntry = null;
         if (value != null) {
             replacedEntry = new AbstractMap.SimpleImmutableEntry<>(key, value);
@@ -168,7 +175,7 @@ public class MemoryCache<K, V> implements Cache<K, V> {
         }
         // Need to move key as it was accessed
         algorithm.shift(key);
-        return cacheMap.get(key);
+        return storage.get(key);
     }
 
     /**
@@ -178,7 +185,7 @@ public class MemoryCache<K, V> implements Cache<K, V> {
      */
     @Override
     public boolean contains(K key) {
-        return ((key != null) && cacheMap.containsKey(key));
+        return ((key != null) && storage.containsKey(key));
     }
 
     /**
@@ -199,7 +206,7 @@ public class MemoryCache<K, V> implements Cache<K, V> {
         }
 
         algorithm.delete(key);
-        return cacheMap.remove(key);
+        return storage.remove(key);
     }
 
     /**
@@ -208,7 +215,7 @@ public class MemoryCache<K, V> implements Cache<K, V> {
      */
     @Override
     public void clear(){
-        cacheMap.clear();
+        storage.clear();
         algorithm.clear();
     }
 
@@ -245,6 +252,6 @@ public class MemoryCache<K, V> implements Cache<K, V> {
      */
     @Override
     public int size() {
-        return cacheMap.size();
+        return storage.size();
     }
 }

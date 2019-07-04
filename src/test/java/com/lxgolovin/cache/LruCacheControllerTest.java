@@ -2,7 +2,6 @@ package com.lxgolovin.cache;
 
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.algorithm.Lru;
-import com.lxgolovin.cache.type.MemoryCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,7 +35,7 @@ class LruCacheControllerTest {
     void setUp() {
         int minRange = 0;
         int maxRange = 7;
-        Cache<Integer, Integer> cacheLevel0 = new MemoryCache<>(lruLev0);
+        Cache<Integer, Integer> cacheLevel0 = new SwCache<>(lruLev0);
         cc = new CacheController<>(cacheLevel0);
 
         IntStream.rangeClosed(minRange,maxRange).forEach(x -> cc.cache(x,x*x));
@@ -48,7 +47,7 @@ class LruCacheControllerTest {
     @Test
     void addRemoveCacheLevels() {
         CacheAlgorithm<Integer> lruLev1 = new Lru<>();
-        Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(lruLev1);
+        Cache<Integer, Integer> cacheLevel1 = new SwCache<>(lruLev1);
 
         assertEquals(2,cc.addLevel(cacheLevel1));
         assertEquals(1, cc.removeLevel(1));
@@ -89,9 +88,9 @@ class LruCacheControllerTest {
     @Test
     void popFor3LevelCacheUntilRemoveAll() {
         CacheAlgorithm<Integer> lruLev1 = new Lru<>();
-        Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(lruLev1);
+        Cache<Integer, Integer> cacheLevel1 = new SwCache<>(lruLev1);
         CacheAlgorithm<Integer> lruLev2 = new Lru<>();
-        Cache<Integer, Integer> cacheLevel2 = new MemoryCache<>(lruLev2);
+        Cache<Integer, Integer> cacheLevel2 = new SwCache<>(lruLev2);
         assertEquals(2,cc.addLevel(cacheLevel1));
         assertEquals(3,cc.addLevel(cacheLevel2));
 
@@ -132,7 +131,7 @@ class LruCacheControllerTest {
     @Test
     void deleteFor2LevelCacheUntilRemoveAll() {
         CacheAlgorithm<Integer> lruLev1 = new Lru<>();
-        Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(lruLev1);
+        Cache<Integer, Integer> cacheLevel1 = new SwCache<>(lruLev1);
 
         // Stream starts with {0..7} cached in level 0: {3,4,5,6,7}
         // add level. current size not changed, max size doubled
@@ -172,7 +171,7 @@ class LruCacheControllerTest {
     @Test
     void sizeAndMaxSize() {
         CacheAlgorithm<Integer> lruLev1 = new Lru<>();
-        Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(lruLev1);
+        Cache<Integer, Integer> cacheLevel1 = new SwCache<>(lruLev1);
 
         // Stream starts with {0..7} cached in level 0: {3,4,5,6,7}
         assertEquals(5,cc.size());
@@ -217,7 +216,7 @@ class LruCacheControllerTest {
     @Test
     void loadDataAdding2Levels() {
         CacheAlgorithm<Integer> lruLev1 = new Lru<>();
-        Cache<Integer, Integer> cacheLevel1 = new MemoryCache<>(lruLev1);
+        Cache<Integer, Integer> cacheLevel1 = new SwCache<>(lruLev1);
 
         // Stream starts with {0..7} cached in level 0: {3,4,5,6,7}
         assertEquals(49, cc.cache(7,7).getValue());

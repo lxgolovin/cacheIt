@@ -14,14 +14,6 @@ public class Memory<K, V> implements Storage<K, V>{
         cacheMap = new HashMap<>();
     }
 
-    public Memory(Map<K, V> map) {
-        if (map == null) {
-            throw new IllegalArgumentException();
-        }
-
-        cacheMap = map;
-    }
-
     public V put(K key, V value) {
         return cacheMap.put(key, value);
     }

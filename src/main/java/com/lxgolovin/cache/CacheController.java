@@ -3,7 +3,6 @@ package com.lxgolovin.cache;
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.algorithm.Lru;
 import com.lxgolovin.cache.algorithm.Mru;
-import com.lxgolovin.cache.type.MemoryCache;
 
 import java.util.*;
 import java.util.stream.IntStream;
@@ -12,13 +11,13 @@ import java.util.stream.IntStream;
  * Cache controller creates several levels of cache with different algorithms to get
  * possibility to keep data. Cache controller implements {@link Cache} and is done as a
  * list of cached levels
- * As levels different types of caches could be used, e.g. {@link MemoryCache}
+ * As levels different types of caches could be used, e.g. {@link SwCache}
  * As algorithms {@link CacheAlgorithm}
  * @param <K> to keep keys
  * @param <V> to keep values
  * @see Cache
  * @see CacheAlgorithm
- * @see MemoryCache
+ * @see SwCache
  * @see Lru
  * @see Mru
  */

@@ -3,13 +3,22 @@ package com.lxgolovin.cache.storage;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 public class FileSystem<K, V> implements Storage<K, V> {
+
+
+    /**
+     * If the directory is created temporary this prefix is used
+     */
+    private static final String TEMP_DIR_PREFIX = "fsStorage";
+
+    /**
+     *
+     */
+    private static final boolean EMPTY_STORAGE_DEFAULT = false;
 
     /**
      * Map to keep data
@@ -17,34 +26,40 @@ public class FileSystem<K, V> implements Storage<K, V> {
     private final Map<K, Path> indexMap;
 
     /**
-     * If the directory is created temporary this prefix is used
-     */
-    private final String TEMP_DIR_PREFIX = "fsStorage";
-
-    /**
      * Defining the directory to keep all data
      */
     private Path directory;
 
     public FileSystem() {
-        indexMap = new HashMap<>();
+        this(null);
     }
 
-    public FileSystem(Map<K, V> map) {
-        if (map == null) {
-            throw new IllegalArgumentException();
+    public FileSystem(Path path) {
+        this(path, FileSystem.EMPTY_STORAGE_DEFAULT);
+    }
+
+    public FileSystem(Path path, boolean emptyStorage) {
+        indexMap = new HashMap<>();
+
+        if (path == null) {
+            createTempDirectory();
+        } else {
+            createDirectory(path);
         }
 
-        indexMap = new HashMap<>();
-        createDirectory(Paths.get("./TEMP"), true);
-        map.forEach(this::put);
-//            cacheMap = map;
+        if (emptyStorage) {
+            emptyDir();
+        }
     }
 
     public V put(K key, V value) {
+        if ((key == null) || (value == null)) {
+            throw new IllegalAccessError();
+        }
 
         Path filePath = null;
         V oldValue = null;
+
         if (containsKey(key)) {
             filePath = indexMap.get(key);
             oldValue = readFromFile(filePath);
@@ -58,15 +73,17 @@ public class FileSystem<K, V> implements Storage<K, V> {
     }
 
     public V get(K key) {
+        if (key == null) {
+            throw new IllegalAccessError();
+        }
+
         // Need to move key as it was accessed. If false, return null
         if (!containsKey(key)) {
             return null;
         }
 
         Path path = indexMap.get(key);
-        V value = readFromFile(path);
-
-        return value;
+        return readFromFile(path);
     }
 
     public boolean containsKey(K key) {
@@ -94,24 +111,12 @@ public class FileSystem<K, V> implements Storage<K, V> {
         return indexMap.size();
     }
 
-
-
-
-    private boolean writeToFile(K key, V value, Path path) {
-        if ((key == null) | (value == null)) {
-            return false;
-        }
-
+    private void writeToFile(K key, V value, Path path) {
         Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
-        return  this.writeToFile(newcomer, path);
+        this.writeToFile(newcomer, path);
     }
 
-
-    private boolean writeToFile(Map.Entry<K, V> entry, Path path) {
-        if (entry == null) {
-            return false;
-        }
-
+    private void writeToFile(Map.Entry<K, V> entry, Path path) {
         Path filePath = (path == null) ? createFile() : path;
 
         try (OutputStream outputStream = Files.newOutputStream(filePath);
@@ -119,15 +124,13 @@ public class FileSystem<K, V> implements Storage<K, V> {
 
             objectOutputStream.writeObject(entry);
             objectOutputStream.flush();
+            indexMap.put(entry.getKey(), filePath);
         } catch (IOException e) {
-            return false;
+            // TODO: sing a song
         }
-
-        indexMap.put(entry.getKey(), filePath);
-        return true;
     }
 
-    Path createFile() {
+    private Path createFile() {
         try {
             return Files.createTempFile(directory, null, null);
         } catch (IOException e) {
@@ -162,13 +165,15 @@ public class FileSystem<K, V> implements Storage<K, V> {
      * Deletes file by path
      * @param path to file
      */
-    private boolean deleteFile(Path path) {
-        return ((path != null) && path.toFile().delete());
+    private void deleteFile(Path path) {
+        if (path != null) {
+            boolean fileDeleted = path.toFile().delete();
+            System.out.println(fileDeleted); // TODO: create a logger
+        }
     }
 
     private boolean needToStoreNewcomer(V oldValue, V newValue) {
         return ((oldValue == null) || (!oldValue.equals(newValue)));
-//        return ((oldValue != null) && (!oldValue.equals(newValue)));
     }
 
 
@@ -181,21 +186,12 @@ public class FileSystem<K, V> implements Storage<K, V> {
         }
     }
 
-    private void createDirectory(Path path, boolean deleteFilesInDirectory) {
+    private void createDirectory(Path path) {
         File dir = new File(path.toString());
 
         // if path is present and not a directory
         if (dir.exists() & !dir.isDirectory()) {
             throw new IllegalAccessError();
-        }
-
-        if (dir.exists() & dir.isDirectory() && deleteFilesInDirectory) {
-            File[] directoryListing = dir.listFiles();
-            if (directoryListing != null) {
-                Arrays.stream(directoryListing)
-                        .filter(File::isFile)
-                        .forEach(File::delete);
-            }
         }
 
         // create the directory if doesn't exist
@@ -206,6 +202,19 @@ public class FileSystem<K, V> implements Storage<K, V> {
             }
         }
 
+
+
+
         directory = dir.toPath();
+    }
+
+    private void emptyDir() {
+        try {
+            Files.walk(directory)
+                    .filter(Files::isRegularFile)
+                    .forEach(this::deleteFile);
+        } catch (IOException e) {
+            throw new IllegalAccessError();
+        }
     }
 }
