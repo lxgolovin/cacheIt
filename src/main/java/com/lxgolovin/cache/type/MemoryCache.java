@@ -1,8 +1,10 @@
 package com.lxgolovin.cache.type;
 
-import com.lxgolovin.cache.AbstractCache;
 import com.lxgolovin.cache.Cache;
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
+import com.lxgolovin.cache.storage.FileSystem;
+import com.lxgolovin.cache.storage.Memory;
+import com.lxgolovin.cache.storage.Storage;
 
 import java.util.AbstractMap;
 import java.util.HashMap;
@@ -23,12 +25,24 @@ import java.util.Map;
  * @see Cache
  * @see CacheAlgorithm
  */
-public class MemoryCache<K, V> extends AbstractCache<K, V> implements Cache<K, V> {
+public class MemoryCache<K, V> implements Cache<K, V> {
+    /**
+     * maximum possible size for the cache. Minimum value is greater then 1.
+     * If you try to use less then 2, {@link Cache#DEFAULT_CACHE_SIZE}
+     * will be used as a size
+     */
+    private final int maxSize;
+
+    /**
+     * Defines cache algorithm
+     */
+    private final CacheAlgorithm<K> algorithm;
 
     /**
      * Map to keep data
      */
-    private final Map<K, V> cacheMap;
+//    private final Map<K, V> cacheMap;
+    private final Storage<K, V> cacheMap;
 
     /**
      * Creates memory cache with default size by defined algorithm
@@ -92,7 +106,10 @@ public class MemoryCache<K, V> extends AbstractCache<K, V> implements Cache<K, V
         }
         
         this.algorithm = algorithm;
-        cacheMap = map;
+//        cacheMap = map;
+//        cacheMap = new Memory<>(map);
+        cacheMap = new FileSystem<>(map);
+//        map.forEach(cacheMap::put);
         putAll(map);
     }
 
@@ -193,6 +210,34 @@ public class MemoryCache<K, V> extends AbstractCache<K, V> implements Cache<K, V
     public void clear(){
         cacheMap.clear();
         algorithm.clear();
+    }
+
+    /**
+     * Removes the mapping for a key from the cache by used algorithm.
+     * To delete {@link Cache#delete(Object)} is used
+     * @return popped out entry, returns null entry if the element was not
+     *          found in algorithm queue (empty)
+     */
+    @Override
+    public Map.Entry<K, V> pop() {
+        K key = algorithm.pop();
+        if (key == null) {
+            return null;
+        }
+
+        Map.Entry<K, V> entry;
+        V value = delete(key);
+        entry = new AbstractMap.SimpleImmutableEntry<>(key, value);
+
+        return entry;
+    }
+
+    /**
+     * @return maximum possible size of the cache
+     */
+    @Override
+    public int sizeMax() {
+        return maxSize;
     }
 
     /**

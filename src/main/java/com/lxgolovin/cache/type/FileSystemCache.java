@@ -166,30 +166,6 @@ public class FileSystemCache<K extends Serializable, V extends Serializable>
             poppedEntry = pop();
         }
 
-
-        // shift
-        // get from index
-        // readFromFile old value
-        // store new value
-        // return popped-replaced
-/*
-        Map.Entry<K, V> replacedEntry = null;
-        Path filePath = null;
-        if (contains(key)) {
-            filePath = indexMap.get(key);
-            replacedEntry = fileStorage.readFromFile(filePath);
-        }
-
-        if (needToStoreNewcomer(replacedEntry, value)) {
-//            filePath = fileStorage.add(key, value, filePath).orElse(null);
-            fileStorage.writeToFile(key, value, filePath);
-            indexMap.put(key, filePath);
-        }
-
-*/
-
-
-
         Map.Entry<K, V> replacedEntry = null;
         Path filePath;
         if (algorithm.shift(key)) {
