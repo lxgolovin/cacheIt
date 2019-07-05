@@ -8,36 +8,42 @@ public class Memory<K, V> implements Storage<K, V>{
     /**
      * Map to keep data
      */
-    private final Map<K, V> cacheMap;
+    private final Map<K, V> storageMap;
 
     public Memory() {
-        cacheMap = new HashMap<>();
+        storageMap = new HashMap<>();
+    }
+
+    public Memory(Map<K, V> map) {
+        storageMap = (map == null) ? new HashMap<>() : map;
     }
 
     public V put(K key, V value) {
-        return cacheMap.put(key, value);
+        return storageMap.put(key, value);
     }
 
     public V get(K key) {
-        return cacheMap.get(key);
+        return storageMap.get(key);
     }
 
     public boolean containsKey(K key) {
-        return ((key != null) && cacheMap.containsKey(key));
+        return ((key != null) && storageMap.containsKey(key));
     }
 
     public V remove(K key) {
         if (key == null) {
             throw new IllegalArgumentException();
         }
-        return cacheMap.remove(key);
+        return storageMap.remove(key);
     }
 
     public void clear(){
-        cacheMap.clear();
+        storageMap.clear();
     }
 
     public int size() {
-        return cacheMap.size();
+        return storageMap.size();
     }
+    
+    public boolean isEmpty() { return storageMap.isEmpty(); }
 }

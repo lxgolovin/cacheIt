@@ -52,6 +52,24 @@ public class FileSystem<K, V> implements Storage<K, V> {
         }
     }
 
+    public FileSystem(Path path, boolean emptyStorage, Map<K, V> map) {
+        if (map == null) {
+            throw new IllegalArgumentException();
+        }
+
+        indexMap = new HashMap<>();
+
+        if (path == null) {
+            createTempDirectory();
+        } else {
+            createDirectory(path);
+        }
+
+        if (emptyStorage) {
+            emptyDir();
+        }
+    }
+
     public V put(K key, V value) {
         if ((key == null) || (value == null)) {
             throw new IllegalAccessError();
@@ -110,6 +128,7 @@ public class FileSystem<K, V> implements Storage<K, V> {
     public int size() {
         return indexMap.size();
     }
+    public boolean isEmpty() { return indexMap.isEmpty(); }
 
     private void writeToFile(K key, V value, Path path) {
         Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);

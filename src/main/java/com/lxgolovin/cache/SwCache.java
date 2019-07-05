@@ -53,12 +53,12 @@ public class SwCache<K, V> implements Cache<K, V> {
      * @param algorithm specifies algorithm type that is used by the cache
      */
     public SwCache(CacheAlgorithm<K> algorithm) {
-        this(algorithm, new Memory<>(), null, Cache.DEFAULT_CACHE_SIZE);
+        this(algorithm, new Memory<>(), new HashMap<>(), Cache.DEFAULT_CACHE_SIZE);
     }
 
-    public SwCache(CacheAlgorithm<K> algorithm, Storage<K, V> storage) {
-        this(algorithm, storage, new HashMap<>(), Cache.DEFAULT_CACHE_SIZE);
-    }
+//    public SwCache(CacheAlgorithm<K> algorithm, Storage<K, V> storage) {
+//        this(algorithm, storage, new HashMap<>(), Cache.DEFAULT_CACHE_SIZE);
+//    }
 
     /**
      * Creates memory cache with defined algorithm and size. Fills with map key-values
@@ -116,7 +116,7 @@ public class SwCache<K, V> implements Cache<K, V> {
             maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
         }
         
-        map.forEach((k, v) -> storage.put(k, v));
+        map.forEach(this.storage::put);
         putAll(map);
     }
 
