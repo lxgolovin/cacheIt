@@ -9,7 +9,6 @@ import java.util.Map;
 
 public class FileSystem<K, V> implements Storage<K, V> {
 
-
     /**
      * If the directory is created temporary this prefix is used
      */
@@ -30,15 +29,15 @@ public class FileSystem<K, V> implements Storage<K, V> {
      */
     private Path directory;
 
-    public FileSystem() {
+    FileSystem() {
         this(null);
     }
 
-    public FileSystem(Path path) {
+    FileSystem(Path path) {
         this(path, FileSystem.EMPTY_STORAGE_DEFAULT);
     }
 
-    public FileSystem(Path path, boolean emptyStorage) {
+    FileSystem(Path path, boolean emptyStorage) {
         indexMap = new HashMap<>();
 
         if (path == null) {
@@ -52,7 +51,7 @@ public class FileSystem<K, V> implements Storage<K, V> {
         }
     }
 
-    public FileSystem(Path path, boolean emptyStorage, Map<K, V> map) {
+    FileSystem(Path path, Map<K, V> map) {
         if (map == null) {
             throw new IllegalArgumentException();
         }
@@ -65,14 +64,21 @@ public class FileSystem<K, V> implements Storage<K, V> {
             createDirectory(path);
         }
 
-        if (emptyStorage) {
-            emptyDir();
-        }
+        emptyDir();
+    }
+
+    /**
+     * Returns directory path where all files are kept
+     *
+     * @return path where data files kept
+     */
+    Path getDirectory() {
+        return directory;
     }
 
     public V put(K key, V value) {
         if ((key == null) || (value == null)) {
-            throw new IllegalAccessError();
+            throw new IllegalArgumentException();
         }
 
         Path filePath = null;
@@ -92,7 +98,7 @@ public class FileSystem<K, V> implements Storage<K, V> {
 
     public V get(K key) {
         if (key == null) {
-            throw new IllegalAccessError();
+            throw new IllegalArgumentException();
         }
 
         // Need to move key as it was accessed. If false, return null
