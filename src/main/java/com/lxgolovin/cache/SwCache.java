@@ -68,6 +68,10 @@ public class SwCache<K, V> implements Cache<K, V> {
         this(algorithm, null, map, Cache.DEFAULT_CACHE_SIZE);
     }
 
+    public SwCache(CacheAlgorithm<K> algorithm, Storage<K, V> storage) {
+        this(algorithm, storage, null, Cache.DEFAULT_CACHE_SIZE);
+    }
+
     /**
      * Creates memory cache with default size by defined algorithm.
      * Here key-value for the first element are defined
@@ -76,7 +80,7 @@ public class SwCache<K, V> implements Cache<K, V> {
      * @param value defined value inside entry
      */
     public SwCache(CacheAlgorithm<K> algorithm, K key, V value) {
-        this(algorithm, null, new HashMap<>(), Cache.DEFAULT_CACHE_SIZE);
+        this(algorithm, null, null, Cache.DEFAULT_CACHE_SIZE);
         cache(key, value);
     }
 
@@ -87,7 +91,11 @@ public class SwCache<K, V> implements Cache<K, V> {
      * @param algorithm specifies algorithm type that is used by the cache
      */
     public SwCache(CacheAlgorithm<K> algorithm, int size) {
-        this(algorithm, null, new HashMap<>(), size);
+        this(algorithm, null, null, size);
+    }
+
+    public SwCache(CacheAlgorithm<K> algorithm, Storage<K, V>  storage, int size) {
+        this(algorithm, storage, null, size);
     }
 
     /**
@@ -99,21 +107,27 @@ public class SwCache<K, V> implements Cache<K, V> {
      * @param size defining the size for the mapping
      */
     private SwCache(CacheAlgorithm<K> algorithm, Storage<K, V> storage, Map<K, V> map, int size) {
-        if ((algorithm == null) | (map == null)) {
+        if (algorithm == null) {
             throw new IllegalArgumentException();
         }
 
         this.algorithm = algorithm;
         this.storage = (storage == null) ? new MemoryStorage<>() : storage;
 
-        if (!map.isEmpty()) {
-            maxSize = map.size();
+        Map<K, V> initialDataMap;
+        if (map == null) {
+            initialDataMap = this.storage.getAll();
+        } else {
+            initialDataMap = new HashMap<>(map);
+            initialDataMap.forEach(this.storage::put);
+        }
+
+        if (!initialDataMap.isEmpty()) {
+            maxSize = initialDataMap.size();
         } else {
             maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
         }
-        
-        map.forEach(this.storage::put);
-        putAll(map);
+        putAll(initialDataMap);
     }
 
     /**
@@ -202,7 +216,8 @@ public class SwCache<K, V> implements Cache<K, V> {
         }
 
         algorithm.delete(key);
-        return storage.remove(key);
+        V value = storage.remove(key);
+        return value;
     }
 
     /**

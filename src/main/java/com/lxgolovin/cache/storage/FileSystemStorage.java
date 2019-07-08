@@ -34,7 +34,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     /**
      * creates storage with temporary directory
      */
-    FileSystemStorage() {
+    public FileSystemStorage() {
         this(null);
     }
 
@@ -42,11 +42,11 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      *
      * @param path to keep files of the storage
      */
-    FileSystemStorage(Path path) {
+    public FileSystemStorage(Path path) {
         this(path, FileSystemStorage.EMPTY_STORAGE_DEFAULT);
     }
 
-    FileSystemStorage(Path path, boolean emptyStorage) {
+    public FileSystemStorage(Path path, boolean emptyStorage) {
         indexMap = new HashMap<>();
         createStorageDirectory(path);
         if (emptyStorage) {
@@ -61,7 +61,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * @param path to the storage
      * @param map can be null. If it is, storage is created empty
      */
-    FileSystemStorage(Path path, Map<K, V> map) {
+    public FileSystemStorage(Path path, Map<K, V> map) {
         indexMap = new HashMap<>();
         createStorageDirectory(path);
         emptyDir();
@@ -109,6 +109,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * @throws IllegalArgumentException if any key or value is null
      */
     public V put(K key, V value) {
+        // TODO: create putAll to load map to storage
         if ((key == null) || (value == null)) {
             throw new IllegalArgumentException();
         }
@@ -172,8 +173,9 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
             throw new IllegalArgumentException();
         }
 
-        Path path = indexMap.remove(key);
+        Path path = indexMap.get(key);
         V value = readFromFile(path);
+        indexMap.remove(key);
         deleteFile(path);
 
         return value;

@@ -3,11 +3,13 @@ package com.lxgolovin.cache;
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.algorithm.Lru;
 import com.lxgolovin.cache.algorithm.Mru;
+import com.lxgolovin.cache.storage.FileSystemStorage;
+import com.lxgolovin.cache.storage.Storage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Paths;
 import java.util.AbstractMap;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.IntStream;
@@ -25,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @see Lru
  * @see Mru
  */
-class SwCacheTest {
+class FileSystemCacheTest {
 
     /**
      * Algorihtm types use in testing
@@ -34,15 +36,23 @@ class SwCacheTest {
     private final CacheAlgorithm<Integer> mru = new Mru<>();
 
     /**
+     * Directory for testing
+     */
+    private final String directoryPath = "./TEMP/";
+
+    /**
      * LRU cache will be initialised with size 6
      */
     private final int maxSize = Cache.DEFAULT_CACHE_SIZE + 1;
 
     /**
-     * caches
+     * caches with memory cache
      */
-    private final Cache<Integer, Integer> lruCache = new SwCache<>(lru, maxSize);
-    private final Cache<Integer, Integer> mruCache = new SwCache<>(mru, 0, 0);
+    private final Storage<Integer, Integer> lruStorage = new FileSystemStorage<>();
+    private final Storage<Integer, Integer> mruStorage = new FileSystemStorage<>(Paths.get(directoryPath), true);
+
+    private final Cache<Integer, Integer> lruCache = new SwCache<>(lru, lruStorage, maxSize);
+    private final Cache<Integer, Integer> mruCache = new SwCache<>(mru, mruStorage);
 
     /**
      * Fill in caches.
@@ -55,7 +65,7 @@ class SwCacheTest {
     void setUp() {
         int maxRange = 9;
         IntStream.rangeClosed(1, maxRange).forEach(x->lruCache.cache(x,x));
-        IntStream.rangeClosed(1, maxRange).forEach(x->mruCache.cache(x,x));
+        IntStream.rangeClosed(0, maxRange).forEach(x->mruCache.cache(x,x));
     }
 
     /**
@@ -63,38 +73,45 @@ class SwCacheTest {
      */
     @Test
     void constructorWithDefaultSize() {
-        Cache<Integer, String> cache = new SwCache<>(lru);
+        Storage<Integer, String> storage = new FileSystemStorage<>();
+        Cache<Integer, String> cache = new SwCache<>(lru, storage);
         assertEquals(0, cache.size());
         assertEquals(5, cache.sizeMax());
     }
 
     /**
-     * Checks work of setting cache size manually
+     * Checks work with not empty map
      */
     @Test
-    void constructorWithEmptyMap() {
-        CacheAlgorithm<Integer> algorithm = new Lru<>();
-        Map<Integer, String> map = new TreeMap<>();
+    void constructorWithNotEmptyMap() {
+        Map<Integer, Integer> map = new TreeMap<>();
+        IntStream.rangeClosed(1, 10).forEach(x -> map.put(x, (x*x)));
 
-        Cache<Integer, String> cache = new SwCache<>(algorithm,map);
-        assertNull(cache.cache(36, "36"));
-        assertEquals(1, cache.size());
-        assertEquals(5, cache.sizeMax());
+        Storage<Integer, Integer> notEmptyStorage = new FileSystemStorage<>(Paths.get(directoryPath), map);
+        assertEquals(10, notEmptyStorage.size());
+
+        CacheAlgorithm<Integer> lru = new Lru<>();
+        Cache<Integer, Integer> cache = new SwCache<>(lru, notEmptyStorage);
+        assertEquals(1,cache.cache(36, 36).getValue());
+        assertEquals(10, cache.size());
+        assertEquals(10, cache.sizeMax());
     }
 
     /**
-     * Checks work of setting cache size manually
+     * Reads data from existing directory. In this case storage is not empty
+     * The size is set to the number of files in the storage
      */
     @Test
-    void constructorWithMaps() {
-        CacheAlgorithm<Integer> algorithm = new Lru<>();
-        Map<Integer, String> map = new TreeMap<>();
-        IntStream.rangeClosed(1, 10).forEach(x -> map.put(x,String.valueOf(x*x)));
+    void constructorWithNonEmptyStorage() {
+        Storage<Integer, Integer> notEmptyStorage = new FileSystemStorage<>(Paths.get(directoryPath));
+        assertEquals(0, notEmptyStorage.size());
 
-        Cache<Integer, String> cache = new SwCache<>(algorithm,map);
-        assertEquals(1,cache.cache(36, "36").getKey());
-        assertEquals(10, cache.size());
-        assertEquals(10, cache.sizeMax());
+        CacheAlgorithm<Integer> lru = new Lru<>();
+        Cache<Integer, Integer> cache = new SwCache<>(lru, notEmptyStorage);
+
+        assertTrue(notEmptyStorage.size() > 0);
+        assertEquals(notEmptyStorage.size(), cache.size());
+        assertEquals(notEmptyStorage.size(), cache.sizeMax());
     }
 
     /**
@@ -102,7 +119,7 @@ class SwCacheTest {
      * cache works fine
      */
     @Test
-   void getPutInLruAlgorithm() {
+    void getPutInLruAlgorithm() {
         // 4..9 are the elements after init and size is 6
         assertEquals(5, lruCache.get(5));
         // Now {4,6,7,8,9,5}
@@ -229,11 +246,10 @@ class SwCacheTest {
     void nullInputs() {
         CacheAlgorithm<Integer> algorithm = new Lru<>();
         assertThrows(IllegalArgumentException.class, () -> new SwCache<>(null));
-        assertThrows(IllegalArgumentException.class, () -> new SwCache<>(algorithm,null));
         assertThrows(IllegalArgumentException.class, () -> new SwCache<>(algorithm,null, null));
-        assertThrows(IllegalArgumentException.class, () -> new SwCache<>(null,new HashMap<>()));
+        assertThrows(IllegalArgumentException.class, () -> new SwCache<>(null, new FileSystemStorage<>()));
 
-        Cache<Integer, Integer> memoryCache =  new SwCache<>(algorithm);
+        Cache<Integer, Integer> memoryCache =  new SwCache<>(algorithm, new FileSystemStorage<>());
         assertThrows(IllegalArgumentException.class, () -> memoryCache.delete(null));
         assertThrows(IllegalArgumentException.class, () -> memoryCache.get(null));
         assertFalse(memoryCache.contains(null));
