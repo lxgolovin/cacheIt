@@ -1,7 +1,5 @@
 package com.lxgolovin.cache;
 
-import com.lxgolovin.cache.type.AbstractCache;
-
 import java.util.Map;
 
 /**
@@ -9,7 +7,6 @@ import java.util.Map;
  * by key. Has a possibility to clean data, get maximum available size to current size.
  * @param <K>
  * @param <V>
- * @see AbstractCache
  */
 public interface Cache<K, V> {
 

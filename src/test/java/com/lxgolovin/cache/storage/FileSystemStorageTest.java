@@ -5,10 +5,13 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class FileSystemTest {
+class FileSystemStorageTest {
 
     /**
      * Directory for testing
@@ -18,15 +21,15 @@ class FileSystemTest {
     /**
      * create object to work with files
      */
-    private final FileSystem<Integer, String> fileStorage = new FileSystem<>(Paths.get(directoryPath));
+    private final FileSystemStorage<Integer, String> fileStorage = new FileSystemStorage<>(Paths.get(directoryPath));
 
     /**
      * Check creating temporary directory
      */
     @Test
     void createTempDirectory() {
-        FileSystem<Integer, Integer> fileStorage = new FileSystem<>();
-        assertTrue(fileStorage.getDirectory().toFile().exists());
+        FileSystemStorage<Integer, Integer> tempStorage = new FileSystemStorage<>();
+        assertTrue(tempStorage.getDirectory().toFile().exists());
     }
 
     /**
@@ -91,9 +94,40 @@ class FileSystemTest {
     @Test
     void emptyStorageDirectoryOnInit() throws IOException {
         boolean emptyStorageDirectoryOnInit = true;
-        FileSystem<Integer, String> emptyFileStorage = new FileSystem<>(Paths.get(directoryPath), emptyStorageDirectoryOnInit);
+        FileSystemStorage<Integer, String> emptyFileStorage = new FileSystemStorage<>(Paths.get(directoryPath), emptyStorageDirectoryOnInit);
         assertEquals(Paths.get(directoryPath), emptyFileStorage.getDirectory());
         assertFalse(Files.walk(Paths.get(directoryPath))
                 .anyMatch(Files::isRegularFile));
+    }
+
+    @Test
+    void putMapToStorage() {
+        Map<Integer, Integer> map = new HashMap<>();
+        IntStream.rangeClosed(1,10).forEach(x -> map.put(x, x*x));
+
+        FileSystemStorage<Integer, Integer> mapFileStorage = new FileSystemStorage<>(Paths.get(directoryPath), map);
+
+        assertEquals(10, mapFileStorage.size());
+        assertFalse(mapFileStorage.isEmpty());
+        assertEquals(100, mapFileStorage.get(10));
+    }
+
+    /**
+     * Store data in files. Then create other storage and read all data from it
+     */
+    @Test
+    void  getAllDataFromStorage() {
+        // create empty storage
+        boolean emptyStorageDirectoryOnInit = true;
+        FileSystemStorage<Integer, Integer> emptyFileStorage = new FileSystemStorage<>(Paths.get(directoryPath), emptyStorageDirectoryOnInit);
+        IntStream.rangeClosed(1,10).forEach(x -> emptyFileStorage.put(x, x*x));
+
+
+        FileSystemStorage<Integer, Integer> storage = new FileSystemStorage<>(Paths.get(directoryPath));
+        Map<Integer, Integer> map = storage.getAll();
+        assertEquals(emptyFileStorage.size(), storage.size());
+        assertEquals(map.size(), storage.size());
+
+        assertEquals(100, map.get(10));
     }
 }

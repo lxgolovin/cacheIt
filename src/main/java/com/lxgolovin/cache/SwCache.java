@@ -1,8 +1,8 @@
 package com.lxgolovin.cache;
 
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
-import com.lxgolovin.cache.storage.FileSystem;
-import com.lxgolovin.cache.storage.Memory;
+import com.lxgolovin.cache.storage.FileSystemStorage;
+import com.lxgolovin.cache.storage.MemoryStorage;
 import com.lxgolovin.cache.storage.Storage;
 
 import java.util.AbstractMap;
@@ -17,7 +17,7 @@ import java.util.Map;
  * size could be set by user. Note that size should by greater then 1, as cache with size 1 has no
  * sense.
  * By default the size of the cache is {@link Cache#DEFAULT_CACHE_SIZE} and the implementation is memory
- * cache {@link Memory}. But these parameters could be defined during initialization phase
+ * cache {@link MemoryStorage}. But these parameters could be defined during initialization phase
  *
  * Here got methods to cache, delete, pop data by key. Has a possibility to clean data,
  * get maximum available size to current size.
@@ -26,8 +26,8 @@ import java.util.Map;
  * @see Cache
  * @see CacheAlgorithm
  * @see Storage
- * @see Memory
- * @see FileSystem
+ * @see MemoryStorage
+ * @see FileSystemStorage
  */
 public class SwCache<K, V> implements Cache<K, V> {
     
@@ -53,12 +53,8 @@ public class SwCache<K, V> implements Cache<K, V> {
      * @param algorithm specifies algorithm type that is used by the cache
      */
     public SwCache(CacheAlgorithm<K> algorithm) {
-        this(algorithm, new Memory<>(), new HashMap<>(), Cache.DEFAULT_CACHE_SIZE);
+        this(algorithm, new MemoryStorage<>(), new HashMap<>(), Cache.DEFAULT_CACHE_SIZE);
     }
-
-//    public SwCache(CacheAlgorithm<K> algorithm, Storage<K, V> storage) {
-//        this(algorithm, storage, new HashMap<>(), Cache.DEFAULT_CACHE_SIZE);
-//    }
 
     /**
      * Creates memory cache with defined algorithm and size. Fills with map key-values
@@ -108,7 +104,7 @@ public class SwCache<K, V> implements Cache<K, V> {
         }
 
         this.algorithm = algorithm;
-        this.storage = (storage == null) ? new Memory<>() : storage;
+        this.storage = (storage == null) ? new MemoryStorage<>() : storage;
 
         if (!map.isEmpty()) {
             maxSize = map.size();
