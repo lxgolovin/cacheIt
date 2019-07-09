@@ -2,7 +2,12 @@ package com.lxgolovin.cache.storage;
 
 import java.util.Map;
 import java.util.Optional;
-// TODO: need some comments what is it
+
+/**
+ * Interface of a storage to keep data, get it, check is contains
+ * @param <K> key
+ * @param <V> value
+ */
 public interface Storage<K, V> {
 
     Optional<V> put(K key, V value);

@@ -140,14 +140,8 @@ public class SwCache<K, V> implements Cache<K, V> {
     }
 
     /**
-     * Caches data into cache by key value. If cache is full up, data is removed from
-     * cache using some algorithm
-     * @param key to define data to be loaded to cache
-     * @param value to be loaded to cache
-     * @return the previous value associated with <tt>key</tt>, or
-     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
-     *         If any key-value mapping was popped during this task, because of size limit,
-     *         the deleted key-value mapping will be returned.
+     * @param key cannot be null
+     * @param value cannot be null
      * @throws IllegalArgumentException if any of incoming parameters are null
      */
     @Override

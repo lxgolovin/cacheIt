@@ -7,7 +7,11 @@ import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
+/**
+ * Implementation of {@link Storage} to keep data in files
+ * @see Storage
+ * @see MemoryStorage
+ */
 public class FileSystemStorage<K extends Serializable, V extends Serializable> implements Storage<K, V> {
 
     /**
@@ -21,9 +25,6 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     private static final boolean EMPTY_STORAGE_DEFAULT = false;
 
-    /**
-     * Map-index to keep paths to the files of the storage
-     */
     private final Map<K, Path> indexMap;
 
     /**
@@ -31,17 +32,10 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     private Path directory;
 
-    /**
-     * creates storage with temporary directory
-     */
     public FileSystemStorage() {
         this(null);
     }
 
-    /**
-     *
-     * @param path to keep files of the storage
-     */
     public FileSystemStorage(Path path) {
         this(path, FileSystemStorage.EMPTY_STORAGE_DEFAULT);
     }
@@ -58,8 +52,6 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     }
 
     /**
-     * Creates storage by map. Uf the map is null, creates empty storage
-     * @param path to the storage
      * @param map can be null. If it is, storage is created empty
      */
     public FileSystemStorage(Path path, Map<K, V> map) {
@@ -75,7 +67,6 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     /**
      * If the storage is not empty, one can get all the data from it
      * as a map
-     * @return map of key-values, stored in storage
      */
     public Map<K, V> getAll() {
         Map<K, V> loadedMap = new HashMap<>();
@@ -90,13 +81,6 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         } catch (IOException e) {
             throw new IllegalAccessError();
         }
-    }
-
-    /**
-     * @return path where data files kept
-     */
-    Path getDirectory() {
-        return directory;
     }
 
     /**
@@ -115,7 +99,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
 
         // element need to be updated
         if (!oldValue.isPresent() || !oldValue.get().equals(value)) {
-            writeToFile(key, value, filePath);
+            putDataToStorage(key, value, filePath);
         }
 
         return oldValue;
@@ -167,15 +151,17 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
 
     public boolean isEmpty() { return indexMap.isEmpty(); }
 
-    /**
-     * Writes mapping key-value to file
-     */
-    private void writeToFile(K key, V value, Path path) {
+    Path getDirectory() {
+        return directory;
+    }
+
+    private void putDataToStorage(K key, V value, Path path) {
         Path filePath = (path == null) ? createFile() : path;
 
         Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
-        this.writeEntryToFile(newcomer, filePath);
-        indexMap.put(key, filePath); // TODO: need to split in 2 methods
+        writeEntryToFile(newcomer, filePath);
+
+        indexMap.put(key, filePath);
     }
 
     /**

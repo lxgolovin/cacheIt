@@ -254,4 +254,30 @@ class LruCacheControllerTest {
         // if getting key that is not present in cache, got null
         assertFalse(cc.get(1000).isPresent());
     }
+
+    @Test
+    void nullChecker() {
+        CacheController<Integer, Integer> cacheController = new CacheController<>(null);
+        assertEquals(1, cacheController.levels());
+        assertEquals(0, cacheController.size());
+        assertEquals(5, cacheController.sizeMax());
+        assertFalse(cacheController.contains(null));
+        assertFalse(cacheController.delete(null).isPresent());
+        assertFalse(cacheController.get(null).isPresent());
+        assertThrows(IllegalArgumentException.class, () -> cacheController.cache(null, 0));
+        assertThrows(IllegalArgumentException.class, () -> cacheController.cache(0, null));
+        assertThrows(IllegalArgumentException.class, () -> cacheController.cache(null, null));
+
+        assertThrows(IndexOutOfBoundsException.class, () -> cacheController.isLevelFull(-1));
+        assertThrows(IndexOutOfBoundsException.class, () -> cacheController.removeLevel(-1));
+
+        assertEquals(2, cacheController.addLevel(null));
+        assertEquals(2, cacheController.levels());
+        assertEquals(0, cacheController.size());
+        assertEquals(10, cacheController.sizeMax());
+
+//        assertFalse(cacheController.(null).isPresent());
+//        CacheAlgorithm<Integer> lruLev1 = new Lru<>();
+//        Cache<Integer, Integer> cacheLevel1 = new SwCache<>(lruLev1);
+    }
 }

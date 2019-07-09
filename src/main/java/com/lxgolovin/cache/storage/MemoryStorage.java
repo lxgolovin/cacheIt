@@ -4,11 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Implementation of {@link Storage} to keep data in memory
+ * @see Storage
+ * @see FileSystemStorage
+ */
 public class MemoryStorage<K, V> implements Storage<K, V>{
 
-    /**
-     * Map to keep data
-     */
     private final Map<K, V> storageMap;
 
     public MemoryStorage() {

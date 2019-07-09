@@ -33,7 +33,12 @@ public class CacheController<K, V> implements Cache<K,V> {
      * @param cache level with specified algorithm
      */
     public CacheController(Cache<K, V> cache) {
-        addLevel(cache);
+        Cache<K, V> cacheLevel = (cache == null) ? createNewMemoryCacheLru() : cache;
+        addLevel(cacheLevel);
+    }
+
+    private SwCache<K, V> createNewMemoryCacheLru() {
+        return new SwCache<>(new Lru<>());
     }
 
     /**
@@ -42,7 +47,8 @@ public class CacheController<K, V> implements Cache<K,V> {
      * @return the number of levels after adding
      */
     public int addLevel(Cache<K, V> cache) {
-        ccList.add(cache);
+        Cache<K, V> cacheLevel = (cache == null) ? createNewMemoryCacheLru() : cache;
+        ccList.add(cacheLevel);
         return levels();
     }
 
@@ -86,30 +92,24 @@ public class CacheController<K, V> implements Cache<K,V> {
     }
 
      /**
-     * Caches data into cache by key value. If cache is full up, data is removed (popped out) from
-     * cache using some algorithm
-     * @param key to define data to be loaded to cache
-     * @param value to be loaded to cache
-     * @return the previous value associated with <tt>key</tt>, or
-     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
-     *         If any key-value mapping was popped during this task, because of size limit,
-     *         the deleted key-value mapping will be returned.
+     * @param key cannot be null
+     * @param value cannot be null
      * @throws IllegalArgumentException if input parameters are null
      */
     public Optional<Map.Entry<K, V>> cache(K key, V value) {
+        // TODO: need refactoring
         if ((key == null) | (value == null)) {
             throw new IllegalArgumentException();
         }
 
         // if key is already in cache, getLevel(key) finds it
-        int startIndex = getLevel(key);
+        int startIndex = getLevelByKey(key);
         if (startIndex == levels()) {
             // the key is not in cache, so start inserting the key-value from 0 level
             startIndex = 0;
         }
 
-//        return load(key, value, startIndex);
-        return load(key, value, startIndex);
+        return loadToLevel(key, value, startIndex);
     }
 
     /**
@@ -123,13 +123,9 @@ public class CacheController<K, V> implements Cache<K,V> {
      *         If any key-value mapping was popped during this task, because of size limit,
      *         the deleted key-value mapping will be returned.
      */
-    private Optional<Map.Entry<K, V>> load(K key, V value, int index) {
-//        return ccList.get(index).cache(key, value).map(entry -> {
-//            if ((key != entry.getKey()) && (levels() > (++index))) {
-//                 one more recursive if some entry popped out and there are still more levels
-//                return load(entry.getKey(), entry.getValue(), index);
-//            }
-//        });
+    private Optional<Map.Entry<K, V>> loadToLevel(K key, V value, int index) {
+        // TODO: need refactoring
+        /*
         Map.Entry<K, V> returnEntry = ccList.get(index).cache(key, value).orElse(null);
         if (returnEntry == null){
             return Optional.empty();
@@ -137,24 +133,35 @@ public class CacheController<K, V> implements Cache<K,V> {
 
         if ((key != returnEntry.getKey()) && (levels() > (++index))) {
             // one more recursive if some entry popped out and there are still more levels
-            return load(returnEntry.getKey(), returnEntry.getValue(), index);
+            return loadToLevel(returnEntry.getKey(), returnEntry.getValue(), index);
         }
 
         return Optional.of(returnEntry);
+
+         */
+
+        Optional<Map.Entry<K, V>> returnEntry = ccList.get(index).cache(key, value);
+
+        int nextLevel = ++index;
+//        if (returnEntry.isPresent()) {
+            return returnEntry
+                    .filter(e -> ((e.getKey()!=key) && (levels() > nextLevel)))
+                    .map(e -> {
+                        Optional<Map.Entry<K, V>> newE = loadToLevel(e.getKey(), e.getValue(), nextLevel);
+                        return newE;
+                    }).orElse(returnEntry);
+
+//        }
+
+//        if ((key != returnEntry.getKey()) && (levels() > (++index))) {
+            // one more recursive if some entry popped out and there are still more levels
+//            return loadToLevel(returnEntry.getKey(), returnEntry.getValue(), index);
+//        }
+
+//        return returnEntry;
     }
 
-    /**
-     * Gets an entry by the key from cache. Searches in all levels
-     * @param key with mapping in cache to value
-     * @return the value to which the specified key is mapped, or
-     *         {@code null} if this map contains no mapping for the key
-     * @throws IllegalArgumentException if key is null
-     */
     public Optional<V> get(K key) {
-        if (key == null) {
-            throw new IllegalArgumentException();
-        }
-
         return ccList.stream()
                 .filter(c -> c.contains(key))
                 .findAny()
@@ -173,6 +180,7 @@ public class CacheController<K, V> implements Cache<K,V> {
      */
     @Override
     public Optional<Map.Entry<K, V>> pop() {
+        // TODO: need refactoring
         // check if there are no levels or all levels are empty
         if ((levels() < 1) || (size() < 1)) {
             return Optional.empty();
@@ -193,26 +201,11 @@ public class CacheController<K, V> implements Cache<K,V> {
             return Optional.empty();
         }
         // enter recursive method to insert popped key-value
-        return load(popped.getKey(), popped.getValue(), startIndex);
+        return loadToLevel(popped.getKey(), popped.getValue(), startIndex);
     }
 
-    /**
-     * Removes the mapping for a key from this cache. Does not depend on algorithm type
-     *
-     * <p>Returns the value for the associated key,
-     * or <tt>null</tt> if the cache contained no mapping for the key.
-     *
-     * @param key key whose mapping is to be removed from the cache
-     * @return the previous value associated with <tt>key</tt>, or
-     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
-     * @throws IllegalArgumentException if key is null
-     */
     @Override
     public Optional<V> delete(K key) {
-        if (key == null) {
-            throw new IllegalArgumentException();
-        }
-
         // TODO: need to ask Mike, how to simplify
         return ccList.stream()
                 .filter(c -> c.contains(key))
@@ -221,25 +214,11 @@ public class CacheController<K, V> implements Cache<K,V> {
 //                .orElse(Optional.empty());
     }
 
-    /**
-     * Checks if the key is present in cache
-     * @param key to check in cache
-     * @return true is element found, else false
-     * @throws IllegalArgumentException if key is null
-     */
     @Override
     public boolean contains(K key) {
-        if (key == null) {
-            throw new IllegalArgumentException();
-        }
-
         return ccList.stream().anyMatch(c -> c.contains(key));
     }
 
-    /**
-     * Clears all data from the queue
-     * All elements are deleted.
-     */
     @Override
     public void clear() {
         ccList.forEach(Cache::clear);
@@ -261,13 +240,7 @@ public class CacheController<K, V> implements Cache<K,V> {
         return ccList.stream().mapToInt(Cache::sizeMax).sum();
     }
 
-    /**
-     * Debug method for internal use only
-     * @param key to get level
-     * @return index of level if the key is present,
-     *          else number of levels
-     */
-    private int getLevel(K key) {
+    private int getLevelByKey(K key) {
         return IntStream.range(0, levels())
                 .filter(i -> (ccList.get(i).contains(key)))
                 .findAny()
