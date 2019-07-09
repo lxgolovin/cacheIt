@@ -1,6 +1,7 @@
 package com.lxgolovin.cache;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Interface to describe cache. Creates methods to cache, delete, pop data
@@ -25,7 +26,7 @@ public interface Cache<K, V> {
      *         If any key-value mapping was popped during this task, because of size limit,
      *         the deleted key-value mapping will be returned.
      */
-    Map.Entry<K, V> cache(K key, V value);
+    Optional<Map.Entry<K, V>> cache(K key, V value);
 
     /**
      * Gets value by the key
@@ -33,14 +34,14 @@ public interface Cache<K, V> {
      * @return the value to which the specified key is mapped, or
      *         {@code null} if this map contains no mapping for the key
      */
-    V get(K key);
+    Optional<V> get(K key);
 
     /**
      * Removes the mapping for a key from the cache by used algorithm.
      * @return popped out entry, returns null entry if the element was not
      *          found in algorithm queue (empty)
      */
-    Map.Entry<K, V> pop();
+    Optional<Map.Entry<K, V>> pop();
 
     /**
      * Removes the mapping for a key from this cache. Does not depend on algorithm type
@@ -52,7 +53,7 @@ public interface Cache<K, V> {
      * @return the previous value associated with <tt>key</tt>, or
      *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
      */
-    V delete(K key);
+    Optional<V> delete(K key);
 
     /**
      * Checks if the key is present in cache

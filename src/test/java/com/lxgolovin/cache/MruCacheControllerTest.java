@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.AbstractMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -65,8 +66,8 @@ class MruCacheControllerTest {
     @Test
     void cache() {
         // Stream starts with {0..7} cached in level 0: {0->0, 1->1, 2->4, 3->9, 7->49}
-        assertEquals(7, cc.cache(4,4).getKey());
-        assertEquals(4, cc.cache(5,5).getKey());
+        assertEquals(Optional.of(7), cc.cache(4,4).map(Map.Entry::getKey));
+        assertEquals(Optional.of(4), cc.cache(5,5).map(Map.Entry::getKey));
     }
 
     /**
@@ -75,10 +76,10 @@ class MruCacheControllerTest {
     @Test
     void get() {
         // Stream starts with {0..7} cached in level 0: {0->0, 1->1, 2->4, 3->9, 7->49}
-        assertEquals(1,cc.get(1));
-        assertEquals(4,cc.get(2));
-        assertEquals(49,cc.get(7));
-        assertNull(cc.get(4));
+        assertEquals(Optional.of(1),cc.get(1));
+        assertEquals(Optional.of(4),cc.get(2));
+        assertEquals(Optional.of(49),cc.get(7));
+        assertFalse(cc.get(4).isPresent());
     }
 
     /**
@@ -102,28 +103,28 @@ class MruCacheControllerTest {
         // if use pop MRU level0 "18" goes to level1, "17" goes to level2. Return should be 17->null
         // size should not change. It will be 14
         assertEquals(14,cc.size());
-        assertNull(cc.pop());
+        assertFalse(cc.pop().isPresent());
         // size should not change. It will be 14
         assertEquals(14,cc.size());
         // get for "17" with still return 289!!! But now from level 2
         // now got: level0: {0,1,2,3}; level1: {7,10,11,12,18}; level2: {13,14,15,16,17}
-        assertEquals(289, cc.get(17));
+        assertEquals(Optional.of(289), cc.get(17));
 
         // same for other
-        assertEquals(17, cc.pop().getKey()); // 17->289 removed
-        assertEquals(18, cc.pop().getKey()); // 18->324 removed
-        assertEquals(3, cc.pop().getKey()); // 3->9 removed
-        assertEquals(2, cc.pop().getKey()); // 2->4 removed
+        assertEquals(17, cc.pop().get().getKey()); // 17->289 removed
+        assertEquals(18, cc.pop().get().getKey()); // 18->324 removed
+        assertEquals(3, cc.pop().get().getKey()); // 3->9 removed
+        assertEquals(2, cc.pop().get().getKey()); // 2->4 removed
         // now got: level0: {}; level1: {7,10,11,12,0}; level2: {13,14,15,16,1} and size 10
         assertEquals(10,cc.size());
         // now pop to check how it works with empty level0
-        assertEquals(1, cc.pop().getKey()); // 1->1 removed
+        assertEquals(1, cc.pop().get().getKey()); // 1->1 removed
 
         // remove all:
         cc.clear();
         assertEquals(0,cc.size());
         // pop for empty should be null
-        assertNull(cc.pop());
+        assertFalse(cc.pop().isPresent());
     }
 
     /**
@@ -138,32 +139,32 @@ class MruCacheControllerTest {
         // add level. current size not changed, max size doubled
         assertEquals(2,cc.addLevel(cacheLevel1));
         // now: level 0: {0,1,2,3,7}; level 1: {}.
-        assertNull(cc.cache(8,64));
+        assertFalse(cc.cache(8,64).isPresent());
         // now: level 0: {0,1,2,3,8}; level 1: {7}.
 
-        assertEquals(1, cc.delete(1));
-        assertEquals(4, cc.delete(2));
-        assertEquals(9, cc.delete(3));
+        assertEquals(Optional.of(1), cc.delete(1));
+        assertEquals(Optional.of(4), cc.delete(2));
+        assertEquals(Optional.of(9), cc.delete(3));
         // now: level 0: {0,8}; level 1: {7}.
         assertEquals(3,cc.size());
         assertEquals(10,cc.sizeMax());
         // try to delete 3 one more time
-        assertNull(cc.delete(3));
+        assertFalse(cc.delete(3).isPresent());
 
         // now: level 0: {0,8}; level 1: {7}.
-        assertEquals(0, cc.delete(0));
-        assertEquals(64, cc.delete(8));
+        assertEquals(Optional.of(0), cc.delete(0));
+        assertEquals(Optional.of(64), cc.delete(8));
 
         // now: level 0: {}; level 1: {7}.
         // change 7->49 to 7->14. Size will be 1 and max size 10 (2 levels)
-        assertEquals(49,cc.cache(7,14).getValue());
-        assertEquals(14, cc.get(7));
+        assertEquals(Optional.of(49),cc.cache(7,14).map(Map.Entry::getValue));
+        assertEquals(Optional.of(14), cc.get(7));
         assertEquals(1,cc.size());
         assertEquals(10,cc.sizeMax());
 
         // delete last element
-        assertEquals(14, cc.delete(7));
-        assertNull(cc.get(7));
+        assertEquals(Optional.of(14), cc.delete(7));
+        assertFalse(cc.get(7).isPresent());
     }
 
     /**
@@ -184,12 +185,12 @@ class MruCacheControllerTest {
         assertEquals(10,cc.sizeMax());
 
         // now: level 0: {0,1,2,3,7}; level 1: {}. adding one value (actually renew). Nothing is changed in sizes
-        assertEquals(2, cc.cache(2,8).getKey());
+        assertEquals(Optional.of(2), cc.cache(2,8).map(Map.Entry::getKey));
         assertEquals(5,cc.size());
         assertEquals(10,cc.sizeMax());
 
         // now: level 0: {0,1,3,7,2}; level 1: {}; adding one new key-value. Current size increase
-        assertNull(cc.cache(4,16));
+        assertFalse(cc.cache(4,16).isPresent());
         // now: level 0: {0,1,3,7,4}; level 1: {2};
         assertEquals(6,cc.size());
         assertEquals(10,cc.sizeMax());
@@ -220,39 +221,39 @@ class MruCacheControllerTest {
         Cache<Integer, Integer> cacheLevel1 = new SwCache<>(mruLev1);
 
         // Stream starts with {0..7} cached in level 0: {0->0, 1->1, 2->4, 3->9, 7->49}
-        assertEquals(49, cc.cache(7,7).getValue());
+        assertEquals(Optional.of(49), cc.cache(7,7).map(Map.Entry::getValue));
         // now: level0 {0->0, 1->1, 2->4, 3->9, 7->7}
-        assertEquals(7, cc.cache(8,64).getKey());
+        assertEquals(Optional.of(7), cc.cache(8,64).map(Map.Entry::getKey));
         // now: level0 {0->0, 1->1, 2->4, 3->9, 8->64}
         assertTrue(cc.isLevelFull(0));
         assertEquals(1, cc.levels());
         assertEquals(2,cc.addLevel(cacheLevel1));
         // now: level0 {0->0, 1->1, 2->4, 3->9, 8->64}; level1 {}
-        assertNull(cc.cache(9,81));
+        assertFalse(cc.cache(9,81).isPresent());
         // now: level0 {0->0, 1->1, 2->4, 3->9, 9->81}; level1 {8->64}
-        assertEquals(64, cc.get(8));
+        assertEquals(Optional.of(64), cc.get(8));
         // if adding to cache 8->8 again mapping 8->64 should be deleted. Check this out
         Map.Entry<Integer, Integer> testEntry = new AbstractMap.SimpleEntry<>(8, 64);
-        assertEquals(testEntry, cc.cache(8, 8));
+        assertEquals(testEntry, cc.cache(8, 8).orElse(null));
         // now: level0 {0->0, 1->1, 2->4, 3->9, 9->81}; level1 {8->8}
-        assertEquals(8, cc.get(8));
+        assertEquals(Optional.of(8), cc.get(8));
 
         // now: level0 {0->0, 1->1, 2->4, 3->9, 9->81}; level1 {8->8}
         // if adding 5->25, return value should be null!!
-        assertNull(cc.cache(5,25));
+        assertFalse(cc.cache(5,25).isPresent());
         // now: level0 {0->0, 1->1, 2->4, 3->9, 5->25}; level1 {8->8, 9->81}
 
         // add keys-values to fill level1 totally
-        assertNull(cc.cache(6,36));
-        assertNull(cc.cache(7,49));
-        assertNull(cc.cache(4,8));
+        assertFalse(cc.cache(6,36).isPresent());
+        assertFalse(cc.cache(7,49).isPresent());
+        assertFalse(cc.cache(4,8).isPresent());
         // now: level0 {0->0, 1->1, 2->4, 3->9, 4->8}; level1 {8->8, 9->81, 5->25, 6->36, 7->49}
         assertTrue(cc.isLevelFull(1));
 
         // one more 11->121, it pops out 7->49 from level1!!
-        assertEquals(7, cc.cache(11,121).getKey());
+        assertEquals(Optional.of(7), cc.cache(11,121).map(Map.Entry::getKey));
         // if getting key that is not present in cache, got null
-        assertNull(cc.get(1000));
+        assertFalse(cc.get(1000).isPresent());
     }
 }
 

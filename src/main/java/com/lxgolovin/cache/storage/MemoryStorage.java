@@ -2,6 +2,7 @@ package com.lxgolovin.cache.storage;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class MemoryStorage<K, V> implements Storage<K, V>{
 
@@ -19,7 +20,7 @@ public class MemoryStorage<K, V> implements Storage<K, V>{
     }
 
     /**
-     * IF the storage is not empty, one can get all the data from it
+     * If the storage is not empty, one can get all the data from it
      * as a map
      * @return map of key-values, stored in storage
      */
@@ -28,34 +29,28 @@ public class MemoryStorage<K, V> implements Storage<K, V>{
     }
 
     /**
-     * Puts key-value mapping to the storage
      * @param key cannot be null
      * @param value cannot be null
-     * @return if mapping key-value is present, return old value for the key.
-     *          if there was no mapping, returns null
      * @throws IllegalArgumentException if any key or value is null
      */
-    public V put(K key, V value) {
+    public Optional<V> put(K key, V value) {
         if ((key == null) || (value == null)) {
             throw new IllegalArgumentException();
         }
 
-        return storageMap.put(key, value);
+        return Optional.ofNullable(storageMap.put(key, value));
     }
 
     /**
-     * Gets value by key from the storage
      * @param key cannot be null
-     * @return if mapping key-value is present, return value for the key.
-     *          if there was no mapping, returns null
      * @throws IllegalArgumentException if key is null
      */
-    public V get(K key) {
+    public Optional<V> get(K key) {
         if (key == null) {
             throw new IllegalArgumentException();
         }
 
-        return storageMap.get(key);
+        return Optional.ofNullable(storageMap.get(key));
     }
 
     /**
@@ -68,14 +63,13 @@ public class MemoryStorage<K, V> implements Storage<K, V>{
 
     /**
      * @param key cannot be null
-     * @return the previous value associated with key, or
-     *         null if there was no mapping for key.
+     * @throws IllegalArgumentException if key is null
      */
-    public V remove(K key) {
+    public Optional<V> remove(K key) {
         if (key == null) {
             throw new IllegalArgumentException();
         }
-        return storageMap.remove(key);
+        return Optional.ofNullable(storageMap.remove(key));
     }
 
     public void clear(){

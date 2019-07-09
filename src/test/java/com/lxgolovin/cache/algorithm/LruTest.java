@@ -3,6 +3,7 @@ package com.lxgolovin.cache.algorithm;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,7 +46,7 @@ class LruTest {
     @Test
     void deleteCandidatesAfterShiftsLru() {
         // {1,2,3,4} after initialization phase
-        assertEquals(1,lQueue.pop());
+        assertEquals(Optional.of(1), lQueue.pop());
         // {2,3,4}
         assertFalse(lQueue.shift(1));
         //{2,3,4,1}
@@ -53,7 +54,7 @@ class LruTest {
         // {3,4,1}
         assertTrue(lQueue.shift(3));
         // {4,1,3}
-        assertEquals(4,lQueue.pop());
+        assertEquals(Optional.of(4), lQueue.pop());
         assertFalse(lQueue.delete(10));
     }
 
@@ -71,7 +72,7 @@ class LruTest {
         // {2,3,4,1,5,6}
         assertFalse(lQueue.shift(7));
         // {2,3,4,1,5,6,7}. if use pop, should delete 2 in LRU algorithm. Check this out:
-        assertEquals(2,lQueue.pop());
+        assertEquals(Optional.of(2), lQueue.pop());
         // check null as input
         assertThrows(IllegalArgumentException.class,
                 () -> lQueue.shift(null));
@@ -86,10 +87,10 @@ class LruTest {
         assertTrue(lQueue.delete(1));
         assertTrue(lQueue.delete(2));
         // {3,4} 3 - should be deleted by pop. Check it:
-        assertEquals(3,lQueue.pop());
+        assertEquals(3, lQueue.pop().get());
         assertTrue(lQueue.delete(4));
         // {}. But if we try to delete more, nothing happens
-        assertNull(lQueue.pop());
+        assertFalse(lQueue.pop().isPresent());
         assertFalse(lQueue.delete(5));
         // check null as input
         assertThrows(IllegalArgumentException.class,
@@ -102,6 +103,6 @@ class LruTest {
     @Test
     void deleteAll() {
         lQueue.clear();
-        assertNull(lQueue.pop());
+        assertFalse(lQueue.pop().isPresent());
     }
 }

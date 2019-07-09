@@ -158,9 +158,9 @@ public class AccessHashSet<E> {
      *
      * @return cut head
      */
-    public E cutHead() {
+    public Optional<E> cutHead() {
         E elem = head;
-        return (this.remove(head)) ? elem : null;
+        return (this.remove(head)) ? Optional.ofNullable(elem) : Optional.empty();
     }
 
     /**
@@ -168,9 +168,9 @@ public class AccessHashSet<E> {
      *
      * @return cut tail
      */
-    public E cutTail() {
+    public Optional<E> cutTail() {
         E elem = tail;
-        return (this.remove(tail)) ? elem : null;
+        return (this.remove(tail)) ? Optional.ofNullable(elem) : Optional.empty();
     }
 
     /**

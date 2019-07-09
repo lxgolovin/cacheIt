@@ -21,7 +21,7 @@ import java.util.stream.IntStream;
  * @see Lru
  * @see Mru
  */
-public class CacheController<K, V> implements Cache<K, V> {
+public class CacheController<K, V> implements Cache<K,V> {
 
     /**
      * Cache controller list to keep levels of cache
@@ -96,7 +96,7 @@ public class CacheController<K, V> implements Cache<K, V> {
      *         the deleted key-value mapping will be returned.
      * @throws IllegalArgumentException if input parameters are null
      */
-    public Map.Entry<K, V> cache(K key, V value) {
+    public Optional<Map.Entry<K, V>> cache(K key, V value) {
         if ((key == null) | (value == null)) {
             throw new IllegalArgumentException();
         }
@@ -108,6 +108,7 @@ public class CacheController<K, V> implements Cache<K, V> {
             startIndex = 0;
         }
 
+//        return load(key, value, startIndex);
         return load(key, value, startIndex);
     }
 
@@ -122,10 +123,16 @@ public class CacheController<K, V> implements Cache<K, V> {
      *         If any key-value mapping was popped during this task, because of size limit,
      *         the deleted key-value mapping will be returned.
      */
-    private Map.Entry<K, V> load(K key, V value, int index) {
-        Map.Entry<K, V> returnEntry = ccList.get(index).cache(key, value);
+    private Optional<Map.Entry<K, V>> load(K key, V value, int index) {
+//        return ccList.get(index).cache(key, value).map(entry -> {
+//            if ((key != entry.getKey()) && (levels() > (++index))) {
+//                 one more recursive if some entry popped out and there are still more levels
+//                return load(entry.getKey(), entry.getValue(), index);
+//            }
+//        });
+        Map.Entry<K, V> returnEntry = ccList.get(index).cache(key, value).orElse(null);
         if (returnEntry == null){
-            return null;
+            return Optional.empty();
         }
 
         if ((key != returnEntry.getKey()) && (levels() > (++index))) {
@@ -133,7 +140,7 @@ public class CacheController<K, V> implements Cache<K, V> {
             return load(returnEntry.getKey(), returnEntry.getValue(), index);
         }
 
-        return returnEntry;
+        return Optional.of(returnEntry);
     }
 
     /**
@@ -143,7 +150,7 @@ public class CacheController<K, V> implements Cache<K, V> {
      *         {@code null} if this map contains no mapping for the key
      * @throws IllegalArgumentException if key is null
      */
-    public V get(K key) {
+    public Optional<V> get(K key) {
         if (key == null) {
             throw new IllegalArgumentException();
         }
@@ -151,8 +158,8 @@ public class CacheController<K, V> implements Cache<K, V> {
         return ccList.stream()
                 .filter(c -> c.contains(key))
                 .findAny()
-                .map(c -> c.get(key))
-                .orElse(null);
+                .map(c -> c.get(key).orElse(null));
+//                .orElse(Optional.empty());
     }
 
     /**
@@ -165,10 +172,10 @@ public class CacheController<K, V> implements Cache<K, V> {
      *          Returns replaced entry if the popped one from first levels moved to next level
      */
     @Override
-    public Map.Entry<K, V> pop() {
+    public Optional<Map.Entry<K, V>> pop() {
         // check if there are no levels or all levels are empty
         if ((levels() < 1) || (size() < 1)) {
-            return null;
+            return Optional.empty();
         }
 
         // try to pop from first levels. One by one. If first is empty, try next
@@ -179,11 +186,11 @@ public class CacheController<K, V> implements Cache<K, V> {
 
         // found first not empty level. key-value are popped and now try to insert into
         // "startIndex" level
-        Map.Entry<K, V> popped = ccList.get(startIndex).pop();
+        Map.Entry<K, V> popped = ccList.get(startIndex).pop().orElse(null);
         startIndex++;
 
         if (popped == null) {
-            return null;
+            return Optional.empty();
         }
         // enter recursive method to insert popped key-value
         return load(popped.getKey(), popped.getValue(), startIndex);
@@ -201,16 +208,17 @@ public class CacheController<K, V> implements Cache<K, V> {
      * @throws IllegalArgumentException if key is null
      */
     @Override
-    public V delete(K key) {
+    public Optional<V> delete(K key) {
         if (key == null) {
             throw new IllegalArgumentException();
         }
 
+        // TODO: need to ask Mike, how to simplify
         return ccList.stream()
                 .filter(c -> c.contains(key))
                 .findAny()
-                .map(c -> c.delete(key))
-                .orElse(null);
+                .map(c -> c.delete(key).orElse(null));
+//                .orElse(Optional.empty());
     }
 
     /**

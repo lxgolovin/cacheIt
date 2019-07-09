@@ -1,5 +1,7 @@
 package com.lxgolovin.cache.algorithm;
 
+import java.util.Optional;
+
 /**
  * Implementation of abstract class {@link AbstractRu} with methods to define
  * Least Recently Used (LRU) algorithms.
@@ -27,7 +29,7 @@ public class Lru<E> extends AbstractRu<E>
      * @return element that was deleted or null if the queue is empty
      */
     @Override
-    public E pop () {
+    public Optional<E> pop () {
         return queue.cutHead();
     }
 }

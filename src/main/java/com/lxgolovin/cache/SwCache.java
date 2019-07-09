@@ -8,6 +8,7 @@ import com.lxgolovin.cache.storage.Storage;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Implementation of interface {@link Cache}. This class creates realization of cache.
@@ -150,25 +151,24 @@ public class SwCache<K, V> implements Cache<K, V> {
      * @throws IllegalArgumentException if any of incoming parameters are null
      */
     @Override
-    public Map.Entry<K, V> cache(K key, V value) {
+    public Optional<Map.Entry<K, V>> cache(K key, V value) {
         if ((key == null) || (value == null)) {
             throw new IllegalArgumentException();
         }
 
-        Map.Entry<K, V> poppedEntry = null;
+        Optional<Map.Entry<K, V>> poppedEntry = Optional.empty();
         if ((size() == maxSize) && (!contains(key))) {
             // using deletion by algorithm
             poppedEntry = pop();
         }
 
         algorithm.shift(key);
-        value = storage.put(key, value);
-        Map.Entry<K, V> replacedEntry = null;
-        if (value != null) {
-            replacedEntry = new AbstractMap.SimpleImmutableEntry<>(key, value);
-        }
+        Optional<Map.Entry<K, V>> replacedEntry = storage.put(key, value)
+                .map(v -> new AbstractMap.SimpleImmutableEntry<>(key, v));
 
-        return (poppedEntry == null) ? replacedEntry : poppedEntry;
+        return (poppedEntry.isPresent()) ? poppedEntry : replacedEntry;
+
+
     }
 
     /**
@@ -179,11 +179,11 @@ public class SwCache<K, V> implements Cache<K, V> {
      * @throws IllegalArgumentException if key is null
      */
     @Override
-    public V get(K key){
+    public Optional<V> get(K key){
         if (key == null) {
             throw new IllegalArgumentException();
         }
-        // Need to move key as it was accessed
+
         algorithm.shift(key);
         return storage.get(key);
     }
@@ -210,14 +210,13 @@ public class SwCache<K, V> implements Cache<K, V> {
      * @throws IllegalArgumentException if any of the params is null
      */
     @Override
-    public V delete(K key) {
+    public Optional<V> delete(K key) {
         if (key == null) {
             throw new IllegalArgumentException();
         }
 
         algorithm.delete(key);
-        V value = storage.remove(key);
-        return value;
+        return storage.remove(key);
     }
 
     /**
@@ -237,17 +236,16 @@ public class SwCache<K, V> implements Cache<K, V> {
      *          found in algorithm queue (empty)
      */
     @Override
-    public Map.Entry<K, V> pop() {
-        K key = algorithm.pop();
-        if (key == null) {
-            return null;
-        }
+    public Optional<Map.Entry<K, V>> pop() {
+        // TODO: need some refactoring!!!! Ask Mike
+//        return algorithm.pop()
+//                .map(key -> delete(key).map(value -> new AbstractMap.SimpleImmutableEntry<>(key, value)).orElse(null));
 
-        Map.Entry<K, V> entry;
-        V value = delete(key);
-        entry = new AbstractMap.SimpleImmutableEntry<>(key, value);
-
-        return entry;
+        return algorithm.pop()
+                .map(key -> delete(key)
+                        .map(value -> new AbstractMap.SimpleImmutableEntry<>(key, value))
+                        .orElse(null)
+                );
     }
 
     /**

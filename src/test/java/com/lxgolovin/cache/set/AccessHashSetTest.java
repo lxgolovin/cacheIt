@@ -68,14 +68,14 @@ class AccessHashSetTest {
     @Test
     void cutHead() {
         // Init set is {1,2,3,4}. cutHead should remove 1
-        assertEquals(1,set.cutHead());
+        assertEquals(1,set.cutHead().get());
         // now {2,3,4}
         assertTrue(set.put(2));
         // now {3,4,2}
-        assertEquals(3,set.cutHead());
-        assertEquals(4,set.cutHead());
-        assertEquals(2,set.cutHead());
-        assertNull(set.cutHead());
+        assertEquals(3,set.cutHead().get());
+        assertEquals(4,set.cutHead().get());
+        assertEquals(2,set.cutHead().get());
+        assertFalse(set.cutHead().isPresent());
     }
 
     /**
@@ -85,14 +85,14 @@ class AccessHashSetTest {
     @Test
     void cutTail() {
         // Init set is {1,2,3,4}. cutTail should remove 4
-        assertEquals(4,set.cutTail());
+        assertEquals(4,set.cutTail().get());
         // now {1,2,3}
         assertTrue(set.put(2));
         // now {1,3,2}
-        assertEquals(2,set.cutTail());
-        assertEquals(3,set.cutTail());
-        assertEquals(1,set.cutTail());
-        assertNull(set.cutTail());
+        assertEquals(2,set.cutTail().get());
+        assertEquals(3,set.cutTail().get());
+        assertEquals(1,set.cutTail().get());
+        assertFalse(set.cutTail().isPresent());
     }
 
     /**

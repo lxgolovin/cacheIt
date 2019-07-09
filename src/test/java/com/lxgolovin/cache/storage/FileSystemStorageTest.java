@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,9 +48,9 @@ class FileSystemStorageTest {
      */
     @Test
     void putKeyValueToStorage() {
-        assertNull(fileStorage.put(1,"One"));
-        assertNull(fileStorage.put(2, "Two"));
-        assertEquals("One", fileStorage.put(1, "Eleven"));
+        assertFalse(fileStorage.put(1,"One").isPresent());
+        assertFalse(fileStorage.put(2, "Two").isPresent());
+        assertEquals(Optional.of("One"), fileStorage.put(1, "Eleven"));
         assertThrows(IllegalArgumentException.class, () -> fileStorage.put(3, null));
         assertThrows(IllegalArgumentException.class, () -> fileStorage.put(null, "null"));
     }
@@ -59,9 +60,9 @@ class FileSystemStorageTest {
      */
     @Test
     void getValueFromStorage() {
-        assertNull(fileStorage.get(1));
-        assertNull(fileStorage.put(1,"One"));
-        assertEquals("One", fileStorage.get(1));
+        assertFalse(fileStorage.get(1).isPresent());
+        assertFalse(fileStorage.put(1,"One").isPresent());
+        assertEquals(Optional.of("One"), fileStorage.get(1));
         assertThrows(IllegalArgumentException.class, () -> fileStorage.get(null));
     }
 
@@ -71,7 +72,7 @@ class FileSystemStorageTest {
     @Test
     void ifEmptyAndClean() {
         assertTrue(fileStorage.isEmpty());
-        assertNull(fileStorage.put(1,"One"));
+        assertFalse(fileStorage.put(1,"One").isPresent());
         assertFalse(fileStorage.isEmpty());
         fileStorage.clear();
         assertTrue(fileStorage.isEmpty());
@@ -83,7 +84,7 @@ class FileSystemStorageTest {
     @Test
     void ifContainsKey() {
         assertTrue(fileStorage.isEmpty());
-        assertNull(fileStorage.put(1,"One"));
+        assertFalse(fileStorage.put(1,"One").isPresent());
         assertTrue(fileStorage.containsKey(1));
         assertFalse(fileStorage.containsKey(null));
     }
@@ -93,8 +94,7 @@ class FileSystemStorageTest {
      */
     @Test
     void emptyStorageDirectoryOnInit() throws IOException {
-        boolean emptyStorageDirectoryOnInit = true;
-        FileSystemStorage<Integer, String> emptyFileStorage = new FileSystemStorage<>(Paths.get(directoryPath), emptyStorageDirectoryOnInit);
+        FileSystemStorage<Integer, String> emptyFileStorage = new FileSystemStorage<>(Paths.get(directoryPath), true);
         assertEquals(Paths.get(directoryPath), emptyFileStorage.getDirectory());
         assertFalse(Files.walk(Paths.get(directoryPath))
                 .anyMatch(Files::isRegularFile));
@@ -109,7 +109,7 @@ class FileSystemStorageTest {
 
         assertEquals(10, mapFileStorage.size());
         assertFalse(mapFileStorage.isEmpty());
-        assertEquals(100, mapFileStorage.get(10));
+        assertEquals(Optional.of(100), mapFileStorage.get(10));
     }
 
     /**
@@ -118,10 +118,8 @@ class FileSystemStorageTest {
     @Test
     void  getAllDataFromStorage() {
         // create empty storage
-        boolean emptyStorageDirectoryOnInit = true;
-        FileSystemStorage<Integer, Integer> emptyFileStorage = new FileSystemStorage<>(Paths.get(directoryPath), emptyStorageDirectoryOnInit);
+        FileSystemStorage<Integer, Integer> emptyFileStorage = new FileSystemStorage<>(Paths.get(directoryPath), true);
         IntStream.rangeClosed(1,10).forEach(x -> emptyFileStorage.put(x, x*x));
-
 
         FileSystemStorage<Integer, Integer> storage = new FileSystemStorage<>(Paths.get(directoryPath));
         Map<Integer, Integer> map = storage.getAll();

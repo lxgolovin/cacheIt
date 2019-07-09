@@ -1,5 +1,7 @@
 package com.lxgolovin.cache.algorithm;
 
+import java.util.Optional;
+
 /**
  * Defined cache algorithm. Specifies main methods to add values to the queue and delete them
  * if needed. Has a possibility to clear all data and check the algorithm name
@@ -21,7 +23,7 @@ public interface CacheAlgorithm<E> {
      * Deletes element from the queue depending on the algorithm type
      * @return element that was deleted or null if the queue is empty
      */
-    E pop();
+    Optional<E> pop();
 
     /**
      * Removes element from the queue

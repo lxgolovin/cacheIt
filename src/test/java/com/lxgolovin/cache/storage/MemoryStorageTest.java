@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,9 +20,9 @@ class MemoryStorageTest {
      */
     @Test
     void putKeyValueToStorage() {
-        assertNull(storage.put(1,"One"));
-        assertNull(storage.put(2, "Two"));
-        assertEquals("One", storage.put(1, "Eleven"));
+        assertFalse(storage.put(1,"One").isPresent());
+        assertFalse(storage.put(2, "Two").isPresent());
+        assertEquals(Optional.of("One"), storage.put(1, "Eleven"));
         assertThrows(IllegalArgumentException.class, () -> storage.put(3, null));
         assertThrows(IllegalArgumentException.class, () -> storage.put(null, "null"));
     }
@@ -31,9 +32,9 @@ class MemoryStorageTest {
      */
     @Test
     void getValueFromStorage() {
-        assertNull(storage.get(1));
-        assertNull(storage.put(1,"One"));
-        assertEquals("One", storage.get(1));
+        assertFalse(storage.get(1).isPresent());
+        assertFalse(storage.put(1,"One").isPresent());
+        assertEquals(Optional.of("One"), storage.get(1));
         assertThrows(IllegalArgumentException.class, () -> storage.get(null));
     }
 
@@ -43,7 +44,7 @@ class MemoryStorageTest {
     @Test
     void ifEmptyAndClean() {
         assertTrue(storage.isEmpty());
-        assertNull(storage.put(1,"One"));
+        assertFalse(storage.put(1,"One").isPresent());
         assertFalse(storage.isEmpty());
         storage.clear();
         assertTrue(storage.isEmpty());
@@ -55,12 +56,10 @@ class MemoryStorageTest {
     @Test
     void ifContainsKey() {
         assertTrue(storage.isEmpty());
-        assertNull(storage.put(1,"One"));
+        assertFalse(storage.put(1,"One").isPresent());
         assertTrue(storage.containsKey(1));
         assertFalse(storage.containsKey(null));
     }
-
-
 
     @Test
     void putMapToStorage() {
@@ -71,7 +70,7 @@ class MemoryStorageTest {
 
         assertEquals(10, mapStorage.size());
         assertFalse(mapStorage.isEmpty());
-        assertEquals(100, mapStorage.get(10));
+        assertEquals(Optional.of(100), mapStorage.get(10));
     }
 
     /**

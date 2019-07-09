@@ -51,6 +51,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         createStorageDirectory(path);
         if (emptyStorage) {
             emptyDir();
+            // TODO: need to check this with Mike
 //        } else {
 //            getAll();
         }
@@ -72,7 +73,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     }
 
     /**
-     * IF the storage is not empty, one can get all the data from it
+     * If the storage is not empty, one can get all the data from it
      * as a map
      * @return map of key-values, stored in storage
      */
@@ -92,8 +93,6 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     }
 
     /**
-     * Returns directory path where all files are kept
-     *
      * @return path where data files kept
      */
     Path getDirectory() {
@@ -101,84 +100,60 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     }
 
     /**
-     * Puts key-value mapping to the storage
      * @param key cannot be null
      * @param value cannot be null
-     * @return if mapping key-value is present, return old value for the key.
-     *          if there was no mapping, returns null
      * @throws IllegalArgumentException if any key or value is null
      */
-    public V put(K key, V value) {
+    public Optional<V> put(K key, V value) {
         // TODO: create putAll to load map to storage
         if ((key == null) || (value == null)) {
             throw new IllegalArgumentException();
         }
 
-        Path filePath = null;
-        V oldValue = null;
-
-        if (containsKey(key)) {
-            filePath = indexMap.get(key);
-            oldValue = readFromFile(filePath);
-        }
+        Path filePath = indexMap.get(key);
+        Optional<V> oldValue = readValueFromFile(filePath);
 
         // element need to be updated
-        if (needToStoreNewcomer(oldValue, value)) {
+        if (!oldValue.isPresent() || !oldValue.get().equals(value)) {
             writeToFile(key, value, filePath);
         }
 
         return oldValue;
     }
 
-    private boolean needToStoreNewcomer(V oldValue, V newValue) {
-        return ((oldValue == null) || (!oldValue.equals(newValue)));
-    }
-
     /**
-     * Gets value by key from the storage
      * @param key cannot be null
-     * @return if mapping key-value is present, return value for the key.
-     *          if there was no mapping, returns null
      * @throws IllegalArgumentException if key is null
      */
-    public V get(K key) {
+    public Optional<V> get(K key) {
         if (key == null) {
             throw new IllegalArgumentException();
         }
 
-        // Need to move key as it was accessed. If false, return null
-        if (!containsKey(key)) {
-            return null;
-        }
-
         Path path = indexMap.get(key);
-        return readFromFile(path);
+        return readValueFromFile(path);
     }
 
-    /**
-     * @param key if null returns false
-     * @return true if element found, else false
-     */
     public boolean containsKey(K key) {
         return ((key != null) && indexMap.containsKey(key));
     }
 
     /**
      * @param key cannot be null
-     * @return the previous value associated with key, or
-     *         null if there was no mapping for key.
+     * @throws IllegalArgumentException if key is null
      */
-    public V remove(K key) {
+    public Optional<V> remove(K key) {
         if (key == null) {
             throw new IllegalArgumentException();
         }
 
         Path path = indexMap.get(key);
-        V value = readFromFile(path);
+        Optional<V> removedValue = readValueFromFile(path);
+
         indexMap.remove(key);
         deleteFile(path);
 
-        return value;
+        return removedValue;
     }
 
     public void clear(){
@@ -196,8 +171,11 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * Writes mapping key-value to file
      */
     private void writeToFile(K key, V value, Path path) {
+        Path filePath = (path == null) ? createFile() : path;
+
         Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
-        this.writeToFile(newcomer, path);
+        this.writeEntryToFile(newcomer, filePath);
+        indexMap.put(key, filePath); // TODO: need to split in 2 methods
     }
 
     /**
@@ -205,17 +183,15 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * @param entry mapping key-value
      * @param path path to the file. If null, file is created
      */
-    private void writeToFile(Map.Entry<K, V> entry, Path path) {
-        Path filePath = (path == null) ? createFile() : path;
+    private void writeEntryToFile(Map.Entry<K, V> entry, Path path) {
 
-        try (OutputStream outputStream = Files.newOutputStream(filePath);
+        try (OutputStream outputStream = Files.newOutputStream(path);
              ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream)) {
 
             objectOutputStream.writeObject(entry);
             objectOutputStream.flush();
-            indexMap.put(entry.getKey(), filePath);
         } catch (IOException e) {
-            // TODO: sing a song
+            // TODO: sing a song. To work with exception
         }
     }
 
@@ -231,18 +207,10 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     }
 
     /**
-     * Gets entry from the specified path.
-     *
-     * @param path to the file with entry. Path cannot be null
      * @return entry stored in file by the path if present, else null.
-     * @throws IllegalArgumentException if path is null.
      */
-    private V readFromFile(Path path) {
-        if (path == null) {
-            return null;
-        }
-        Optional<Map.Entry<K, V>> entry = readEntryFromFile(path);
-        return entry.map(Map.Entry::getValue).orElse(null);
+    private Optional<V> readValueFromFile(Path path) {
+        return readEntryFromFile(path).map(Map.Entry::getValue);
     }
 
     /**
@@ -251,18 +219,20 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     @SuppressWarnings("unchecked")
     private Optional<Map.Entry<K, V>> readEntryFromFile(Path path) {
+        Map.Entry<K, V> entry = null;
+
         try (InputStream inputStream = Files.newInputStream(path);
                 ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
 
-            Map.Entry<K, V> entry = (Map.Entry<K, V>) objectInputStream.readObject();
-
+            entry = (Map.Entry<K, V>) objectInputStream.readObject();
             if (entry != null)
                 indexMap.put(entry.getKey(), path);
 
-            return Optional.ofNullable(entry);
-        } catch (IOException | ClassNotFoundException e) {
-            return Optional.empty();
+        } catch (IOException | ClassNotFoundException | NullPointerException e) {
+            // TODO: to implement my exception
         }
+
+        return Optional.ofNullable(entry);
     }
 
     /**
