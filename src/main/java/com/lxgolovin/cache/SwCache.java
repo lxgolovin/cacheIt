@@ -139,17 +139,8 @@ public class SwCache<K, V> implements Cache<K, V> {
         map.keySet().forEach(algorithm::shift);
     }
 
-    /**
-     * @param key cannot be null
-     * @param value cannot be null
-     * @throws IllegalArgumentException if any of incoming parameters are null
-     */
     @Override
     public Optional<Map.Entry<K, V>> cache(K key, V value) {
-        if ((key == null) || (value == null)) {
-            throw new IllegalArgumentException();
-        }
-
         Optional<Map.Entry<K, V>> poppedEntry = Optional.empty();
         if ((size() == maxSize) && (!contains(key))) {
             // using deletion by algorithm
@@ -161,30 +152,15 @@ public class SwCache<K, V> implements Cache<K, V> {
                 .map(v -> new AbstractMap.SimpleImmutableEntry<>(key, v));
 
         return (poppedEntry.isPresent()) ? poppedEntry : replacedEntry;
-
-
     }
 
-    /**
-     * Gets value by the key
-     * @param key - may not be null
-     * @return the value to which the specified key is mapped, or
-     *         {@code null} if this map contains no mapping for the key
-     * @throws IllegalArgumentException if key is null
-     */
     @Override
     public Optional<V> get(K key){
-        if (key == null) {
-            throw new IllegalArgumentException();
-        }
-
         algorithm.shift(key);
         return storage.get(key);
     }
 
     /**
-     * Checks if the key is present in cache
-     * @param key to check in cache
      * @return true is element found, else false. Returns false if key is null
      */
     @Override
@@ -194,21 +170,9 @@ public class SwCache<K, V> implements Cache<K, V> {
 
     /**
      * Removes the mapping for a key from this cache. Does not depend on algorithm type
-     *
-     * <p>Returns the value for the associated key,
-     * or <tt>null</tt> if the cache contained no mapping for the key.
-     *
-     * @param key key whose mapping is to be removed from the cache
-     * @return the previous value associated with <tt>key</tt>, or
-     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
-     * @throws IllegalArgumentException if any of the params is null
      */
     @Override
     public Optional<V> delete(K key) {
-        if (key == null) {
-            throw new IllegalArgumentException();
-        }
-
         algorithm.delete(key);
         return storage.remove(key);
     }
@@ -225,9 +189,6 @@ public class SwCache<K, V> implements Cache<K, V> {
 
     /**
      * Removes the mapping for a key from the cache by used algorithm.
-     * To delete {@link Cache#delete(Object)} is used
-     * @return popped out entry, returns null entry if the element was not
-     *          found in algorithm queue (empty)
      */
     @Override
     public Optional<Map.Entry<K, V>> pop() {
@@ -235,7 +196,8 @@ public class SwCache<K, V> implements Cache<K, V> {
 //        return algorithm.pop()
 //                .map(key -> delete(key).map(value -> new AbstractMap.SimpleImmutableEntry<>(key, value)).orElse(null));
 
-        return algorithm.pop()
+        return algorithm
+                .pop()
                 .map(key -> delete(key)
                         .map(value -> new AbstractMap.SimpleImmutableEntry<>(key, value))
                         .orElse(null)

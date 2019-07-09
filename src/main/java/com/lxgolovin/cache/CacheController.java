@@ -4,6 +4,7 @@ import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.algorithm.Lru;
 import com.lxgolovin.cache.algorithm.Mru;
 
+import javax.crypto.spec.OAEPParameterSpec;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -115,50 +116,16 @@ public class CacheController<K, V> implements Cache<K,V> {
     /**
      * Loads new data (key and value) in recursive way.
      * Goes through all levels and moves data (popped out or inserted)
-     * @param key for the data
-     * @param value data
-     * @param index for the level to insert values
-     * @return the previous value associated with <tt>key</tt>, or
-     *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
-     *         If any key-value mapping was popped during this task, because of size limit,
-     *         the deleted key-value mapping will be returned.
      */
     private Optional<Map.Entry<K, V>> loadToLevel(K key, V value, int index) {
         // TODO: need refactoring
-        /*
-        Map.Entry<K, V> returnEntry = ccList.get(index).cache(key, value).orElse(null);
-        if (returnEntry == null){
-            return Optional.empty();
-        }
+         Optional<Map.Entry<K, V>> returnEntry = ccList.get(index).cache(key, value);
 
-        if ((key != returnEntry.getKey()) && (levels() > (++index))) {
-            // one more recursive if some entry popped out and there are still more levels
-            return loadToLevel(returnEntry.getKey(), returnEntry.getValue(), index);
-        }
-
-        return Optional.of(returnEntry);
-
-         */
-
-        Optional<Map.Entry<K, V>> returnEntry = ccList.get(index).cache(key, value);
-
-        int nextLevel = ++index;
-//        if (returnEntry.isPresent()) {
-            return returnEntry
-                    .filter(e -> ((e.getKey()!=key) && (levels() > nextLevel)))
-                    .map(e -> {
-                        Optional<Map.Entry<K, V>> newE = loadToLevel(e.getKey(), e.getValue(), nextLevel);
-                        return newE;
-                    }).orElse(returnEntry);
-
-//        }
-
-//        if ((key != returnEntry.getKey()) && (levels() > (++index))) {
-            // one more recursive if some entry popped out and there are still more levels
-//            return loadToLevel(returnEntry.getKey(), returnEntry.getValue(), index);
-//        }
-
-//        return returnEntry;
+        int nextLevel = index + 1;
+        return returnEntry
+                .filter(e -> ((e.getKey()!=key) && (levels() > nextLevel)))
+                .map(e -> loadToLevel(e.getKey(), e.getValue(), nextLevel))
+                .orElse(returnEntry);
     }
 
     public Optional<V> get(K key) {
@@ -173,10 +140,6 @@ public class CacheController<K, V> implements Cache<K,V> {
      * Removes the mapping for a key from the cache by used algorithm.
      * In multilevel cache the value is popped from the first level, then trying
      * to insert it in next level.
-     * @return popped out entry if it was the last available level.
-     *          Returns null entry if the element was not found in algorithm queue (empty) or
-     *          if there are no levels or all levels are empty.
-     *          Returns replaced entry if the popped one from first levels moved to next level
      */
     @Override
     public Optional<Map.Entry<K, V>> pop() {
@@ -187,21 +150,17 @@ public class CacheController<K, V> implements Cache<K,V> {
         }
 
         // try to pop from first levels. One by one. If first is empty, try next
-        int startIndex = IntStream.range(0, levels())
+        int notEmptyLevelI = IntStream.range(0, levels())
                 .filter(i -> (ccList.get(i).size() > 0))
                 .findFirst()
                 .orElse(0);
+        int nextLevel = notEmptyLevelI + 1;
 
-        // found first not empty level. key-value are popped and now try to insert into
-        // "startIndex" level
-        Map.Entry<K, V> popped = ccList.get(startIndex).pop().orElse(null);
-        startIndex++;
-
-        if (popped == null) {
-            return Optional.empty();
-        }
-        // enter recursive method to insert popped key-value
-        return loadToLevel(popped.getKey(), popped.getValue(), startIndex);
+        return ccList
+                .get(notEmptyLevelI)
+                .pop()
+                .map(e -> loadToLevel(e.getKey(), e.getValue(), nextLevel))
+                .orElse(Optional.empty());
     }
 
     @Override

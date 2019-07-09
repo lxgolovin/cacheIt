@@ -235,6 +235,9 @@ class MemoryCacheTest {
         Cache<Integer, Integer> memoryCache =  new SwCache<>(algorithm);
         assertThrows(IllegalArgumentException.class, () -> memoryCache.delete(null));
         assertThrows(IllegalArgumentException.class, () -> memoryCache.get(null));
+        assertThrows(IllegalArgumentException.class, () -> memoryCache.cache(null, null));
+        assertThrows(IllegalArgumentException.class, () -> memoryCache.cache(666, null));
+        assertThrows(IllegalArgumentException.class, () -> memoryCache.cache(null, 666));
         assertFalse(memoryCache.contains(null));
     }
 }

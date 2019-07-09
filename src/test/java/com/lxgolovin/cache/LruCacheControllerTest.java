@@ -275,9 +275,5 @@ class LruCacheControllerTest {
         assertEquals(2, cacheController.levels());
         assertEquals(0, cacheController.size());
         assertEquals(10, cacheController.sizeMax());
-
-//        assertFalse(cacheController.(null).isPresent());
-//        CacheAlgorithm<Integer> lruLev1 = new Lru<>();
-//        Cache<Integer, Integer> cacheLevel1 = new SwCache<>(lruLev1);
     }
 }
