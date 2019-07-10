@@ -101,11 +101,24 @@ class FileSystemStorageTest {
     }
 
     @Test
-    void putMapToStorage() {
+    void putMapToStorageInConstructor() {
         Map<Integer, Integer> map = new HashMap<>();
         IntStream.rangeClosed(1,10).forEach(x -> map.put(x, x*x));
 
         FileSystemStorage<Integer, Integer> mapFileStorage = new FileSystemStorage<>(Paths.get(directoryPath), map);
+
+        assertEquals(10, mapFileStorage.size());
+        assertFalse(mapFileStorage.isEmpty());
+        assertEquals(Optional.of(100), mapFileStorage.get(10));
+    }
+
+    @Test
+    void putMapToStorageByPutAll() {
+        Map<Integer, Integer> map = new HashMap<>();
+        IntStream.rangeClosed(1,10).forEach(x -> map.put(x, x*x));
+
+        FileSystemStorage<Integer, Integer> mapFileStorage = new FileSystemStorage<>();
+        assertTrue(mapFileStorage.putAll(map));
 
         assertEquals(10, mapFileStorage.size());
         assertFalse(mapFileStorage.isEmpty());

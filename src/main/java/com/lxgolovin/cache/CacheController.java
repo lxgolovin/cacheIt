@@ -110,7 +110,6 @@ public class CacheController<K, V> implements Cache<K,V> {
      * Goes through all levels and moves data (popped out or inserted)
      */
     private Optional<Map.Entry<K, V>> loadToLevel(K key, V value, int index) {
-        // TODO: Ask Mike about refactoring
          Optional<Map.Entry<K, V>> returnEntry = ccList.get(index).cache(key, value);
 
         int nextLevel = index + 1;
@@ -124,8 +123,7 @@ public class CacheController<K, V> implements Cache<K,V> {
         return ccList.stream()
                 .filter(c -> c.contains(key))
                 .findAny()
-                .map(c -> c.get(key).orElse(null));
-//                .orElse(Optional.empty());
+                .flatMap(c -> c.get(key));
     }
 
     /**
@@ -135,7 +133,6 @@ public class CacheController<K, V> implements Cache<K,V> {
      */
     @Override
     public Optional<Map.Entry<K, V>> pop() {
-        // TODO: Ask Mike about refactoring
         // check if there are no levels or all levels are empty
         if ((levels() < 1) || (size() < 1)) {
             return Optional.empty();
@@ -151,18 +148,15 @@ public class CacheController<K, V> implements Cache<K,V> {
         return ccList
                 .get(notEmptyLevelIndex)
                 .pop()
-                .map(e -> loadToLevel(e.getKey(), e.getValue(), nextLevel).orElse(null));
-//                .orElse(Optional.empty());
+                .flatMap(e -> loadToLevel(e.getKey(), e.getValue(), nextLevel));
     }
 
     @Override
     public Optional<V> delete(K key) {
-        // TODO: need to ask Mike, how to simplify
         return ccList.stream()
                 .filter(c -> c.contains(key))
                 .findAny()
-                .map(c -> c.delete(key).orElse(null));
-//                .orElse(Optional.empty());
+                .flatMap(c -> c.delete(key));
     }
 
     @Override

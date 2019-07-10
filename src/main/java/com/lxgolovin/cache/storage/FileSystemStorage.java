@@ -89,7 +89,6 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * @throws IllegalArgumentException if any key or value is null
      */
     public Optional<V> put(K key, V value) {
-        // TODO: create putAll to load map to storage
         if ((key == null) || (value == null)) {
             throw new IllegalArgumentException();
         }
@@ -103,6 +102,16 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         }
 
         return oldValue;
+    }
+
+    boolean putAll(Map<K, V> map) {
+        boolean putAllSuccess = false;
+
+        if (map != null) {
+            map.forEach(this::put);
+            putAllSuccess = true;
+        }
+        return putAllSuccess;
     }
 
     /**

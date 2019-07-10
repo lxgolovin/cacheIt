@@ -192,15 +192,10 @@ public class CacheLevel<K, V> implements Cache<K, V> {
      */
     @Override
     public Optional<Map.Entry<K, V>> pop() {
-        // TODO: need some refactoring!!!! Ask Mike
-//        return algorithm.pop()
-//                .map(key -> delete(key).map(value -> new AbstractMap.SimpleImmutableEntry<>(key, value)).orElse(null));
-
         return algorithm
                 .pop()
-                .map(key -> delete(key)
+                .flatMap(key -> delete(key)
                         .map(value -> new AbstractMap.SimpleImmutableEntry<>(key, value))
-                        .orElse(null)
                 );
     }
 
