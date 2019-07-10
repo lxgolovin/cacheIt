@@ -109,16 +109,18 @@ class MruCacheControllerTest {
         // get for "17" with still return 289!!! But now from level 2
         // now got: level0: {0,1,2,3}; level1: {7,10,11,12,18}; level2: {13,14,15,16,17}
         assertEquals(Optional.of(289), cc.get(17));
-
-        // same for other
-        assertEquals(17, cc.pop().get().getKey()); // 17->289 removed
-        assertEquals(18, cc.pop().get().getKey()); // 18->324 removed
-        assertEquals(3, cc.pop().get().getKey()); // 3->9 removed
-        assertEquals(2, cc.pop().get().getKey()); // 2->4 removed
+        // after "get" element 7-289 moved to level0
+        // now got: level0: {0,1,2,3,17}; level1: {7,10,11,12,18}; level2: {13,14,15,16}
+        assertFalse(cc.pop().isPresent());
+        // now got: level0: {0,1,2,3}; level1: {7,10,11,12,17}; level2: {13,14,15,16,18}
+        assertEquals(Optional.of(18), cc.pop().map(Map.Entry::getKey)); // 18->324 removed
+        assertEquals(Optional.of(17), cc.pop().map(Map.Entry::getKey)); // 17->289 removed
+        assertEquals(Optional.of(3), cc.pop().map(Map.Entry::getKey)); // 3->9 removed
+        assertEquals(Optional.of(2), cc.pop().map(Map.Entry::getKey)); // 2->4 removed
         // now got: level0: {}; level1: {7,10,11,12,0}; level2: {13,14,15,16,1} and size 10
         assertEquals(10,cc.size());
         // now pop to check how it works with empty level0
-        assertEquals(1, cc.pop().get().getKey()); // 1->1 removed
+        assertEquals(Optional.of(1), cc.pop().map(Map.Entry::getKey)); // 1->1 removed
 
         // remove all:
         cc.clear();

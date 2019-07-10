@@ -108,16 +108,19 @@ class LruCacheControllerTest {
         // get for "7" with still return 49!!! But now from level 2
         // now got: level0: {15,16,17,18}; level1: {10,11,12,13,14}; level2: {3,4,5,6,7}
         assertEquals(Optional.of(49), cc.get(7));
-
-        // same for other
-        assertEquals(3, cc.pop().get().getKey()); // 3->9 removed
-        assertEquals(4, cc.pop().get().getKey()); // 4->16 removed
-        assertEquals(5, cc.pop().get().getKey()); // 5->25 removed
-        assertEquals(6, cc.pop().get().getKey()); // 6->36 removed
+        // after "get" element 7-49 moved to level0
+        // now got: level0: {15,16,17,18,7}; level1: {10,11,12,13,14}; level2: {3,4,5,6}
+        assertFalse(cc.pop().isPresent());
+        // now got: level0: {16,17,18,7}; level1: {11,12,13,14,15}; level2: {3,4,5,6,10}
+        assertEquals(Optional.of(3), cc.pop().map(Map.Entry::getKey)); // 3->9 removed
+        assertEquals(Optional.of(4), cc.pop().map(Map.Entry::getKey)); // 4->16 removed
+        assertEquals(Optional.of(5), cc.pop().map(Map.Entry::getKey)); // 5->25 removed
+        assertEquals(Optional.of(6), cc.pop().map(Map.Entry::getKey)); // 6->36 removed
+        // now: level0: {}; level1: {15,16,17,18,7}; level2: {10,11,12,13,14} and size 10
         // now: level0: {}; level1: {14,15,16,17,18}; level2: {7,10,11,12,13} and size 10
         assertEquals(10,cc.size());
         // now pop to check how it works with empty level0
-        assertEquals(7, cc.pop().get().getKey()); // 7->49 removed
+        assertEquals(Optional.of(10), cc.pop().map(Map.Entry::getKey)); // 7->49 removed
 
         // remove all:
         cc.clear();
@@ -231,26 +234,27 @@ class LruCacheControllerTest {
         assertFalse(cc.cache(9,81).isPresent());
         // now: level0 {5-25, 6->36, 7->7, 8->64, 9->81}; level1 {4->16}
         assertEquals(Optional.of(16), cc.get(4));
-        // if adding to cache 4->4 again mapping 4->16 should be deleted. Check this out
-        Map.Entry<Integer, Integer> testEntry = new AbstractMap.SimpleEntry<>(4, 16);
-        assertEquals(Optional.of(testEntry), cc.cache(4, 4));
-        // now: level0 {5-25, 6->36, 7->7, 8->64, 9->81}; level1 {4->4}
-        assertEquals(Optional.of(4), cc.get(4));
+        // now: level0 {6->36, 7->7, 8->64, 9->81, 4->16}; level1 {5-25}
+        // if adding to cache 5->5 again mapping 5->25 should be deleted. Check this out
+        Map.Entry<Integer, Integer> testEntry = new AbstractMap.SimpleEntry<>(5, 25);
+        assertEquals(Optional.of(testEntry), cc.cache(5, 5));
+        // now: level0 {7->7, 8->64, 9->81, 4->16, 5->5}; level1 {6->36}
+        assertEquals(Optional.of(5), cc.get(5));
 
-        // now: level0 {5-25, 6->36, 7->7, 8->64, 9->81}; level1 {4->4}
+        // now: level0 {7->7, 8->64, 9->81, 4->16, 5->5}; level1 {6->36}
         // if adding 0->0, return value should be null!!
         assertFalse(cc.cache(0,0).isPresent());
-        // now: level0 {6->36, 7->7, 8->64, 9->81, 0->0}; level1 {4->4, 5->25}
+        // now: level0 {8->64, 9->81, 4->16, 5->5, 0->0}; level1 {6->36, 7->7}
 
         // add keys-values to fill level1 totally
         assertFalse(cc.cache(1,1).isPresent());
         assertFalse(cc.cache(2,4).isPresent());
         assertFalse(cc.cache(3,9).isPresent());
-        // now: level0 {9->81, 0->0, 1->1, 2->4, 3->9}; level1 {4->4, 5-25, 6->36, 7->7, 8->64}
+        // now: level0 {5->5, 0->0, 1->1, 2->4, 3->9}; level1 {6->36, 7->7, 8->64, 9->81, 4->16}
         assertTrue(cc.isLevelFull(1));
 
-        // one more 11->121, it pops out 4->4 from level1!!
-        assertEquals(Optional.of(4), cc.cache(11,121).map(Map.Entry::getKey));
+        // one more 11->121, it pops out 6->36 from level1!!
+        assertEquals(Optional.of(6), cc.cache(11,121).map(Map.Entry::getKey));
         // if getting key that is not present in cache, got null
         assertFalse(cc.get(1000).isPresent());
     }

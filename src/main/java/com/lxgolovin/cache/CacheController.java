@@ -59,7 +59,6 @@ public class CacheController<K, V> implements Cache<K,V> {
      * @throws IndexOutOfBoundsException if there is now level with such index
      */
     public int removeLevel(int index) {
-        //TODO: possibly need to move data to next levels when deleting level
         if ((index < 0) | (index >= levels())) {
             throw new IndexOutOfBoundsException();
         }
@@ -123,7 +122,12 @@ public class CacheController<K, V> implements Cache<K,V> {
         return ccList.stream()
                 .filter(c -> c.contains(key))
                 .findAny()
-                .flatMap(c -> c.get(key));
+                .flatMap(c -> c.get(key))
+                .flatMap(v -> delete(key))
+                .map(v -> {
+                    cache(key, v);
+                    return v;
+                });
     }
 
     /**
