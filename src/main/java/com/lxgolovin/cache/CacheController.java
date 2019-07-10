@@ -4,7 +4,6 @@ import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.algorithm.Lru;
 import com.lxgolovin.cache.algorithm.Mru;
 
-import javax.crypto.spec.OAEPParameterSpec;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -12,13 +11,13 @@ import java.util.stream.IntStream;
  * Cache controller creates several levels of cache with different algorithms to get
  * possibility to keep data. Cache controller implements {@link Cache} and is done as a
  * list of cached levels
- * As levels different types of caches could be used, e.g. {@link SwCache}
+ * As levels different types of caches could be used, e.g. {@link CacheLevel}
  * As algorithms {@link CacheAlgorithm}
  * @param <K> to keep keys
  * @param <V> to keep values
  * @see Cache
  * @see CacheAlgorithm
- * @see SwCache
+ * @see CacheLevel
  * @see Lru
  * @see Mru
  */
@@ -38,8 +37,8 @@ public class CacheController<K, V> implements Cache<K,V> {
         addLevel(cacheLevel);
     }
 
-    private SwCache<K, V> createNewMemoryCacheLru() {
-        return new SwCache<>(new Lru<>());
+    private CacheLevel<K, V> createNewMemoryCacheLru() {
+        return new CacheLevel<>(new Lru<>());
     }
 
     /**
@@ -98,19 +97,12 @@ public class CacheController<K, V> implements Cache<K,V> {
      * @throws IllegalArgumentException if input parameters are null
      */
     public Optional<Map.Entry<K, V>> cache(K key, V value) {
-        // TODO: need refactoring
         if ((key == null) | (value == null)) {
             throw new IllegalArgumentException();
         }
 
-        // if key is already in cache, getLevel(key) finds it
-        int startIndex = getLevelByKey(key);
-        if (startIndex == levels()) {
-            // the key is not in cache, so start inserting the key-value from 0 level
-            startIndex = 0;
-        }
-
-        return loadToLevel(key, value, startIndex);
+        int levelIndex = (contains(key)) ? getLevelByKey(key) : 0;
+        return loadToLevel(key, value, levelIndex);
     }
 
     /**
@@ -118,7 +110,7 @@ public class CacheController<K, V> implements Cache<K,V> {
      * Goes through all levels and moves data (popped out or inserted)
      */
     private Optional<Map.Entry<K, V>> loadToLevel(K key, V value, int index) {
-        // TODO: need refactoring
+        // TODO: Ask Mike about refactoring
          Optional<Map.Entry<K, V>> returnEntry = ccList.get(index).cache(key, value);
 
         int nextLevel = index + 1;
@@ -143,24 +135,24 @@ public class CacheController<K, V> implements Cache<K,V> {
      */
     @Override
     public Optional<Map.Entry<K, V>> pop() {
-        // TODO: need refactoring
+        // TODO: Ask Mike about refactoring
         // check if there are no levels or all levels are empty
         if ((levels() < 1) || (size() < 1)) {
             return Optional.empty();
         }
 
         // try to pop from first levels. One by one. If first is empty, try next
-        int notEmptyLevelI = IntStream.range(0, levels())
+        int notEmptyLevelIndex = IntStream.range(0, levels())
                 .filter(i -> (ccList.get(i).size() > 0))
                 .findFirst()
                 .orElse(0);
-        int nextLevel = notEmptyLevelI + 1;
+        int nextLevel = notEmptyLevelIndex + 1;
 
         return ccList
-                .get(notEmptyLevelI)
+                .get(notEmptyLevelIndex)
                 .pop()
-                .map(e -> loadToLevel(e.getKey(), e.getValue(), nextLevel))
-                .orElse(Optional.empty());
+                .map(e -> loadToLevel(e.getKey(), e.getValue(), nextLevel).orElse(null));
+//                .orElse(Optional.empty());
     }
 
     @Override

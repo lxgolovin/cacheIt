@@ -14,12 +14,12 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Create checks-tests for the implementation of memory cache {@link SwCache}
+ * Create checks-tests for the implementation of memory cache {@link CacheLevel}
  * based on interface {@link Cache}. Two algorithms are used for testing: LRU and MRU.
  * Algorithms are defined be interface {@link CacheAlgorithm} with implementations
  * {@link Lru} and {@link Mru}
  * @see Cache
- * @see SwCache
+ * @see CacheLevel
  * @see CacheAlgorithm
  * @see Lru
  * @see Mru
@@ -40,8 +40,8 @@ class MemoryCacheTest {
     /**
      * caches with memory cache
      */
-    private final Cache<Integer, Integer> lruCache = new SwCache<>(lru, maxSize);
-    private final Cache<Integer, Integer> mruCache = new SwCache<>(mru, 0, 0);
+    private final Cache<Integer, Integer> lruCache = new CacheLevel<>(lru, maxSize);
+    private final Cache<Integer, Integer> mruCache = new CacheLevel<>(mru, 0, 0);
 
     /**
      * Fill in caches.
@@ -63,7 +63,7 @@ class MemoryCacheTest {
     @Test
     void constructorWithDefaultSize() {
         Storage<Integer, String> storage = new MemoryStorage<>();
-        Cache<Integer, String> cache = new SwCache<>(lru, storage);
+        Cache<Integer, String> cache = new CacheLevel<>(lru, storage);
         assertEquals(0, cache.size());
         assertEquals(5, cache.sizeMax());
     }
@@ -76,7 +76,7 @@ class MemoryCacheTest {
         CacheAlgorithm<Integer> algorithm = new Lru<>();
         Map<Integer, String> map = new TreeMap<>();
 
-        Cache<Integer, String> cache = new SwCache<>(algorithm,map);
+        Cache<Integer, String> cache = new CacheLevel<>(algorithm,map);
         assertFalse(cache.cache(36, "36").isPresent());
         assertEquals(1, cache.size());
         assertEquals(5, cache.sizeMax());
@@ -91,7 +91,7 @@ class MemoryCacheTest {
         Map<Integer, String> map = new TreeMap<>();
         IntStream.rangeClosed(1, 10).forEach(x -> map.put(x,String.valueOf(x*x)));
 
-        Cache<Integer, String> cache = new SwCache<>(algorithm,map);
+        Cache<Integer, String> cache = new CacheLevel<>(algorithm,map);
         assertEquals(Optional.of(1),cache.cache(36, "36").map(Map.Entry::getKey));
         assertEquals(10, cache.size());
         assertEquals(10, cache.sizeMax());
@@ -228,11 +228,11 @@ class MemoryCacheTest {
     @Test
     void nullInputs() {
         CacheAlgorithm<Integer> algorithm = new Lru<>();
-        assertThrows(IllegalArgumentException.class, () -> new SwCache<>(null));
-        assertThrows(IllegalArgumentException.class, () -> new SwCache<>(algorithm,null, null));
-        assertThrows(IllegalArgumentException.class, () -> new SwCache<>(null,new HashMap<>()));
+        assertThrows(IllegalArgumentException.class, () -> new CacheLevel<>(null));
+        assertThrows(IllegalArgumentException.class, () -> new CacheLevel<>(algorithm,null, null));
+        assertThrows(IllegalArgumentException.class, () -> new CacheLevel<>(null,new HashMap<>()));
 
-        Cache<Integer, Integer> memoryCache =  new SwCache<>(algorithm);
+        Cache<Integer, Integer> memoryCache =  new CacheLevel<>(algorithm);
         assertThrows(IllegalArgumentException.class, () -> memoryCache.delete(null));
         assertThrows(IllegalArgumentException.class, () -> memoryCache.get(null));
         assertThrows(IllegalArgumentException.class, () -> memoryCache.cache(null, null));

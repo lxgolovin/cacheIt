@@ -30,7 +30,7 @@ import java.util.Optional;
  * @see MemoryStorage
  * @see FileSystemStorage
  */
-public class SwCache<K, V> implements Cache<K, V> {
+public class CacheLevel<K, V> implements Cache<K, V> {
     
     /**
      * maximum possible size for the cache. Minimum value is greater then 1.
@@ -53,7 +53,7 @@ public class SwCache<K, V> implements Cache<K, V> {
      * Creates memory cache with default size by defined algorithm
      * @param algorithm specifies algorithm type that is used by the cache
      */
-    public SwCache(CacheAlgorithm<K> algorithm) {
+    public CacheLevel(CacheAlgorithm<K> algorithm) {
         this(algorithm, new MemoryStorage<>(), new HashMap<>(), Cache.DEFAULT_CACHE_SIZE);
     }
 
@@ -65,11 +65,11 @@ public class SwCache<K, V> implements Cache<K, V> {
      * @param algorithm specifies algorithm type that is used by the cache
      * @param map incoming with keys-values of empty
      */
-    public SwCache(CacheAlgorithm<K> algorithm, Map<K, V> map) {
+    public CacheLevel(CacheAlgorithm<K> algorithm, Map<K, V> map) {
         this(algorithm, null, map, Cache.DEFAULT_CACHE_SIZE);
     }
 
-    public SwCache(CacheAlgorithm<K> algorithm, Storage<K, V> storage) {
+    public CacheLevel(CacheAlgorithm<K> algorithm, Storage<K, V> storage) {
         this(algorithm, storage, null, Cache.DEFAULT_CACHE_SIZE);
     }
 
@@ -80,7 +80,7 @@ public class SwCache<K, V> implements Cache<K, V> {
      * @param key specifies key for the entry
      * @param value defined value inside entry
      */
-    public SwCache(CacheAlgorithm<K> algorithm, K key, V value) {
+    public CacheLevel(CacheAlgorithm<K> algorithm, K key, V value) {
         this(algorithm, null, null, Cache.DEFAULT_CACHE_SIZE);
         cache(key, value);
     }
@@ -91,11 +91,11 @@ public class SwCache<K, V> implements Cache<K, V> {
      * {@link Cache#DEFAULT_CACHE_SIZE} will be used as a size
      * @param algorithm specifies algorithm type that is used by the cache
      */
-    public SwCache(CacheAlgorithm<K> algorithm, int size) {
+    public CacheLevel(CacheAlgorithm<K> algorithm, int size) {
         this(algorithm, null, null, size);
     }
 
-    public SwCache(CacheAlgorithm<K> algorithm, Storage<K, V>  storage, int size) {
+    public CacheLevel(CacheAlgorithm<K> algorithm, Storage<K, V>  storage, int size) {
         this(algorithm, storage, null, size);
     }
 
@@ -107,7 +107,7 @@ public class SwCache<K, V> implements Cache<K, V> {
      * @param map incoming with keys-values of empty
      * @param size defining the size for the mapping
      */
-    private SwCache(CacheAlgorithm<K> algorithm, Storage<K, V> storage, Map<K, V> map, int size) {
+    private CacheLevel(CacheAlgorithm<K> algorithm, Storage<K, V> storage, Map<K, V> map, int size) {
         if (algorithm == null) {
             throw new IllegalArgumentException();
         }

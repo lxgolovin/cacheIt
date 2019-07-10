@@ -18,12 +18,12 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Create checks-tests for the implementation of memory cache {@link SwCache}
+ * Create checks-tests for the implementation of memory cache {@link CacheLevel}
  * based on interface {@link Cache}. Two algorithms are used for testing: LRU and MRU.
  * Algorithms are defined be interface {@link CacheAlgorithm} with implementations
  * {@link Lru} and {@link Mru}
  * @see Cache
- * @see SwCache
+ * @see CacheLevel
  * @see CacheAlgorithm
  * @see Lru
  * @see Mru
@@ -52,8 +52,8 @@ class FileSystemCacheTest {
     private final Storage<Integer, Integer> lruStorage = new FileSystemStorage<>();
     private final Storage<Integer, Integer> mruStorage = new FileSystemStorage<>(Paths.get(directoryPath), true);
 
-    private final Cache<Integer, Integer> lruCache = new SwCache<>(lru, lruStorage, maxSize);
-    private final Cache<Integer, Integer> mruCache = new SwCache<>(mru, mruStorage);
+    private final Cache<Integer, Integer> lruCache = new CacheLevel<>(lru, lruStorage, maxSize);
+    private final Cache<Integer, Integer> mruCache = new CacheLevel<>(mru, mruStorage);
 
     /**
      * Fill in caches.
@@ -75,7 +75,7 @@ class FileSystemCacheTest {
     @Test
     void constructorWithDefaultSize() {
         Storage<Integer, String> storage = new FileSystemStorage<>();
-        Cache<Integer, String> cache = new SwCache<>(lru, storage);
+        Cache<Integer, String> cache = new CacheLevel<>(lru, storage);
         assertEquals(0, cache.size());
         assertEquals(5, cache.sizeMax());
     }
@@ -92,7 +92,7 @@ class FileSystemCacheTest {
         assertEquals(10, notEmptyStorage.size());
 
         CacheAlgorithm<Integer> lru = new Lru<>();
-        Cache<Integer, Integer> cache = new SwCache<>(lru, notEmptyStorage);
+        Cache<Integer, Integer> cache = new CacheLevel<>(lru, notEmptyStorage);
         assertEquals(Optional.of(1),cache.cache(36, 36).map(Map.Entry::getValue));
         assertEquals(10, cache.size());
         assertEquals(10, cache.sizeMax());
@@ -108,7 +108,7 @@ class FileSystemCacheTest {
         assertEquals(0, notEmptyStorage.size());
 
         CacheAlgorithm<Integer> lru = new Lru<>();
-        Cache<Integer, Integer> cache = new SwCache<>(lru, notEmptyStorage);
+        Cache<Integer, Integer> cache = new CacheLevel<>(lru, notEmptyStorage);
 
         assertTrue(notEmptyStorage.size() > 0);
         assertEquals(notEmptyStorage.size(), cache.size());
@@ -246,11 +246,11 @@ class FileSystemCacheTest {
     @Test
     void nullInputs() {
         CacheAlgorithm<Integer> algorithm = new Lru<>();
-        assertThrows(IllegalArgumentException.class, () -> new SwCache<>(null));
-        assertThrows(IllegalArgumentException.class, () -> new SwCache<>(algorithm,null, null));
-        assertThrows(IllegalArgumentException.class, () -> new SwCache<>(null, new FileSystemStorage<>()));
+        assertThrows(IllegalArgumentException.class, () -> new CacheLevel<>(null));
+        assertThrows(IllegalArgumentException.class, () -> new CacheLevel<>(algorithm,null, null));
+        assertThrows(IllegalArgumentException.class, () -> new CacheLevel<>(null, new FileSystemStorage<>()));
 
-        Cache<Integer, Integer> memoryCache =  new SwCache<>(algorithm, new FileSystemStorage<>());
+        Cache<Integer, Integer> memoryCache =  new CacheLevel<>(algorithm, new FileSystemStorage<>());
         assertThrows(IllegalArgumentException.class, () -> memoryCache.delete(null));
         assertThrows(IllegalArgumentException.class, () -> memoryCache.get(null));
         assertFalse(memoryCache.contains(null));
