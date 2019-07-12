@@ -1,0 +1,28 @@
+package com.lxgolovin.cache.storage;
+
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Interface of a storage to keep data, get it, check is contains
+ * @param <K> key
+ * @param <V> value
+ */
+public interface Storage<K, V> {
+
+    Optional<V> put(K key, V value);
+
+    Optional<V> get(K key);
+
+    Optional<V> remove(K key);
+
+    Map<K, V> getAll();
+
+    boolean containsKey(K key);
+
+    void clear();
+
+    int size();
+
+    boolean isEmpty();
+}

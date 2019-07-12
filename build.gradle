@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+}
+
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    testImplementation('org.junit.jupiter:junit-jupiter:5.4.2')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.4.2')
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+//        events "passed", "skipped", "failed"
+        events "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+wrapper {
+    distributionUrl='https://services.gradle.org/distributions/gradle-5.4.1-all.zip'
+    distributionType = Wrapper.DistributionType.ALL
+    gradleVersion = '5.4.1'
+}
