@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class FileSystemCacheTest {
 
     /**
-     * Algorihtm types use in testing
+     * Algorithm types use in testing
      */
     private final CacheAlgorithm<Integer> lru = new Lru<>();
     private final CacheAlgorithm<Integer> mru = new Mru<>();

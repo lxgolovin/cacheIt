@@ -13,7 +13,7 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Create usefull tests to check cache controller working
+ * Create useful tests to check cache controller working
  */
 class LruCacheControllerTest {
 

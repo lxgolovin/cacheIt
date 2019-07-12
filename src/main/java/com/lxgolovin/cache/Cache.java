@@ -9,7 +9,7 @@ import java.util.Optional;
  * @param <K>
  * @param <V>
  */
-public interface Cache<K, V> {
+interface Cache<K, V> {
 
     /**
      * Default cache size
