@@ -1,5 +1,8 @@
 package com.lxgolovin.cache.storage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,6 +34,8 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * Defining the directory to keep all data
      */
     private Path directory;
+
+    private static Logger logger = LoggerFactory.getLogger(FileSystemStorage.class);
 
     public FileSystemStorage() {
         this(null);
@@ -237,7 +242,13 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     private void deleteFile(Path path) {
         if (path != null) {
             boolean fileDeleted = path.toFile().delete();
-            System.out.println(fileDeleted); // TODO: create a logger
+            if (fileDeleted) {
+                logger.info("File {} deleted successfully", path.toUri());
+            } else {
+                logger.info("File {} not deleted", path.toUri());
+            }
+//            System.out.println(fileDeleted);
+            // TODO: create a logger
         }
     }
 
