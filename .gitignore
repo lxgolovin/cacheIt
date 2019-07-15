@@ -54,3 +54,4 @@ Thumbs.db
 
 # Current project tests
 TEMP/
+logs/

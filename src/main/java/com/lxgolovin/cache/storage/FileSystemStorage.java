@@ -1,5 +1,7 @@
 package com.lxgolovin.cache.storage;
 
+import com.lxgolovin.cache.core.ErrorMessages;
+import com.lxgolovin.cache.core.FileSystemCacheException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,6 +12,7 @@ import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
 /**
  * Implementation of {@link Storage} to keep data in files
  * @see Storage
@@ -81,10 +84,11 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
                     .map(this::readEntryFromFile)
                     .filter(Optional::isPresent)
                     .forEach(e -> loadedMap.put(e.get().getKey(), e.get().getValue()));
-
             return loadedMap;
-        } catch (IOException e) {
-            throw new IllegalAccessError();
+        } catch (IOException | SecurityException e) {
+            logger.error(ErrorMessages.READ_ALL_FROM_STORAGE_LOGGER, directory, e.getLocalizedMessage());
+            throw new FileSystemCacheException(
+                    ErrorMessages.READ_ALL_FROM_STORAGE_TRACE.concat(directory.toString()));
         }
     }
 
@@ -191,7 +195,9 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
             objectOutputStream.writeObject(entry);
             objectOutputStream.flush();
         } catch (IOException e) {
-            // TODO: sing a song. To work with exception
+            logger.error(ErrorMessages.PUT_DATA_TO_STORAGE_LOGGER, path.toUri(), e.getLocalizedMessage());
+            throw new FileSystemCacheException(
+                    ErrorMessages.PUT_DATA_TO_STORAGE_TRACE.concat(path.toString()), e.getCause());
         }
     }
 
@@ -201,8 +207,10 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     private Path createFile() {
         try {
             return Files.createTempFile(directory, null, null);
-        } catch (IOException e) {
-            throw new IllegalAccessError();
+        } catch (Exception e) {
+            logger.error(ErrorMessages.CREATE_FILE_STORAGE_LOGGER, directory, e.getLocalizedMessage());
+            throw new FileSystemCacheException(
+                    ErrorMessages.CREATE_FILE_STORAGE_TRACE, e.getCause());
         }
     }
 
@@ -219,7 +227,11 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     @SuppressWarnings("unchecked")
     private Optional<Map.Entry<K, V>> readEntryFromFile(Path path) {
-        Map.Entry<K, V> entry = null;
+        if (path == null) {
+            return Optional.empty();
+        }
+
+        Map.Entry<K, V> entry;
 
         try (InputStream inputStream = Files.newInputStream(path);
                 ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
@@ -228,8 +240,10 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
             if (entry != null)
                 indexMap.put(entry.getKey(), path);
 
-        } catch (IOException | ClassNotFoundException | NullPointerException e) {
-            // TODO: to implement my exception
+        } catch (Exception e) {
+            logger.error(ErrorMessages.READ_FILE_FROM_STORAGE_LOGGER, path.toUri(), e.getLocalizedMessage());
+            throw new FileSystemCacheException(
+                    ErrorMessages.READ_FILE_FROM_STORAGE_TRACE.concat(path.toString()), e.getCause());
         }
 
         return Optional.ofNullable(entry);
@@ -243,12 +257,10 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         if (path != null) {
             boolean fileDeleted = path.toFile().delete();
             if (fileDeleted) {
-                logger.info("File {} deleted successfully", path.toUri());
+                logger.info(ErrorMessages.INFO_FILE_DELETE_SUCCESS, path.toUri());
             } else {
-                logger.info("File {} not deleted", path.toUri());
+                logger.warn(ErrorMessages.WARN_FILE_DELETE_FAIL, path.toUri());
             }
-//            System.out.println(fileDeleted);
-            // TODO: create a logger
         }
     }
 
@@ -271,8 +283,9 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         try {
             directory = Files.createTempDirectory(TEMP_DIR_PREFIX);
             directory.toFile().deleteOnExit();
-        } catch (IOException e) {
-            throw new IllegalAccessError();
+        } catch (Exception e) {
+            logger.error(ErrorMessages.CREATE_TEMP_DIRECTORY_LOGGER, e.getLocalizedMessage());
+            throw new FileSystemCacheException(ErrorMessages.CREATE_TEMP_DIRECTORY_TRACE, e.getCause());
         }
     }
 
@@ -283,9 +296,10 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         if (!path.toFile().isDirectory()) {
             try {
                 directory = Files.createDirectory(path);
-            } catch (IOException e) {
-                // TODO: to sing a song
-                throw new IllegalAccessError();
+            } catch (Exception e) {
+                logger.error(ErrorMessages.CREATE_DIRECTORY_LOGGER, e.getLocalizedMessage());
+                throw new FileSystemCacheException(
+                        ErrorMessages.CREATE_DIRECTORY_TRACE, e.getCause());
             }
         } else {
             directory = path;
@@ -300,8 +314,10 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
             Files.walk(directory)
                     .filter(Files::isRegularFile)
                     .forEach(this::deleteFile);
-        } catch (IOException e) {
-            throw new IllegalAccessError();
+        } catch (Exception e) {
+            logger.error(ErrorMessages.EMPTY_DIRECTORY_LOGGER, directory, e.getLocalizedMessage());
+            throw new FileSystemCacheException(
+                    ErrorMessages.EMPTY_DIRECTORY_TRACE.concat(directory.toString()), e.getCause());
         }
     }
 }
