@@ -16,7 +16,7 @@ class ConcurrentMemoryStorageTest {
 
     private static Logger logger = LoggerFactory.getLogger(ConcurrentMemoryStorageTest.class);
 
-    private static final int threadsTotal = 5;
+    private static final int threadsTotal = 50;
 
     private static ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
 
@@ -62,10 +62,11 @@ class ConcurrentMemoryStorageTest {
     }
 
     @Test
-    void putKeyToHashMapLatch() throws InterruptedException {
-        final CountDownLatch latch = new CountDownLatch(threadsTotal);
+    void putKeyToHashMapLatch() throws InterruptedException, ExecutionException {
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        CountDownLatch latch = new CountDownLatch(threadsTotal);
 
-        map.forEach((k, v) -> exec.execute(() -> {
+        map.forEach((k, v) -> futures.add(CompletableFuture.runAsync(() -> {
             try {
                 logger.info("Latch ready: {}, {}", k, v);
                 latch.countDown();
@@ -75,9 +76,9 @@ class ConcurrentMemoryStorageTest {
             } catch (InterruptedException e) {
                 logger.info("Not inserted {}, {}, {}", k, v, e);
             }
-        }));
+        }, exec)));
 
-        TimeUnit.SECONDS.sleep(3); // wait all finished
+        FutureConvertor.getAllFinished(futures).get();
         assertEquals(threadsTotal, storage.size());
         assertEquals(storage.getAll(), map);
     }
