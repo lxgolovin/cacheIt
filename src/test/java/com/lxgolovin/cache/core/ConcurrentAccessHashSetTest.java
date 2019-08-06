@@ -1,10 +1,8 @@
 package com.lxgolovin.cache.core;
 
-import com.lxgolovin.cache.tools.FutureConvertor;
+import com.lxgolovin.cache.tools.FutureConverter;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +15,9 @@ class ConcurrentAccessHashSetTest {
 
     private static final int threadsTotal = 100;
 
-    private static ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
+    private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
 
     private final AccessHashSet<Integer> set = new AccessHashSet<>();
-    private static Logger logger = LoggerFactory.getLogger(ConcurrentAccessHashSetTest.class);
 
     @Test
     void putDataToSetFuture() throws InterruptedException, ExecutionException {
@@ -29,7 +26,7 @@ class ConcurrentAccessHashSetTest {
         IntStream.rangeClosed(1,threadsTotal)
                 .forEach(elem -> futures.add(CompletableFuture.runAsync(() -> set.put(elem), exec)));
 
-        FutureConvertor.listToFuture(futures).get();
+        FutureConverter.listToFuture(futures).get();
         assertEquals(threadsTotal, set.size());
     }
 
@@ -48,7 +45,7 @@ class ConcurrentAccessHashSetTest {
             }, exec));
         }
 
-        FutureConvertor.listToFuture(futures).get();
+        FutureConverter.getAllFinished(futures).get();
         assertEquals(1, set.size());
     }
 

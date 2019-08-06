@@ -1,6 +1,6 @@
 package com.lxgolovin.cache.storage;
 
-import com.lxgolovin.cache.tools.FutureConvertor;
+import com.lxgolovin.cache.tools.FutureConverter;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -14,13 +14,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ConcurrentMemoryStorageTest {
 
-    private static Logger logger = LoggerFactory.getLogger(ConcurrentMemoryStorageTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(ConcurrentMemoryStorageTest.class);
 
     private static final int threadsTotal = 50;
 
-    private static ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
+    private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
 
-    private static Map<Integer, String> map = new HashMap<>();
+    private static final Map<Integer, String> map = new HashMap<>();
 
     private final Storage<Integer, String> storage = new MemoryStorage<>();
 
@@ -52,7 +52,7 @@ class ConcurrentMemoryStorageTest {
             logger.info("Future inserted {}, {}", k, v);
         }, exec)));
 
-        FutureConvertor.getAllFinished(futures).get();
+        FutureConverter.getAllFinished(futures).get();
         assertEquals(threadsTotal, storage.size());
         map.forEach((k, v) -> {
             assertTrue(storage.containsKey(k));
@@ -78,7 +78,7 @@ class ConcurrentMemoryStorageTest {
             }
         }, exec)));
 
-        FutureConvertor.getAllFinished(futures).get();
+        FutureConverter.getAllFinished(futures).get();
         assertEquals(threadsTotal, storage.size());
         assertEquals(storage.getAll(), map);
     }

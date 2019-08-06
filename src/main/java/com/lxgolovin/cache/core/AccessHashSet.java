@@ -20,7 +20,7 @@ public class AccessHashSet<E> {
      */
     private final Map<E,Node<E>> map;
 
-    private ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * Inner class to define values inside map
@@ -36,15 +36,9 @@ public class AccessHashSet<E> {
          */
         private K nextElem, prevElem;
 
-        /**
-         * Constructor to set up values
-         *
-         * @param nextElement next element
-         * @param prevElement previous element
-         */
-        Node(K nextElement, K prevElement) {
-            this.nextElem = nextElement;
-            this.prevElem = prevElement;
+        Node() {
+            this.nextElem = null;
+            this.prevElem = null;
         }
     }
 
@@ -92,7 +86,7 @@ public class AccessHashSet<E> {
             // create first element
             head = elem;
             tail = elem;
-            newNode = new Node<>(null, null);
+            newNode = new Node<>();
         } else {
             // if element is not in map, push the element to the tail
             newNode = linkElementToTail(elem);
@@ -257,7 +251,7 @@ public class AccessHashSet<E> {
             pokedNode = map.get(elem);
         } else {
             // if no such element in map, create empty and link to tail
-            pokedNode = new Node<>(null, null);
+            pokedNode = new Node<>();
         }
 
         map.get(tail).nextElem = elem;

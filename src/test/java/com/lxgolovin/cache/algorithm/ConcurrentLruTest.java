@@ -1,6 +1,6 @@
 package com.lxgolovin.cache.algorithm;
 
-import com.lxgolovin.cache.tools.FutureConvertor;
+import com.lxgolovin.cache.tools.FutureConverter;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
@@ -15,10 +15,9 @@ class ConcurrentLruTest {
 
     private static final int threadsTotal = 100;
 
+    private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
+
     private final CacheAlgorithm<Integer> lQueue = new Lru<>();
-
-    private static ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
-
 
     @Test
     void shiftDataStressTest() throws InterruptedException, ExecutionException {
@@ -36,7 +35,7 @@ class ConcurrentLruTest {
                     }
                 }, exec)));
 
-        FutureConvertor.listToFuture(futures).get();
+        FutureConverter.getAllFinished(futures).get();
         assertTrue(lQueue.pop().isPresent());
     }
 
@@ -54,7 +53,7 @@ class ConcurrentLruTest {
             }, exec));
         }
 
-        FutureConvertor.listToFuture(futures).get();
+        FutureConverter.getAllFinished(futures).get();
         assertTrue(lQueue.delete(element));
     }
 
