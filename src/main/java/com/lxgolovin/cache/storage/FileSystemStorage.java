@@ -1,5 +1,9 @@
 package com.lxgolovin.cache.storage;
 
+import com.lxgolovin.cache.core.CacheException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -7,6 +11,7 @@ import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
 /**
  * Implementation of {@link Storage} to keep data in files
  * @see Storage
@@ -32,6 +37,8 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     private Path directory;
 
+    private static final Logger logger = LoggerFactory.getLogger(FileSystemStorage.class);
+
     public FileSystemStorage() {
         this(null);
     }
@@ -45,9 +52,6 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         createStorageDirectory(path);
         if (emptyStorage) {
             emptyDir();
-            // TODO: need to check this with Mike
-//        } else {
-//            getAll();
         }
     }
 
@@ -76,10 +80,9 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
                     .map(this::readEntryFromFile)
                     .filter(Optional::isPresent)
                     .forEach(e -> loadedMap.put(e.get().getKey(), e.get().getValue()));
-
             return loadedMap;
-        } catch (IOException e) {
-            throw new IllegalAccessError();
+        } catch (IOException | SecurityException e) {
+            throw new CacheException("Contact admin. Cannot read directory ".concat(directory.toString()));
         }
     }
 
@@ -88,7 +91,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * @param value cannot be null
      * @throws IllegalArgumentException if any key or value is null
      */
-    public Optional<V> put(K key, V value) {
+    public synchronized Optional<V> put(K key, V value) {
         if ((key == null) || (value == null)) {
             throw new IllegalArgumentException();
         }
@@ -135,7 +138,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * @param key cannot be null
      * @throws IllegalArgumentException if key is null
      */
-    public Optional<V> remove(K key) {
+    public synchronized Optional<V> remove(K key) {
         if (key == null) {
             throw new IllegalArgumentException();
         }
@@ -165,12 +168,16 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     }
 
     private void putDataToStorage(K key, V value, Path path) {
-        Path filePath = (path == null) ? createFile() : path;
+        try {
+            Path filePath = (path == null) ? createFile() : path;
 
-        Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
-        writeEntryToFile(newcomer, filePath);
+            Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
+            writeEntryToFile(newcomer, filePath);
 
-        indexMap.put(key, filePath);
+            indexMap.put(key, filePath);
+        } catch (IOException e) {
+            logger.error("Unable to put data into storage: ", e);
+        }
     }
 
     /**
@@ -178,27 +185,21 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * @param entry mapping key-value
      * @param path path to the file. If null, file is created
      */
-    private void writeEntryToFile(Map.Entry<K, V> entry, Path path) {
+    private void writeEntryToFile(Map.Entry<K, V> entry, Path path) throws IOException {
 
         try (OutputStream outputStream = Files.newOutputStream(path);
              ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream)) {
 
             objectOutputStream.writeObject(entry);
             objectOutputStream.flush();
-        } catch (IOException e) {
-            // TODO: sing a song. To work with exception
         }
     }
 
     /**
      * @return path to created temp file
      */
-    private Path createFile() {
-        try {
-            return Files.createTempFile(directory, null, null);
-        } catch (IOException e) {
-            throw new IllegalAccessError();
-        }
+    private Path createFile() throws IOException {
+        return Files.createTempFile(directory, null, null);
     }
 
     /**
@@ -214,6 +215,10 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     @SuppressWarnings("unchecked")
     private Optional<Map.Entry<K, V>> readEntryFromFile(Path path) {
+        if (path == null) {
+            return Optional.empty();
+        }
+
         Map.Entry<K, V> entry = null;
 
         try (InputStream inputStream = Files.newInputStream(path);
@@ -223,8 +228,8 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
             if (entry != null)
                 indexMap.put(entry.getKey(), path);
 
-        } catch (IOException | ClassNotFoundException | NullPointerException e) {
-            // TODO: to implement my exception
+        } catch (Exception e) {
+            logger.error("Cannot read file {} from storage: {}", path.toUri(), e.getLocalizedMessage());
         }
 
         return Optional.ofNullable(entry);
@@ -237,7 +242,11 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     private void deleteFile(Path path) {
         if (path != null) {
             boolean fileDeleted = path.toFile().delete();
-            System.out.println(fileDeleted); // TODO: create a logger
+            if (fileDeleted) {
+                logger.info("File {} deleted successfully", path.toUri());
+            } else {
+                logger.warn("File {} not deleted", path.toUri());
+            }
         }
     }
 
@@ -260,8 +269,8 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         try {
             directory = Files.createTempDirectory(TEMP_DIR_PREFIX);
             directory.toFile().deleteOnExit();
-        } catch (IOException e) {
-            throw new IllegalAccessError();
+        } catch (Exception e) {
+            throw new CacheException("Cannot create temporary directory", e);
         }
     }
 
@@ -272,9 +281,8 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         if (!path.toFile().isDirectory()) {
             try {
                 directory = Files.createDirectory(path);
-            } catch (IOException e) {
-                // TODO: to sing a song
-                throw new IllegalAccessError();
+            } catch (Exception e) {
+                throw new CacheException("Cannot create temporary directory", e);
             }
         } else {
             directory = path;
@@ -289,8 +297,8 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
             Files.walk(directory)
                     .filter(Files::isRegularFile)
                     .forEach(this::deleteFile);
-        } catch (IOException e) {
-            throw new IllegalAccessError();
+        } catch (Exception e) {
+            throw new CacheException("Cannot create temporary directory ".concat(directory.toString()), e);
         }
     }
 }

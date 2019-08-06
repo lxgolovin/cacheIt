@@ -1,14 +1,17 @@
-package com.lxgolovin.cache.set;
+package com.lxgolovin.cache.core;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Implements doubly linked "set" based on {@link HashMap}. The elements link each other
+ * Implements doubly linked "set" based on {@link ConcurrentHashMap}. The elements link each other
  * by access order. This set is a kind of implementation of LinkedHashMap with access order
  * set to true
  *
  * @param <E> type for the incoming element
- * @see HashMap
+ * @see ConcurrentHashMap
  */
 public class AccessHashSet<E> {
 
@@ -16,6 +19,8 @@ public class AccessHashSet<E> {
      * Map to keep elements
      */
     private final Map<E,Node<E>> map;
+
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * Inner class to define values inside map
@@ -31,15 +36,9 @@ public class AccessHashSet<E> {
          */
         private K nextElem, prevElem;
 
-        /**
-         * Constructor to set up values
-         *
-         * @param nextElement next element
-         * @param prevElement previous element
-         */
-        Node(K nextElement, K prevElement) {
-            this.nextElem = nextElement;
-            this.prevElem = prevElement;
+        Node() {
+            this.nextElem = null;
+            this.prevElem = null;
         }
     }
 
@@ -47,20 +46,20 @@ public class AccessHashSet<E> {
      * Pointer to the first element
      * Actually it is LRU
      */
-    private E head;
+    private volatile E head;
 
     /**
      * Pointer to the last element in map
      * Actually it is MRU
      */
-    private E tail;
+    private volatile E tail;
 
     /**
      * Constructs a new, empty set; the backing <tt>HashMap</tt> instance has
      * default initial capacity (16) and load factor (0.75).
      */
     public AccessHashSet() {
-        map = new HashMap<>();
+        map = new ConcurrentHashMap<>();
     }
 
     /**
@@ -72,7 +71,7 @@ public class AccessHashSet<E> {
      * @return <tt>true</tt> if this set did already contain the specified
      *          element. Return false if elem is null
      */
-    public boolean put(E elem) {
+    public synchronized boolean put(E elem) {
         if (elem == null) {
             return false;
         }
@@ -87,7 +86,7 @@ public class AccessHashSet<E> {
             // create first element
             head = elem;
             tail = elem;
-            newNode = new Node<>(null, null);
+            newNode = new Node<>();
         } else {
             // if element is not in map, push the element to the tail
             newNode = linkElementToTail(elem);
@@ -115,12 +114,17 @@ public class AccessHashSet<E> {
             return true;
         }
 
-        if (isHead(elem)) {
-            unlinkElementFromHead(elem);
-        } else if (isMiddle(elem)) {
-            unlinkElementFromMiddle(elem);
+        lock.writeLock().lock();
+        try {
+            if (isHead(elem)) {
+                unlinkElementFromHead(elem);
+            } else if (isMiddle(elem)) {
+                unlinkElementFromMiddle(elem);
+            }
+            linkElementToTail(elem);
+        } finally {
+            lock.writeLock().unlock();
         }
-        linkElementToTail(elem);
 
         return true;
     }
@@ -134,7 +138,7 @@ public class AccessHashSet<E> {
      * @return <tt>true</tt> if the set contained the specified element
      * @throws IllegalArgumentException if elem is null
      */
-    public boolean remove(E elem) {
+    public synchronized boolean remove(E elem) {
         if (elem == null) {
             return false;
         }
@@ -247,7 +251,7 @@ public class AccessHashSet<E> {
             pokedNode = map.get(elem);
         } else {
             // if no such element in map, create empty and link to tail
-            pokedNode = new Node<>(null, null);
+            pokedNode = new Node<>();
         }
 
         map.get(tail).nextElem = elem;

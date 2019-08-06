@@ -1,6 +1,6 @@
 package com.lxgolovin.cache.algorithm;
 
-import com.lxgolovin.cache.set.AccessHashSet;
+import com.lxgolovin.cache.core.AccessHashSet;
 
 import java.util.Optional;
 

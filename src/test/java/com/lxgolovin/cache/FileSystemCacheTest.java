@@ -65,7 +65,10 @@ class FileSystemCacheTest {
     @BeforeEach
     void setUp() {
         int maxRange = 9;
-        IntStream.rangeClosed(1, maxRange).forEach(x->lruCache.cache(x,x));
+        for (int i = 1; i <= maxRange; i++) {
+            lruCache.cache(i,i);
+        }
+//        IntStream.rangeClosed(1, maxRange).forEach(x->lruCache.cache(x,x));
         IntStream.rangeClosed(0, maxRange).forEach(x->mruCache.cache(x,x));
     }
 
