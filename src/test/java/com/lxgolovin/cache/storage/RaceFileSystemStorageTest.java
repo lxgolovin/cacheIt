@@ -4,19 +4,16 @@ import com.lxgolovin.cache.tools.FutureConverter;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.*;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class ConcurrentMemoryStorageTest {
+class RaceFileSystemStorageTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(ConcurrentMemoryStorageTest.class);
-
-    private static final int threadsTotal = 50;
+    private static final int threadsTotal = 100;
 
     private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
 
@@ -33,10 +30,9 @@ class ConcurrentMemoryStorageTest {
 
     @Test
     void putKeyToHashMapSleep() throws InterruptedException {
-        map.forEach((k, v) -> exec.execute(() -> {
-            storage.put(k, v);
-            logger.info("Sleep inserted {}, {}", k, v);
-        }));
+        map.forEach((k, v) ->
+                exec.execute(() ->
+                        storage.put(k, v)));
 
         TimeUnit.SECONDS.sleep(3); // wait all finished
         assertEquals(threadsTotal, storage.size());
@@ -47,10 +43,9 @@ class ConcurrentMemoryStorageTest {
     void putKeyToHashMapFuture() throws InterruptedException, ExecutionException {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        map.forEach((k, v) -> futures.add(CompletableFuture.runAsync(() -> {
-            storage.put(k, v);
-            logger.info("Future inserted {}, {}", k, v);
-        }, exec)));
+        map.forEach((k, v) ->
+                futures.add(CompletableFuture.runAsync(() ->
+                        storage.put(k, v), exec)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(threadsTotal, storage.size());
@@ -68,13 +63,11 @@ class ConcurrentMemoryStorageTest {
 
         map.forEach((k, v) -> futures.add(CompletableFuture.runAsync(() -> {
             try {
-                logger.info("Latch ready: {}, {}", k, v);
                 latch.countDown();
                 latch.await();
                 storage.put(k, v);
-                logger.info("Latch inserted {}, {}", k, v);
             } catch (InterruptedException e) {
-                logger.info("Not inserted {}, {}, {}", k, v, e);
+                // just skip it and finish
             }
         }, exec)));
 

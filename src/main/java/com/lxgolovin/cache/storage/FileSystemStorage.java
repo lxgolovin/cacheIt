@@ -1,7 +1,6 @@
 package com.lxgolovin.cache.storage;
 
-import com.lxgolovin.cache.core.ErrorMessages;
-import com.lxgolovin.cache.core.FileSystemCacheException;
+import com.lxgolovin.cache.core.CacheException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,9 +52,6 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         createStorageDirectory(path);
         if (emptyStorage) {
             emptyDir();
-            // TODO: need to check this with Mike
-//        } else {
-//            getAll();
         }
     }
 
@@ -86,9 +82,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
                     .forEach(e -> loadedMap.put(e.get().getKey(), e.get().getValue()));
             return loadedMap;
         } catch (IOException | SecurityException e) {
-            logger.error(ErrorMessages.READ_ALL_FROM_STORAGE_LOGGER, directory, e.getLocalizedMessage());
-            throw new FileSystemCacheException(
-                    ErrorMessages.READ_ALL_FROM_STORAGE_TRACE.concat(directory.toString()));
+            throw new CacheException("Contact admin. Cannot read directory ".concat(directory.toString()));
         }
     }
 
@@ -174,12 +168,16 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     }
 
     private void putDataToStorage(K key, V value, Path path) {
-        Path filePath = (path == null) ? createFile() : path;
+        try {
+            Path filePath = (path == null) ? createFile() : path;
 
-        Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
-        writeEntryToFile(newcomer, filePath);
+            Map.Entry<K, V> newcomer = new AbstractMap.SimpleImmutableEntry<>(key, value);
+            writeEntryToFile(newcomer, filePath);
 
-        indexMap.put(key, filePath);
+            indexMap.put(key, filePath);
+        } catch (IOException e) {
+            logger.error("Unable to put data into storage: ", e);
+        }
     }
 
     /**
@@ -187,31 +185,21 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * @param entry mapping key-value
      * @param path path to the file. If null, file is created
      */
-    private void writeEntryToFile(Map.Entry<K, V> entry, Path path) {
+    private void writeEntryToFile(Map.Entry<K, V> entry, Path path) throws IOException {
 
         try (OutputStream outputStream = Files.newOutputStream(path);
              ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream)) {
 
             objectOutputStream.writeObject(entry);
             objectOutputStream.flush();
-        } catch (IOException e) {
-            logger.error(ErrorMessages.PUT_DATA_TO_STORAGE_LOGGER, path.toUri(), e.getLocalizedMessage());
-            throw new FileSystemCacheException(
-                    ErrorMessages.PUT_DATA_TO_STORAGE_TRACE.concat(path.toString()), e.getCause());
         }
     }
 
     /**
      * @return path to created temp file
      */
-    private Path createFile() {
-        try {
-            return Files.createTempFile(directory, null, null);
-        } catch (Exception e) {
-            logger.error(ErrorMessages.CREATE_FILE_STORAGE_LOGGER, directory, e.getLocalizedMessage());
-            throw new FileSystemCacheException(
-                    ErrorMessages.CREATE_FILE_STORAGE_TRACE, e.getCause());
-        }
+    private Path createFile() throws IOException {
+        return Files.createTempFile(directory, null, null);
     }
 
     /**
@@ -231,7 +219,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
             return Optional.empty();
         }
 
-        Map.Entry<K, V> entry;
+        Map.Entry<K, V> entry = null;
 
         try (InputStream inputStream = Files.newInputStream(path);
                 ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
@@ -241,9 +229,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
                 indexMap.put(entry.getKey(), path);
 
         } catch (Exception e) {
-            logger.error(ErrorMessages.READ_FILE_FROM_STORAGE_LOGGER, path.toUri(), e.getLocalizedMessage());
-            throw new FileSystemCacheException(
-                    ErrorMessages.READ_FILE_FROM_STORAGE_TRACE.concat(path.toString()), e.getCause());
+            logger.error("Cannot read file {} from storage: {}", path.toUri(), e.getLocalizedMessage());
         }
 
         return Optional.ofNullable(entry);
@@ -257,9 +243,9 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         if (path != null) {
             boolean fileDeleted = path.toFile().delete();
             if (fileDeleted) {
-                logger.info(ErrorMessages.INFO_FILE_DELETE_SUCCESS, path.toUri());
+                logger.info("File {} deleted successfully", path.toUri());
             } else {
-                logger.warn(ErrorMessages.WARN_FILE_DELETE_FAIL, path.toUri());
+                logger.warn("File {} not deleted", path.toUri());
             }
         }
     }
@@ -284,8 +270,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
             directory = Files.createTempDirectory(TEMP_DIR_PREFIX);
             directory.toFile().deleteOnExit();
         } catch (Exception e) {
-            logger.error(ErrorMessages.CREATE_TEMP_DIRECTORY_LOGGER, e.getLocalizedMessage());
-            throw new FileSystemCacheException(ErrorMessages.CREATE_TEMP_DIRECTORY_TRACE, e.getCause());
+            throw new CacheException("Cannot create temporary directory", e);
         }
     }
 
@@ -297,9 +282,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
             try {
                 directory = Files.createDirectory(path);
             } catch (Exception e) {
-                logger.error(ErrorMessages.CREATE_DIRECTORY_LOGGER, e.getLocalizedMessage());
-                throw new FileSystemCacheException(
-                        ErrorMessages.CREATE_DIRECTORY_TRACE, e.getCause());
+                throw new CacheException("Cannot create temporary directory", e);
             }
         } else {
             directory = path;
@@ -315,9 +298,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
                     .filter(Files::isRegularFile)
                     .forEach(this::deleteFile);
         } catch (Exception e) {
-            logger.error(ErrorMessages.EMPTY_DIRECTORY_LOGGER, directory, e.getLocalizedMessage());
-            throw new FileSystemCacheException(
-                    ErrorMessages.EMPTY_DIRECTORY_TRACE.concat(directory.toString()), e.getCause());
+            throw new CacheException("Cannot create temporary directory ".concat(directory.toString()), e);
         }
     }
 }

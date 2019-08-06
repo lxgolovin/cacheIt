@@ -1,6 +1,6 @@
 package com.lxgolovin.cache.storage;
 
-import com.lxgolovin.cache.core.FileSystemCacheException;
+import com.lxgolovin.cache.core.CacheException;
 
 import java.util.Map;
 import java.util.Optional;
@@ -18,7 +18,7 @@ public interface Storage<K, V> {
 
     Optional<V> remove(K key);
 
-    Map<K, V> getAll() throws FileSystemCacheException;
+    Map<K, V> getAll() throws CacheException;
 
     boolean containsKey(K key);
 

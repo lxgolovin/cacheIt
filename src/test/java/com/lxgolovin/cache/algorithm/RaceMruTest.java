@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class ConcurrentMruTest {
+class RaceMruTest {
 
     private static final int threadsTotal = 100;
 
