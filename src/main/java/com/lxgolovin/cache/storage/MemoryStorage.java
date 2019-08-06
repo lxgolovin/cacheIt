@@ -1,8 +1,8 @@
 package com.lxgolovin.cache.storage;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Implementation of {@link Storage} to keep data in memory
@@ -14,11 +14,11 @@ public class MemoryStorage<K, V> implements Storage<K, V>{
     private final Map<K, V> storageMap;
 
     public MemoryStorage() {
-        storageMap = new HashMap<>();
+        storageMap = new ConcurrentHashMap<>();
     }
 
     public MemoryStorage(Map<K, V> map) {
-        storageMap = (map == null) ? new HashMap<>() : map;
+        storageMap = (map == null) ? new ConcurrentHashMap<>() : new ConcurrentHashMap<>(map);
     }
 
     /**
@@ -27,7 +27,7 @@ public class MemoryStorage<K, V> implements Storage<K, V>{
      * @return map of key-values, stored in storage
      */
     public Map<K, V> getAll() {
-        return new HashMap<>(storageMap);
+        return new ConcurrentHashMap<>(storageMap);
     }
 
     /**
