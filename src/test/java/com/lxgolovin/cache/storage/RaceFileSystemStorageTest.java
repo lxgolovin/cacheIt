@@ -5,6 +5,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -19,10 +20,12 @@ class RaceFileSystemStorageTest {
 
     private static final Map<Integer, String> map = new HashMap<>();
 
-    private final Storage<Integer, String> storage = new MemoryStorage<>();
+    private static FileSystemStorage<Integer, String> storage;
 
     @BeforeAll
     static void setUp() {
+        final String directoryPath = "./TEMP/";
+        storage = new FileSystemStorage<>(Paths.get(directoryPath), true);
         for (int i = 0; i < threadsTotal; i++) {
             map.put(i, String.valueOf(Math.random() * 100));
         }
@@ -31,8 +34,13 @@ class RaceFileSystemStorageTest {
     @Test
     void putKeyToHashMapSleep() throws InterruptedException {
         map.forEach((k, v) ->
-                exec.execute(() ->
-                        storage.put(k, v)));
+                exec.execute(() -> {
+                    storage.put(k, v);
+                    Thread.yield();
+                    storage.remove(k);
+                    Thread.yield();
+                    storage.put(k, v);
+                }));
 
         TimeUnit.SECONDS.sleep(3); // wait all finished
         assertEquals(threadsTotal, storage.size());
@@ -44,8 +52,13 @@ class RaceFileSystemStorageTest {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         map.forEach((k, v) ->
-                futures.add(CompletableFuture.runAsync(() ->
-                        storage.put(k, v), exec)));
+                futures.add(CompletableFuture.runAsync(() -> {
+                    storage.put(k, v);
+                    Thread.yield();
+                    storage.remove(k);
+                    Thread.yield();
+                    storage.put(k, v);
+                }, exec)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(threadsTotal, storage.size());
@@ -65,6 +78,10 @@ class RaceFileSystemStorageTest {
             try {
                 latch.countDown();
                 latch.await();
+                storage.put(k, v);
+                Thread.yield();
+                storage.remove(k);
+                Thread.yield();
                 storage.put(k, v);
             } catch (InterruptedException e) {
                 // just skip it and finish

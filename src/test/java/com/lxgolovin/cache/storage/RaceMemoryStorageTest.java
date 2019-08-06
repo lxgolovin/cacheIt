@@ -30,8 +30,13 @@ class RaceMemoryStorageTest {
     @Test
     void putKeyToHashMapSleep() throws InterruptedException {
         map.forEach((k, v) ->
-                exec.execute(() ->
-                        storage.put(k, v)));
+                exec.execute(() -> {
+                    storage.put(k, v);
+                    Thread.yield();
+                    storage.remove(k);
+                    Thread.yield();
+                    storage.put(k, v);
+                }));
 
         TimeUnit.SECONDS.sleep(3); // wait all finished
         assertEquals(threadsTotal, storage.size());
@@ -43,8 +48,13 @@ class RaceMemoryStorageTest {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         map.forEach((k, v) ->
-                futures.add(CompletableFuture.runAsync(() ->
-                        storage.put(k, v), exec)));
+                futures.add(CompletableFuture.runAsync(() -> {
+                    storage.put(k, v);
+                    Thread.yield();
+                    storage.remove(k);
+                    Thread.yield();
+                    storage.put(k, v);
+                }, exec)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(threadsTotal, storage.size());
@@ -64,6 +74,10 @@ class RaceMemoryStorageTest {
             try {
                 latch.countDown();
                 latch.await();
+                storage.put(k, v);
+                Thread.yield();
+                storage.remove(k);
+                Thread.yield();
                 storage.put(k, v);
             } catch (InterruptedException e) {
                 // just skip it and finish

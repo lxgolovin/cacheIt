@@ -91,7 +91,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * @param value cannot be null
      * @throws IllegalArgumentException if any key or value is null
      */
-    public Optional<V> put(K key, V value) {
+    public synchronized Optional<V> put(K key, V value) {
         if ((key == null) || (value == null)) {
             throw new IllegalArgumentException();
         }
@@ -138,7 +138,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * @param key cannot be null
      * @throws IllegalArgumentException if key is null
      */
-    public Optional<V> remove(K key) {
+    public synchronized Optional<V> remove(K key) {
         if (key == null) {
             throw new IllegalArgumentException();
         }
