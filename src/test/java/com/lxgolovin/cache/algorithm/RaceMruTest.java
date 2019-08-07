@@ -49,12 +49,44 @@ class RaceMruTest {
                 mQueue.shift(element);
                 Thread.yield();
                 mQueue.pop();
+                Thread.yield();
                 mQueue.shift(element);
             }, exec));
         }
 
         FutureConverter.getAllFinished(futures).get();
         assertTrue(mQueue.delete(element));
+    }
+
+    @Test
+    void chaosStressTest() throws InterruptedException, ExecutionException {
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        CountDownLatch latch = new CountDownLatch(threadsTotal);
+
+        IntStream.rangeClosed(1,threadsTotal)
+                .forEach(elem -> futures.add(CompletableFuture.runAsync(() -> {
+                    try {
+                        latch.countDown();
+                        latch.await();
+
+                        mQueue.shift(elem);
+                        TimeUnit.MILLISECONDS.sleep((int) (Math.random() * 100));
+                        Thread.yield();
+
+                        mQueue.delete(elem);
+                        TimeUnit.MILLISECONDS.sleep((int) (Math.random() * 100));
+                        Thread.yield();
+
+                        mQueue.shift(elem);
+                        TimeUnit.MILLISECONDS.sleep((int) (Math.random() * 100));
+                        Thread.yield();
+                    } catch (InterruptedException e) {
+                        // just skip it and finish
+                    }
+                }, exec)));
+
+        FutureConverter.getAllFinished(futures).get();
+        assertTrue(mQueue.pop().isPresent());
     }
 
     @AfterAll

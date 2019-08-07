@@ -1,17 +1,16 @@
 package com.lxgolovin.cache.core;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Implements doubly linked "set" based on {@link ConcurrentHashMap}. The elements link each other
+ * Implements doubly linked "set" based on {@link HashMap}. The elements link each other
  * by access order. This set is a kind of implementation of LinkedHashMap with access order
  * set to true
  *
  * @param <E> type for the incoming element
- * @see ConcurrentHashMap
+ * @see HashMap
  */
 public class AccessHashSet<E> {
 
@@ -20,7 +19,12 @@ public class AccessHashSet<E> {
      */
     private final Map<E,Node<E>> map;
 
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final Lock lock = new ReentrantLock();
+
+    /**
+     * Inner class to define values inside map
+     * The class is a structure to get next and previous element
+     * Both elements are <K> type
 
     /**
      * Inner class to define values inside map
@@ -59,7 +63,7 @@ public class AccessHashSet<E> {
      * default initial capacity (16) and load factor (0.75).
      */
     public AccessHashSet() {
-        map = new ConcurrentHashMap<>();
+        map = new HashMap<>();
     }
 
     /**
@@ -71,28 +75,34 @@ public class AccessHashSet<E> {
      * @return <tt>true</tt> if this set did already contain the specified
      *          element. Return false if elem is null
      */
-    public synchronized boolean put(E elem) {
+    public boolean put(E elem) {
         if (elem == null) {
             return false;
         }
 
-        // if element is present, just poke the element and push to tail
-        if (map.containsKey(elem)) {
-            return poke(elem);
-        }
+        lock.lock();
+        try {
+//        synchronized (monitor) {
+            // if element is present, just poke the element and push to tail
+            if (map.containsKey(elem)) {
+                return poke(elem);
+            }
 
-        Node<E> newNode;
-        if (map.isEmpty()) {
-            // create first element
-            head = elem;
-            tail = elem;
-            newNode = new Node<>();
-        } else {
-            // if element is not in map, push the element to the tail
-            newNode = linkElementToTail(elem);
-        }
+            Node<E> newNode;
+            if (map.isEmpty()) {
+                // create first element
+                head = elem;
+                tail = elem;
+                newNode = new Node<>();
+            } else {
+                // if element is not in map, push the element to the tail
+                newNode = linkElementToTail(elem);
+            }
 
-        return (map.put(elem, newNode) != null);
+            return (map.put(elem, newNode) != null);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -114,17 +124,12 @@ public class AccessHashSet<E> {
             return true;
         }
 
-        lock.writeLock().lock();
-        try {
-            if (isHead(elem)) {
-                unlinkElementFromHead(elem);
-            } else if (isMiddle(elem)) {
-                unlinkElementFromMiddle(elem);
-            }
-            linkElementToTail(elem);
-        } finally {
-            lock.writeLock().unlock();
+        if (isHead(elem)) {
+            unlinkElementFromHead(elem);
+        } else if (isMiddle(elem)) {
+            unlinkElementFromMiddle(elem);
         }
+        linkElementToTail(elem);
 
         return true;
     }
@@ -138,23 +143,29 @@ public class AccessHashSet<E> {
      * @return <tt>true</tt> if the set contained the specified element
      * @throws IllegalArgumentException if elem is null
      */
-    public synchronized boolean remove(E elem) {
+    public boolean remove(E elem) {
         if (elem == null) {
             return false;
         }
 
-        // the element moved to tail if it is present
-        if (poke(elem)) {
-            E beforeTail = map.get(elem).prevElem;
-            if (beforeTail == null) { // the last element in the map
-                head = null;
-            } else { // this is not the last element in map
-                map.get(beforeTail).nextElem = null;
+        lock.lock();
+        try {
+//        synchronized (monitor) {
+            // the element moved to tail if it is present
+            if (poke(elem)) {
+                E beforeTail = map.get(elem).prevElem;
+                if (beforeTail == null) { // the last element in the map
+                    head = null;
+                } else { // this is not the last element in map
+                    map.get(beforeTail).nextElem = null;
+                }
+                tail = beforeTail;
             }
-            tail = beforeTail;
-        }
 
-        return (map.remove(elem) != null);
+            return (map.remove(elem) != null);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
