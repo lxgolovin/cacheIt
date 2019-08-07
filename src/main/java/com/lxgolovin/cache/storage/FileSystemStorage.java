@@ -11,6 +11,7 @@ import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Implementation of {@link Storage} to keep data in files
@@ -31,6 +32,8 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     private static final boolean EMPTY_STORAGE_DEFAULT = false;
 
     private final Map<K, Path> indexMap;
+
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * Defining the directory to keep all data
@@ -91,20 +94,24 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * @param value cannot be null
      * @throws IllegalArgumentException if any key or value is null
      */
-    public synchronized Optional<V> put(K key, V value) {
+    public Optional<V> put(K key, V value) {
         if ((key == null) || (value == null)) {
             throw new IllegalArgumentException();
         }
+        lock.writeLock().lock();
+        try {
+            Path filePath = indexMap.get(key);
+            Optional<V> oldValue = readValueFromFile(filePath);
 
-        Path filePath = indexMap.get(key);
-        Optional<V> oldValue = readValueFromFile(filePath);
+            // element need to be updated
+            if (!oldValue.isPresent() || !oldValue.get().equals(value)) {
+                putDataToStorage(key, value, filePath);
+            }
 
-        // element need to be updated
-        if (!oldValue.isPresent() || !oldValue.get().equals(value)) {
-            putDataToStorage(key, value, filePath);
+            return oldValue;
+        } finally {
+            lock.writeLock().unlock();
         }
-
-        return oldValue;
     }
 
     boolean putAll(Map<K, V> map) {
@@ -126,42 +133,69 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
             throw new IllegalArgumentException();
         }
 
-        Path path = indexMap.get(key);
-        return readValueFromFile(path);
+        lock.readLock().lock();
+        try {
+            Path path = indexMap.get(key);
+            return readValueFromFile(path);
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public boolean containsKey(K key) {
-        return ((key != null) && indexMap.containsKey(key));
+        lock.readLock().lock();
+        try {
+            return ((key != null) && indexMap.containsKey(key));
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     /**
      * @param key cannot be null
      * @throws IllegalArgumentException if key is null
      */
-    public synchronized Optional<V> remove(K key) {
+    public Optional<V> remove(K key) {
         if (key == null) {
             throw new IllegalArgumentException();
         }
 
-        Path path = indexMap.get(key);
-        Optional<V> removedValue = readValueFromFile(path);
+        lock.writeLock().lock();
+        try {
+            Path path = indexMap.get(key);
+            Optional<V> removedValue = readValueFromFile(path);
 
-        indexMap.remove(key);
-        deleteFile(path);
+            indexMap.remove(key);
+            deleteFile(path);
 
-        return removedValue;
+            return removedValue;
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public void clear(){
-        indexMap.values().forEach(this::deleteFile);
-        indexMap.clear();
+        lock.writeLock().lock();
+        try {
+            indexMap.values().forEach(this::deleteFile);
+            indexMap.clear();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public int size() {
-        return indexMap.size();
+        lock.readLock().lock();
+        try {
+            return indexMap.size();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
-    public boolean isEmpty() { return indexMap.isEmpty(); }
+    public boolean isEmpty() {
+        return indexMap.isEmpty();
+    }
 
     Path getDirectory() {
         return directory;
@@ -222,7 +256,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         Map.Entry<K, V> entry = null;
 
         try (InputStream inputStream = Files.newInputStream(path);
-                ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
+             ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
 
             entry = (Map.Entry<K, V>) objectInputStream.readObject();
             if (entry != null)
