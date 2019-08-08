@@ -98,14 +98,13 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         if ((key == null) || (value == null)) {
             throw new IllegalArgumentException();
         }
+        Optional<V> oldValue = get(key);
+
         lock.writeLock().lock();
         try {
-            Path filePath = indexMap.get(key);
-            Optional<V> oldValue = readValueFromFile(filePath);
-
             // element need to be updated
             if (!oldValue.isPresent() || !oldValue.get().equals(value)) {
-                putDataToStorage(key, value, filePath);
+                putDataToStorage(key, value, indexMap.get(key));
             }
 
             return oldValue;
@@ -118,7 +117,12 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         boolean putAllSuccess = false;
 
         if (map != null) {
-            map.forEach(this::put);
+            lock.writeLock().lock();
+            try {
+                map.forEach(this::put);
+            } finally {
+                lock.writeLock().unlock();
+            }
             putAllSuccess = true;
         }
         return putAllSuccess;
@@ -159,13 +163,11 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         if (key == null) {
             throw new IllegalArgumentException();
         }
+        Optional<V> removedValue = get(key);
 
         lock.writeLock().lock();
         try {
-            Path path = indexMap.get(key);
-            Optional<V> removedValue = readValueFromFile(path);
-
-            indexMap.remove(key);
+            Path path = indexMap.remove(key);
             deleteFile(path);
 
             return removedValue;
@@ -194,7 +196,12 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     }
 
     public boolean isEmpty() {
+        lock.readLock().lock();
+        try {
         return indexMap.isEmpty();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     Path getDirectory() {
