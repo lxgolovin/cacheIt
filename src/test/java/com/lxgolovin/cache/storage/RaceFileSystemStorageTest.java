@@ -93,6 +93,37 @@ class RaceFileSystemStorageTest {
         assertEquals(storage.getAll(), map);
     }
 
+    @Test
+    void chaosStressTest() throws InterruptedException, ExecutionException {
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        CountDownLatch latch = new CountDownLatch(threadsTotal);
+
+        map.forEach((k, v) -> futures.add(CompletableFuture.runAsync(() -> {
+            try {
+                latch.countDown();
+                latch.await();
+
+                storage.put(k, v);
+                TimeUnit.MILLISECONDS.sleep((int) (Math.random() * 100));
+                Thread.yield();
+
+                storage.remove(k);
+                TimeUnit.MILLISECONDS.sleep((int) (Math.random() * 100));
+                Thread.yield();
+
+                storage.put(k, v);
+                TimeUnit.MILLISECONDS.sleep((int) (Math.random() * 100));
+                Thread.yield();
+            } catch (InterruptedException e) {
+                // just skip it and finish
+            }
+        }, exec)));
+
+        FutureConverter.getAllFinished(futures).get();
+        assertEquals(threadsTotal, storage.size());
+        assertEquals(storage.getAll(), map);
+    }
+
     @AfterAll
     static void tearDown() {
         exec.shutdown();

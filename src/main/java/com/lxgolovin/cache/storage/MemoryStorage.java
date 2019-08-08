@@ -1,5 +1,6 @@
 package com.lxgolovin.cache.storage;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +28,7 @@ public class MemoryStorage<K, V> implements Storage<K, V>{
      * @return map of key-values, stored in storage
      */
     public Map<K, V> getAll() {
-        return new ConcurrentHashMap<>(storageMap);
+        return new HashMap<>(storageMap);
     }
 
     /**
@@ -71,6 +72,7 @@ public class MemoryStorage<K, V> implements Storage<K, V>{
         if (key == null) {
             throw new IllegalArgumentException();
         }
+
         return Optional.ofNullable(storageMap.remove(key));
     }
 

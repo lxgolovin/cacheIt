@@ -2,6 +2,7 @@ package com.lxgolovin.cache.core;
 
 import com.lxgolovin.cache.tools.FutureConverter;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -17,14 +18,25 @@ class RaceAccessHashSetTest {
 
     private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
 
-    private final AccessHashSet<Integer> set = new AccessHashSet<>();
+    private AccessHashSet<Integer> set;
+
+    @BeforeEach
+    void setUp() {
+        set = new AccessHashSet<>();
+    }
 
     @Test
     void putDataToSetFuture() throws InterruptedException, ExecutionException {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         IntStream.rangeClosed(1,threadsTotal)
-                .forEach(elem -> futures.add(CompletableFuture.runAsync(() -> set.put(elem), exec)));
+                .forEach(elem -> futures.add(CompletableFuture.runAsync(() -> {
+                    set.put(elem);
+                    Thread.yield();
+                    set.remove(elem);
+                    Thread.yield();
+                    set.put(elem);
+                }, exec)));
 
         FutureConverter.listToFuture(futures).get();
         assertEquals(threadsTotal, set.size());
@@ -47,6 +59,36 @@ class RaceAccessHashSetTest {
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(1, set.size());
+    }
+
+    @Test
+    void chaosStressTest() throws InterruptedException, ExecutionException {
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        CountDownLatch latch = new CountDownLatch(threadsTotal);
+
+        IntStream.rangeClosed(1,threadsTotal)
+                .forEach(elem -> futures.add(CompletableFuture.runAsync(() -> {
+                    try {
+                        latch.countDown();
+                        latch.await();
+                        set.put(elem);
+                        TimeUnit.MILLISECONDS.sleep((int) (Math.random() * 100));
+                        Thread.yield();
+
+                        set.remove(elem);
+                        TimeUnit.MILLISECONDS.sleep((int) (Math.random() * 100));
+                        Thread.yield();
+
+                        set.put(elem);
+                        TimeUnit.MILLISECONDS.sleep((int) (Math.random() * 100));
+                        Thread.yield();
+                    } catch (InterruptedException e) {
+                        // just skip it and finish
+                    }
+                }, exec)));
+
+        FutureConverter.getAllFinished(futures).get();
+        assertEquals(threadsTotal, set.size());
     }
 
     @AfterAll

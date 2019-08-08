@@ -9,6 +9,7 @@ import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Implementation of interface {@link Cache}. This class creates realization of cache.
@@ -31,7 +32,7 @@ import java.util.Optional;
  * @see FileSystemStorage
  */
 public class CacheLevel<K, V> implements Cache<K, V> {
-    
+
     /**
      * maximum possible size for the cache. Minimum value is greater then 1.
      * If you try to use less then 2, {@link Cache#DEFAULT_CACHE_SIZE}
@@ -48,6 +49,8 @@ public class CacheLevel<K, V> implements Cache<K, V> {
      * Storage to keep key-values
      */
     private final Storage<K, V> storage;
+
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * Creates memory cache with default size by defined algorithm
@@ -142,22 +145,32 @@ public class CacheLevel<K, V> implements Cache<K, V> {
     @Override
     public Optional<Map.Entry<K, V>> cache(K key, V value) {
         Optional<Map.Entry<K, V>> poppedEntry = Optional.empty();
-        if ((size() == maxSize) && (!contains(key))) {
-            // using deletion by algorithm
-            poppedEntry = pop();
+        lock.writeLock().lock();
+        try {
+            if ((size() == maxSize) && (!contains(key))) {
+                // using deletion by algorithm
+                poppedEntry = pop();
+            }
+
+            algorithm.shift(key);
+            Optional<Map.Entry<K, V>> replacedEntry = storage.put(key, value)
+                    .map(v -> new AbstractMap.SimpleImmutableEntry<>(key, v));
+
+            return (poppedEntry.isPresent()) ? poppedEntry : replacedEntry;
+        } finally {
+            lock.writeLock().unlock();
         }
-
-        algorithm.shift(key);
-        Optional<Map.Entry<K, V>> replacedEntry = storage.put(key, value)
-                .map(v -> new AbstractMap.SimpleImmutableEntry<>(key, v));
-
-        return (poppedEntry.isPresent()) ? poppedEntry : replacedEntry;
     }
 
     @Override
     public Optional<V> get(K key){
-        algorithm.shift(key);
-        return storage.get(key);
+        lock.readLock().lock();
+        try {
+            algorithm.shift(key);
+            return storage.get(key);
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     /**
@@ -165,7 +178,12 @@ public class CacheLevel<K, V> implements Cache<K, V> {
      */
     @Override
     public boolean contains(K key) {
-        return ((key != null) && storage.containsKey(key));
+        lock.readLock().lock();
+        try {
+            return ((key != null) && storage.containsKey(key));
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     /**
@@ -173,8 +191,13 @@ public class CacheLevel<K, V> implements Cache<K, V> {
      */
     @Override
     public Optional<V> delete(K key) {
-        algorithm.delete(key);
-        return storage.remove(key);
+        lock.writeLock().lock();
+        try {
+            algorithm.delete(key);
+            return storage.remove(key);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
@@ -183,8 +206,13 @@ public class CacheLevel<K, V> implements Cache<K, V> {
      */
     @Override
     public void clear(){
-        storage.clear();
-        algorithm.clear();
+        lock.writeLock().lock();
+        try {
+            storage.clear();
+            algorithm.clear();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
@@ -192,11 +220,16 @@ public class CacheLevel<K, V> implements Cache<K, V> {
      */
     @Override
     public Optional<Map.Entry<K, V>> pop() {
-        return algorithm
-                .pop()
-                .flatMap(key -> delete(key)
-                        .map(value -> new AbstractMap.SimpleImmutableEntry<>(key, value))
-                );
+        lock.writeLock().lock();
+        try {
+            return algorithm
+                    .pop()
+                    .flatMap(key -> delete(key)
+                            .map(value -> new AbstractMap.SimpleImmutableEntry<>(key, value))
+                    );
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
@@ -212,6 +245,11 @@ public class CacheLevel<K, V> implements Cache<K, V> {
      */
     @Override
     public int size() {
-        return storage.size();
+        lock.readLock().lock();
+        try {
+            return storage.size();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 }
