@@ -206,7 +206,9 @@ public class CacheController<K, V> implements Cache<K,V> {
      */
     @Override
     public int sizeMax() {
-        return ccList.stream().mapToInt(Cache::sizeMax).sum();
+        synchronized (monitor) {
+            return ccList.stream().mapToInt(Cache::sizeMax).sum();
+        }
     }
 
     private int getLevelByKey(K key) {

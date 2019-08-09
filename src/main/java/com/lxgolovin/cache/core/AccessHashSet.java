@@ -1,6 +1,7 @@
 package com.lxgolovin.cache.core;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -50,20 +51,20 @@ public class AccessHashSet<E> {
      * Pointer to the first element
      * Actually it is LRU
      */
-    private E head;
+    private volatile E head;
 
     /**
      * Pointer to the last element in map
      * Actually it is MRU
      */
-    private E tail;
+    private volatile E tail;
 
     /**
      * Constructs a new, empty set; the backing <tt>HashMap</tt> instance has
      * default initial capacity (16) and load factor (0.75).
      */
     public AccessHashSet() {
-        map = new HashMap<>();
+        map = new ConcurrentHashMap<>();
     }
 
     /**
@@ -248,7 +249,7 @@ public class AccessHashSet<E> {
      */
     private boolean isTail(E elem) {
         Node<E> node = map.get(elem);
-        return ((node.nextElem == null) & (elem == tail));
+        return ((node.nextElem == null) & elem.equals(tail));
     }
 
     /**
@@ -258,7 +259,7 @@ public class AccessHashSet<E> {
      */
     private boolean isHead(E elem) {
         Node<E> node = map.get(elem);
-        return ((node.prevElem == null) & (elem == head));
+        return ((node.prevElem == null) & elem.equals(head));
     }
 
     /**
@@ -282,20 +283,26 @@ public class AccessHashSet<E> {
     private Node<E> linkElementToTail(E elem) {
         Node<E> pokedNode;
 
-        if (map.containsKey(elem)) {
-            // if the element is present, link to tail
-            pokedNode = map.get(elem);
-        } else {
-            // if no such element in map, create empty and link to tail
-            pokedNode = new Node<>();
+        lock.lock();
+        try {
+            if (map.containsKey(elem)) {
+                // if the element is present, link to tail
+                pokedNode = map.get(elem);
+            } else {
+                // if no such element in map, create empty and link to tail
+                pokedNode = new Node<>();
+            }
+
+            Node<E> tailNode = map.get(tail);
+            tailNode.nextElem = elem;
+            pokedNode.prevElem = tail;
+            pokedNode.nextElem = null;
+            tail = elem;
+
+            return pokedNode;
+        } finally {
+            lock.unlock();
         }
-
-        map.get(tail).nextElem = elem;
-        pokedNode.prevElem = tail;
-        pokedNode.nextElem = null;
-        tail = elem;
-
-        return pokedNode;
     }
 
     /**

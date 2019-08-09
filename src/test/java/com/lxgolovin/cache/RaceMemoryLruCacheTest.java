@@ -3,6 +3,7 @@ package com.lxgolovin.cache;
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.algorithm.Lru;
 import com.lxgolovin.cache.tools.FutureConverter;
+import com.lxgolovin.cache.tools.ListGenerator;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class RaceMemoryLruCacheTest {
 
-    private static final int threadsTotal = 100;
+    private static final int threadsTotal = 1;
 
     private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
 
@@ -30,7 +31,7 @@ class RaceMemoryLruCacheTest {
     void setUp() {
         lruCache = new CacheLevel<>(lru, maxSize);
         for (int i = 0; i < maxSize; i++) {
-            lruCache.cache(i, "init");
+            lruCache.cache((-1)*i, "init");
         }
     }
 
@@ -40,7 +41,7 @@ class RaceMemoryLruCacheTest {
         IntStream.rangeClosed(1,threadsTotal)
                 .forEach(i ->
                         exec.execute(() -> {
-                                    List<Integer> data = generateList();
+                                    List<Integer> data = ListGenerator.generate(100);
                                     data.forEach(k -> {
                                         String v = String.valueOf(Math.random() * threadsTotal);
                                         lruCache.cache(k, v);
@@ -138,10 +139,10 @@ class RaceMemoryLruCacheTest {
     }
 
     private List<Integer> generateList() {
-        final int dataSize = 1000;
+        final int dataSize = 100;
         return IntStream
                 .rangeClosed(1, dataSize)
-                .map(i -> (int)(Math.random() * threadsTotal))
+                .map(i -> (int)(Math.random() * dataSize * 10 + 1))
                 .boxed()
                 .collect(Collectors.toList());
     }

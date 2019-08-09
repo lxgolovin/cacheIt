@@ -5,6 +5,7 @@ import com.lxgolovin.cache.algorithm.Lru;
 import com.lxgolovin.cache.storage.FileSystemStorage;
 import com.lxgolovin.cache.storage.Storage;
 import com.lxgolovin.cache.tools.FutureConverter;
+import com.lxgolovin.cache.tools.ListGenerator;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,8 @@ class RaceFileSystemLruCacheTest {
 
     private final int maxSize = 40;
 
+    private final int dataSize = 100;
+
     private Cache<Integer, String> lruCache;
 
     @BeforeEach
@@ -51,7 +54,8 @@ class RaceFileSystemLruCacheTest {
         IntStream.rangeClosed(1,threadsTotal)
                 .forEach(i ->
                         futures.add(CompletableFuture.runAsync(() -> {
-                            List<Integer> data = generateList();
+                            List<Integer> data = generateList(dataSize);
+//                            List<Integer> data = ListGenerator.generate(dataSize);
                             data.forEach(k -> {
                                 String v = String.valueOf(Math.random() * threadsTotal);
                                 lruCache.cache(k, v);
@@ -71,7 +75,8 @@ class RaceFileSystemLruCacheTest {
         IntStream.rangeClosed(1,threadsTotal)
                 .forEach(i -> futures.add(CompletableFuture.runAsync(() -> {
                     try {
-                        List<Integer> data = generateList();
+                        List<Integer> data = generateList(dataSize);
+//                        List<Integer> data = ListGenerator.generate(dataSize);
                         latch.countDown();
                         latch.await();
                         data.forEach(k -> {
@@ -96,7 +101,8 @@ class RaceFileSystemLruCacheTest {
         IntStream.rangeClosed(1,threadsTotal)
                 .forEach(i -> futures.add(CompletableFuture.runAsync(() -> {
                     try {
-                        List<Integer> data = generateList();
+                        List<Integer> data = generateList(dataSize);
+//                        List<Integer> data = ListGenerator.generate(dataSize);
                         latch.countDown();
                         latch.await();
                         data.forEach(k -> {
@@ -126,10 +132,9 @@ class RaceFileSystemLruCacheTest {
         assertTrue(maxSize >= lruCache.size());
     }
 
-    private List<Integer> generateList() {
-        final int dataSize = 100;
+    private List<Integer> generateList(int size) {
         return IntStream
-                .rangeClosed(1, dataSize)
+                .rangeClosed(1, size)
                 .map(i -> (int)(Math.random() * threadsTotal))
                 .boxed()
                 .collect(Collectors.toList());

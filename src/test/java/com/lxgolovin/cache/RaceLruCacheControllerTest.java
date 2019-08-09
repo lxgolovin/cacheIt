@@ -29,6 +29,8 @@ class RaceLruCacheControllerTest {
 
     private final int maxSize = 40;
 
+    private final int dataSize = 100;
+
     @BeforeEach
     void setUp() {
         final CacheAlgorithm<Integer> lruLev0 = new Lru<>();

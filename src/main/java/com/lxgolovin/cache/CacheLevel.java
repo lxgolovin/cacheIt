@@ -147,7 +147,7 @@ public class CacheLevel<K, V> implements Cache<K, V> {
         Optional<Map.Entry<K, V>> poppedEntry = Optional.empty();
         lock.writeLock().lock();
         try {
-            if ((size() == maxSize) && (!contains(key))) {
+            if ((size() >= maxSize) && (!contains(key))) {
                 // using deletion by algorithm
                 while (size() >= maxSize)
                     poppedEntry = pop();

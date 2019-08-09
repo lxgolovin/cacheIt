@@ -137,7 +137,7 @@ class RaceMruCacheControllerTest {
         final int dataSize = 100;
         return IntStream
                 .rangeClosed(1, dataSize)
-                .map(i -> (int)(Math.random() * threadsTotal))
+                .map(i -> (int)(Math.random() * dataSize))
                 .boxed()
                 .collect(Collectors.toList());
     }

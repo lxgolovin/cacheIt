@@ -5,8 +5,11 @@ import com.lxgolovin.cache.algorithm.Lru;
 import com.lxgolovin.cache.algorithm.Mru;
 import com.lxgolovin.cache.storage.MemoryStorage;
 import com.lxgolovin.cache.storage.Storage;
+import com.lxgolovin.cache.tools.ListGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.IntStream;
@@ -43,6 +46,8 @@ class MemoryCacheTest {
     private final Cache<Integer, Integer> lruCache = new CacheLevel<>(lru, maxSize);
     private final Cache<Integer, Integer> mruCache = new CacheLevel<>(mru, 0, 0);
 
+    private final Logger logger = LoggerFactory.getLogger(MemoryCacheTest.class);
+
     /**
      * Fill in caches.
      * LRU cache is initialized
@@ -57,6 +62,49 @@ class MemoryCacheTest {
         IntStream.rangeClosed(1, maxRange).forEach(x->mruCache.cache(x,x));
     }
 
+    @Test
+    void puttingStreamIntoCache() {
+        List<Integer> data = ListGenerator.generate(1000);
+//        List<Integer> data = new ArrayList<>(); //ListGenerator.generate(1000);
+//        data.add(12);
+//        data.add(23);
+//        data.add(34);
+//        data.add(45);
+//        data.add(56);
+
+//        2019-08-09_16:49:56.699 [main] INFO  com.lxgolovin.cache.MemoryCacheTest - 502, 629, 1000
+//        2019-08-09_16:49:56.699 [main] INFO  com.lxgolovin.cache.MemoryCacheTest - 503, 555, 1000
+//        2019-08-09_16:49:56.699 [main] INFO  com.lxgolovin.cache.MemoryCacheTest - 504, 281, 1000
+//        2019-08-09_16:49:56.700 [main] INFO  com.lxgolovin.cache.MemoryCacheTest - 505, 528, 1000
+//        2019-08-09_16:49:56.700 [main] INFO  com.lxgolovin.cache.MemoryCacheTest - 506, 861, 1000
+//        2019-08-09_16:49:56.700 [main] INFO  com.lxgolovin.cache.MemoryCacheTest - 507, 183, 1000
+//        2019-08-09_16:49:56.700 [main] INFO  com.lxgolovin.cache.MemoryCacheTest - 508, 629, 1000
+
+//        data.add(629);
+//        data.add(555);
+//        data.add(281);
+//        data.add(528);
+//        data.add(861);
+//        data.add(183);
+//        data.add(629);
+//        data.add(12);
+//        data.add(23);
+
+
+
+        logger.info("START");
+        int key = 0;
+        try {
+            for (int i = 0; i < data.size(); i++) {
+                int v = (int) (Math.random() * 100);
+                key = data.get(i);
+                logger.info("{}, {}, {}", i, key, data.size());
+                lruCache.cache(key, v);
+            }
+        } catch (NullPointerException e) {
+            logger.error("{} ", key, e);
+        }
+    }
     /**
      * Checks work of setting cache size manually
      */

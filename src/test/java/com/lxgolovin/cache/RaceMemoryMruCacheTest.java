@@ -42,8 +42,8 @@ class RaceMemoryMruCacheTest {
         IntStream.rangeClosed(1,threadsTotal)
                 .forEach(i ->
                         exec.execute(() -> {
-                                    List<Integer> data = generateList();
-                                    data.forEach(k -> {
+                            List<Integer> data = generateList();
+                            data.forEach(k -> {
                                         String v = String.valueOf(Math.random() * threadsTotal);
                                         mruCache.cache(k, v);
                                     });
@@ -51,7 +51,7 @@ class RaceMemoryMruCacheTest {
                         ));
 
         TimeUnit.SECONDS.sleep(3); // wait all finished
-        assertEquals(maxSize, mruCache.size());
+        assertTrue(maxSize >= mruCache.size());
     }
 
     @Test
