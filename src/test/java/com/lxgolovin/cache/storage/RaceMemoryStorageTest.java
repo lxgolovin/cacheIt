@@ -2,7 +2,7 @@ package com.lxgolovin.cache.storage;
 
 import com.lxgolovin.cache.tools.FutureConverter;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -16,12 +16,12 @@ class RaceMemoryStorageTest {
 
     private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
 
-    private static final Map<Integer, String> map = new HashMap<>();
+    private final Map<Integer, String> map = new HashMap<>();
 
     private final Storage<Integer, String> storage = new MemoryStorage<>();
 
-    @BeforeAll
-    static void setUp() {
+    @BeforeEach
+    void setUp() {
         for (int i = 0; i < threadsTotal; i++) {
             map.put(i, String.valueOf(Math.random() * 100));
         }
@@ -94,6 +94,8 @@ class RaceMemoryStorageTest {
         FutureConverter.getAllFinished(futures).get();
         assertEquals(threadsTotal, storage.size());
         assertEquals(storage.getAll(), map);
+        storage.clear();
+        assertEquals(0, storage.size());
     }
 
     @Test

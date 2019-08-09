@@ -77,15 +77,21 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     public Map<K, V> getAll() {
         Map<K, V> loadedMap = new HashMap<>();
+        lock.readLock().lock();
         try {
-            Files.walk(directory)
-                    .filter(Files::isRegularFile)
-                    .map(this::readEntryFromFile)
-                    .filter(Optional::isPresent)
-                    .forEach(e -> loadedMap.put(e.get().getKey(), e.get().getValue()));
-            return loadedMap;
-        } catch (IOException | SecurityException e) {
-            throw new CacheException("Contact admin. Cannot read directory ".concat(directory.toString()));
+            try {
+                Files.walk(directory)
+                        .filter(Files::isRegularFile)
+                        .map(this::readEntryFromFile)
+                        .filter(Optional::isPresent)
+                        .forEach(e -> loadedMap.put(e.get().getKey(), e.get().getValue()));
+                return loadedMap;
+
+            } catch (IOException | SecurityException e) {
+                throw new CacheException("Contact admin. Cannot read directory ".concat(directory.toString()));
+            }
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
@@ -98,10 +104,10 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         if ((key == null) || (value == null)) {
             throw new IllegalArgumentException();
         }
-        Optional<V> oldValue = get(key);
 
         lock.writeLock().lock();
         try {
+            Optional<V> oldValue = get(key);
             // element need to be updated
             if (!oldValue.isPresent() || !oldValue.get().equals(value)) {
                 putDataToStorage(key, value, indexMap.get(key));
@@ -163,10 +169,11 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         if (key == null) {
             throw new IllegalArgumentException();
         }
-        Optional<V> removedValue = get(key);
 
         lock.writeLock().lock();
         try {
+            Optional<V> removedValue = get(key);
+
             Path path = indexMap.remove(key);
             deleteFile(path);
 
@@ -198,7 +205,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     public boolean isEmpty() {
         lock.readLock().lock();
         try {
-        return indexMap.isEmpty();
+            return indexMap.isEmpty();
         } finally {
             lock.readLock().unlock();
         }
@@ -283,9 +290,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     private void deleteFile(Path path) {
         if (path != null) {
             boolean fileDeleted = path.toFile().delete();
-            if (fileDeleted) {
-                logger.info("File {} deleted successfully", path.toUri());
-            } else {
+            if (!fileDeleted) {
                 logger.warn("File {} not deleted", path.toUri());
             }
         }

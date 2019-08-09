@@ -6,7 +6,8 @@ import com.lxgolovin.cache.storage.FileSystemStorage;
 import com.lxgolovin.cache.storage.Storage;
 import com.lxgolovin.cache.tools.FutureConverter;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
@@ -21,44 +22,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RaceFileSystemLruCacheTest {
 
-    private static final CacheAlgorithm<Integer> lru = new Lru<>();
-
-    private static final int maxSize = 40;
-
     private static final int threadsTotal = 100;
 
     private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
 
-    private static Cache<Integer, String> lruCache;
+    private final CacheAlgorithm<Integer> lru = new Lru<>();
 
-    private static final String directoryPath = "./TEMP/";
+    private final int maxSize = 40;
 
-    @BeforeAll
-    static void setUp() {
+    private Cache<Integer, String> lruCache;
+
+    @BeforeEach
+    void setUp() {
+        final String directoryPath = "./TEMP/";
         final Storage<Integer, String> lruStorage = new FileSystemStorage<>(Paths.get(directoryPath), true);
         lruCache = new CacheLevel<>(lru, lruStorage, maxSize);
 
         for (int i = 0; i < maxSize; i++) {
             lruCache.cache(i, "init");
         }
-    }
-
-    @Test
-    void putDataIntoCacheSleep() throws InterruptedException {
-        assertEquals(maxSize, lruCache.size());
-        IntStream.rangeClosed(1,threadsTotal)
-                .forEach(i ->
-                        exec.execute(() -> {
-                                    List<Integer> data = generateList();
-                                    data.forEach(k -> {
-                                        String v = String.valueOf(Math.random() * threadsTotal);
-                                        lruCache.cache(k, v);
-                                    });
-                                }
-                        ));
-
-        TimeUnit.SECONDS.sleep(3); // wait all finished
-        assertEquals(maxSize, lruCache.size());
     }
 
     @Test
@@ -128,20 +110,19 @@ class RaceFileSystemLruCacheTest {
                             lruCache.get(k);
                             Thread.yield();
 
-                            lruCache.clear();
-                            assertTrue(lruCache.size() >= 0);
+                            assertTrue(maxSize >= lruCache.size());
+                            lruCache.delete(k);
                             Thread.yield();
 
                             lruCache.cache(k, v);
-                            Thread.yield();
-                            lruCache.delete(k);
+                            assertTrue(maxSize >= lruCache.size());
                         });
                     } catch (InterruptedException e) {
                         // just skip it and finish
                     }
                 }, exec)));
 
-        FutureConverter.getAllFinished(futures).get();
+        FutureConverter.listToFuture(futures).get();
         assertTrue(maxSize >= lruCache.size());
     }
 
@@ -154,8 +135,14 @@ class RaceFileSystemLruCacheTest {
                 .collect(Collectors.toList());
     }
 
+    @AfterEach
+    void tearDown() {
+        lruCache.clear();
+        assertEquals(0, lruCache.size());
+    }
+
     @AfterAll
-    static void tearDown() {
+    static void finishAll() {
         exec.shutdown();
     }
 }
