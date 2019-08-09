@@ -4,7 +4,7 @@ import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.algorithm.Lru;
 import com.lxgolovin.cache.tools.FutureConverter;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -16,18 +16,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class RaceMemoryLruCacheTest {
 
-    private static final CacheAlgorithm<Integer> lru = new Lru<>();
-
-    private static final int maxSize = 40;
-
     private static final int threadsTotal = 100;
 
     private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
 
-    private static Cache<Integer, String> lruCache;
+    private final CacheAlgorithm<Integer> lru = new Lru<>();
 
-    @BeforeAll
-    static void setUp() {
+    private final int maxSize = 40;
+
+    private Cache<Integer, String> lruCache;
+
+    @BeforeEach
+    void setUp() {
         lruCache = new CacheLevel<>(lru, maxSize);
         for (int i = 0; i < maxSize; i++) {
             lruCache.cache(i, "init");
@@ -119,13 +119,12 @@ class RaceMemoryLruCacheTest {
                             lruCache.get(k);
                             Thread.yield();
 
-                            lruCache.clear();
-                            assertTrue(lruCache.size() >= 0);
+                            assertTrue(maxSize >= lruCache.size());
+                            lruCache.delete(k);
                             Thread.yield();
 
                             lruCache.cache(k, v);
-                            Thread.yield();
-                            lruCache.delete(k);
+                            assertTrue(maxSize >= lruCache.size());
                         });
                     } catch (InterruptedException e) {
                         // just skip it and finish
@@ -134,6 +133,8 @@ class RaceMemoryLruCacheTest {
 
         FutureConverter.getAllFinished(futures).get();
         assertTrue(maxSize >= lruCache.size());
+        lruCache.clear();
+        assertEquals(0, lruCache.size());
     }
 
     private List<Integer> generateList() {

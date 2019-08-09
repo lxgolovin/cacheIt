@@ -127,7 +127,7 @@ public class CacheLevel<K, V> implements Cache<K, V> {
         }
 
         if (!initialDataMap.isEmpty()) {
-            maxSize = initialDataMap.size();
+            maxSize = Math.max(initialDataMap.size(), size);
         } else {
             maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
         }
@@ -149,13 +149,13 @@ public class CacheLevel<K, V> implements Cache<K, V> {
         try {
             if ((size() == maxSize) && (!contains(key))) {
                 // using deletion by algorithm
-                poppedEntry = pop();
+                while (size() >= maxSize)
+                    poppedEntry = pop();
             }
 
             algorithm.shift(key);
             Optional<Map.Entry<K, V>> replacedEntry = storage.put(key, value)
                     .map(v -> new AbstractMap.SimpleImmutableEntry<>(key, v));
-
             return (poppedEntry.isPresent()) ? poppedEntry : replacedEntry;
         } finally {
             lock.writeLock().unlock();
@@ -208,8 +208,8 @@ public class CacheLevel<K, V> implements Cache<K, V> {
     public void clear(){
         lock.writeLock().lock();
         try {
-            storage.clear();
             algorithm.clear();
+            storage.clear();
         } finally {
             lock.writeLock().unlock();
         }

@@ -2,7 +2,7 @@ package com.lxgolovin.cache.storage;
 
 import com.lxgolovin.cache.tools.FutureConverter;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
@@ -18,12 +18,12 @@ class RaceFileSystemStorageTest {
 
     private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
 
-    private static final Map<Integer, String> map = new HashMap<>();
+    private final Map<Integer, String> map = new HashMap<>();
 
-    private static FileSystemStorage<Integer, String> storage;
+    private FileSystemStorage<Integer, String> storage;
 
-    @BeforeAll
-    static void setUp() {
+    @BeforeEach
+    void setUp() {
         final String directoryPath = "./TEMP/";
         storage = new FileSystemStorage<>(Paths.get(directoryPath), true);
         for (int i = 0; i < threadsTotal; i++) {
@@ -122,6 +122,8 @@ class RaceFileSystemStorageTest {
         FutureConverter.getAllFinished(futures).get();
         assertEquals(threadsTotal, storage.size());
         assertEquals(storage.getAll(), map);
+        storage.clear();
+        assertEquals(0, storage.size());
     }
 
     @AfterAll

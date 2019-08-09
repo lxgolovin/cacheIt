@@ -26,7 +26,7 @@ public class AccessHashSet<E> {
      * The class is a structure to get next and previous element
      * Both elements are <K> type
 
-    /**
+     /**
      * Inner class to define values inside map
      * The class is a structure to get next and previous element
      * Both elements are <K> type
@@ -50,13 +50,13 @@ public class AccessHashSet<E> {
      * Pointer to the first element
      * Actually it is LRU
      */
-    private volatile E head;
+    private E head;
 
     /**
      * Pointer to the last element in map
      * Actually it is MRU
      */
-    private volatile E tail;
+    private E tail;
 
     /**
      * Constructs a new, empty set; the backing <tt>HashMap</tt> instance has
@@ -174,8 +174,13 @@ public class AccessHashSet<E> {
      * @return cut head
      */
     public Optional<E> cutHead() {
-        E elem = head;
-        return (this.remove(head)) ? Optional.ofNullable(elem) : Optional.empty();
+        lock.lock();
+        try{
+            E elem = head;
+            return (this.remove(head)) ? Optional.ofNullable(elem) : Optional.empty();
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -184,8 +189,13 @@ public class AccessHashSet<E> {
      * @return cut tail
      */
     public Optional<E> cutTail() {
-        E elem = tail;
-        return (this.remove(tail)) ? Optional.ofNullable(elem) : Optional.empty();
+        lock.lock();
+        try{
+            E elem = tail;
+            return (this.remove(tail)) ? Optional.ofNullable(elem) : Optional.empty();
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -194,7 +204,12 @@ public class AccessHashSet<E> {
      * @return the number of elements in this set (its cardinality)
      */
     public int size() {
-        return map.size();
+        lock.lock();
+        try{
+            return map.size();
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -203,7 +218,12 @@ public class AccessHashSet<E> {
      * @return <tt>true</tt> if this set contains no elements
      */
     public boolean isEmpty() {
-        return map.isEmpty();
+        lock.lock();
+        try{
+            return map.isEmpty();
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -211,9 +231,14 @@ public class AccessHashSet<E> {
      * All elements are deleted.
      */
     public void clear() {
-        map.clear();
-        head = null;
-        tail = null;
+        lock.lock();
+        try{
+            map.clear();
+            head = null;
+            tail = null;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**

@@ -28,6 +28,8 @@ public class CacheController<K, V> implements Cache<K,V> {
      */
     private final List<Cache<K, V>> ccList = new LinkedList<>();
 
+    private final Object monitor = new Object();
+
     /**
      * Constructor for the cache controller. Add first level by default
      * @param cache level with specified algorithm
@@ -63,9 +65,11 @@ public class CacheController<K, V> implements Cache<K,V> {
             throw new IndexOutOfBoundsException();
         }
 
-        ccList.get(index).clear();
-        ccList.remove(index);
-        return levels();
+        synchronized (monitor) {
+            ccList.get(index).clear();
+            ccList.remove(index);
+            return levels();
+        }
     }
 
     /**
@@ -87,7 +91,9 @@ public class CacheController<K, V> implements Cache<K,V> {
             throw new IndexOutOfBoundsException();
         }
 
-        return (ccList.get(index).size() == ccList.get(index).sizeMax());
+        synchronized (monitor) {
+            return (ccList.get(index).size() == ccList.get(index).sizeMax());
+        }
     }
 
      /**
@@ -100,8 +106,10 @@ public class CacheController<K, V> implements Cache<K,V> {
             throw new IllegalArgumentException();
         }
 
-        int levelIndex = (contains(key)) ? getLevelByKey(key) : 0;
-        return loadToLevel(key, value, levelIndex);
+        synchronized (monitor) {
+            int levelIndex = (contains(key)) ? getLevelByKey(key) : 0;
+            return loadToLevel(key, value, levelIndex);
+        }
     }
 
     /**
@@ -119,15 +127,17 @@ public class CacheController<K, V> implements Cache<K,V> {
     }
 
     public Optional<V> get(K key) {
-        return ccList.stream()
-                .filter(c -> c.contains(key))
-                .findAny()
-                .flatMap(c -> c.get(key))
-                .flatMap(v -> delete(key))
-                .map(v -> {
-                    cache(key, v);
-                    return v;
-                });
+        synchronized (monitor) {
+            return ccList.stream()
+                    .filter(c -> c.contains(key))
+                    .findAny()
+                    .flatMap(c -> c.get(key))
+                    .flatMap(v -> delete(key))
+                    .map(v -> {
+                        cache(key, v);
+                        return v;
+                    });
+        }
     }
 
     /**
@@ -141,36 +151,44 @@ public class CacheController<K, V> implements Cache<K,V> {
         if ((levels() < 1) || (size() < 1)) {
             return Optional.empty();
         }
+        synchronized (monitor) {
 
-        // try to pop from first levels. One by one. If first is empty, try next
-        int notEmptyLevelIndex = IntStream.range(0, levels())
-                .filter(i -> (ccList.get(i).size() > 0))
-                .findFirst()
-                .orElse(0);
-        int nextLevel = notEmptyLevelIndex + 1;
+            // try to pop from first levels. One by one. If first is empty, try next
+            int notEmptyLevelIndex = IntStream.range(0, levels())
+                    .filter(i -> (ccList.get(i).size() > 0))
+                    .findFirst()
+                    .orElse(0);
+            int nextLevel = notEmptyLevelIndex + 1;
 
-        return ccList
-                .get(notEmptyLevelIndex)
-                .pop()
-                .flatMap(e -> loadToLevel(e.getKey(), e.getValue(), nextLevel));
+            return ccList
+                    .get(notEmptyLevelIndex)
+                    .pop()
+                    .flatMap(e -> loadToLevel(e.getKey(), e.getValue(), nextLevel));
+        }
     }
 
     @Override
     public Optional<V> delete(K key) {
-        return ccList.stream()
-                .filter(c -> c.contains(key))
-                .findAny()
-                .flatMap(c -> c.delete(key));
+        synchronized (monitor) {
+            return ccList.stream()
+                    .filter(c -> c.contains(key))
+                    .findAny()
+                    .flatMap(c -> c.delete(key));
+        }
     }
 
     @Override
     public boolean contains(K key) {
-        return ccList.stream().anyMatch(c -> c.contains(key));
+        synchronized (monitor) {
+            return ccList.stream().anyMatch(c -> c.contains(key));
+        }
     }
 
     @Override
     public void clear() {
-        ccList.forEach(Cache::clear);
+        synchronized (monitor) {
+            ccList.forEach(Cache::clear);
+        }
     }
 
     /**
@@ -178,7 +196,9 @@ public class CacheController<K, V> implements Cache<K,V> {
      */
     @Override
     public int size() {
-        return ccList.stream().mapToInt(Cache::size).sum();
+        synchronized (monitor) {
+            return ccList.stream().mapToInt(Cache::size).sum();
+        }
     }
 
     /**
