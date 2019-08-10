@@ -25,11 +25,6 @@ public class AccessHashSet<E> {
      * Inner class to define values inside map
      * The class is a structure to get next and previous element
      * Both elements are <K> type
-
-     /**
-     * Inner class to define values inside map
-     * The class is a structure to get next and previous element
-     * Both elements are <K> type
      *
      * @param <K> links to next and previous elements
      */
@@ -50,13 +45,13 @@ public class AccessHashSet<E> {
      * Pointer to the first element
      * Actually it is LRU
      */
-    private E head;
+    private volatile E head;
 
     /**
      * Pointer to the last element in map
      * Actually it is MRU
      */
-    private E tail;
+    private volatile E tail;
 
     /**
      * Constructs a new, empty set; the backing <tt>HashMap</tt> instance has
@@ -82,7 +77,6 @@ public class AccessHashSet<E> {
 
         lock.lock();
         try {
-//        synchronized (monitor) {
             // if element is present, just poke the element and push to tail
             if (map.containsKey(elem)) {
                 return poke(elem);
@@ -150,7 +144,6 @@ public class AccessHashSet<E> {
 
         lock.lock();
         try {
-//        synchronized (monitor) {
             // the element moved to tail if it is present
             if (poke(elem)) {
                 E beforeTail = map.get(elem).prevElem;
@@ -174,13 +167,8 @@ public class AccessHashSet<E> {
      * @return cut head
      */
     public Optional<E> cutHead() {
-        lock.lock();
-        try{
-            E elem = head;
-            return (this.remove(head)) ? Optional.ofNullable(elem) : Optional.empty();
-        } finally {
-            lock.unlock();
-        }
+        E elem = head;
+        return (this.remove(head)) ? Optional.ofNullable(elem) : Optional.empty();
     }
 
     /**
@@ -189,13 +177,8 @@ public class AccessHashSet<E> {
      * @return cut tail
      */
     public Optional<E> cutTail() {
-        lock.lock();
-        try{
-            E elem = tail;
-            return (this.remove(tail)) ? Optional.ofNullable(elem) : Optional.empty();
-        } finally {
-            lock.unlock();
-        }
+        E elem = tail;
+        return (this.remove(tail)) ? Optional.ofNullable(elem) : Optional.empty();
     }
 
     /**
@@ -204,12 +187,7 @@ public class AccessHashSet<E> {
      * @return the number of elements in this set (its cardinality)
      */
     public int size() {
-        lock.lock();
-        try{
-            return map.size();
-        } finally {
-            lock.unlock();
-        }
+        return map.size();
     }
 
     /**
@@ -218,12 +196,7 @@ public class AccessHashSet<E> {
      * @return <tt>true</tt> if this set contains no elements
      */
     public boolean isEmpty() {
-        lock.lock();
-        try{
-            return map.isEmpty();
-        } finally {
-            lock.unlock();
-        }
+        return map.isEmpty();
     }
 
     /**
@@ -248,7 +221,7 @@ public class AccessHashSet<E> {
      */
     private boolean isTail(E elem) {
         Node<E> node = map.get(elem);
-        return ((node.nextElem == null) & (elem == tail));
+        return ((node.nextElem == null) & elem.equals(tail));
     }
 
     /**
@@ -258,7 +231,7 @@ public class AccessHashSet<E> {
      */
     private boolean isHead(E elem) {
         Node<E> node = map.get(elem);
-        return ((node.prevElem == null) & (elem == head));
+        return ((node.prevElem == null) & elem.equals(head));
     }
 
     /**
@@ -290,7 +263,8 @@ public class AccessHashSet<E> {
             pokedNode = new Node<>();
         }
 
-        map.get(tail).nextElem = elem;
+        Node<E> tailNode = map.get(tail);
+        tailNode.nextElem = elem;
         pokedNode.prevElem = tail;
         pokedNode.nextElem = null;
         tail = elem;

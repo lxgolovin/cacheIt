@@ -40,7 +40,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     private Path directory;
 
-    private static final Logger logger = LoggerFactory.getLogger(FileSystemStorage.class);
+    private final Logger logger = LoggerFactory.getLogger(FileSystemStorage.class);
 
     public FileSystemStorage() {
         this(null);

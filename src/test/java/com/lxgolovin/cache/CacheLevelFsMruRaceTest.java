@@ -2,21 +2,25 @@ package com.lxgolovin.cache;
 
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.algorithm.Mru;
+import com.lxgolovin.cache.storage.FileSystemStorage;
+import com.lxgolovin.cache.storage.Storage;
 import com.lxgolovin.cache.tools.FutureConverter;
+import com.lxgolovin.cache.tools.ListGenerator;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class RaceMemoryMruCacheTest {
+class CacheLevelFsMruRaceTest {
 
     private static final int threadsTotal = 100;
 
@@ -24,34 +28,47 @@ class RaceMemoryMruCacheTest {
 
     private final CacheAlgorithm<Integer> mru = new Mru<>();
 
+    private final int dataSize = 1000;
+
     private final int maxSize = 40;
 
     private Cache<Integer, String> mruCache;
 
     @BeforeEach
     void setUp() {
-        mruCache = new CacheLevel<>(mru, maxSize);
+        final String directoryPath = "./TEMP/";
+        final Storage<Integer, String> mruStorage = new FileSystemStorage<>(Paths.get(directoryPath), true);
+        mruCache = new CacheLevel<>(mru, mruStorage, maxSize);
+
         for (int i = 0; i < maxSize; i++) {
             mruCache.cache(i, "init");
         }
     }
 
     @Test
-    void putDataIntoCacheSleep() throws InterruptedException {
+    void putDataIntoCacheBarrier() throws InterruptedException, BrokenBarrierException {
+        final CyclicBarrier barrier = new CyclicBarrier(threadsTotal + 1, () -> {
+            assertEquals(maxSize, mruCache.size());
+            assertEquals(mruCache.sizeMax(), mruCache.size());
+        });
+
         assertEquals(maxSize, mruCache.size());
         IntStream.rangeClosed(1,threadsTotal)
-                .forEach(i ->
-                        exec.execute(() -> {
-                                    List<Integer> data = generateList();
-                                    data.forEach(k -> {
-                                        String v = String.valueOf(Math.random() * threadsTotal);
-                                        mruCache.cache(k, v);
-                                    });
-                                }
-                        ));
+                .forEach(i -> exec.execute(() -> {
+                    try {
+                        List<Integer> data = ListGenerator.generateInt(dataSize);
+                        data.forEach(k -> {
+                            String v = String.valueOf(Math.random() * threadsTotal);
+                            mruCache.cache(k, v);
+                        });
 
-        TimeUnit.SECONDS.sleep(3); // wait all finished
-        assertEquals(maxSize, mruCache.size());
+                        barrier.await();
+                    } catch (InterruptedException | BrokenBarrierException e) {
+                        // just skip. Not needed here
+                    }
+                }));
+
+        barrier.await();
     }
 
     @Test
@@ -62,7 +79,7 @@ class RaceMemoryMruCacheTest {
         IntStream.rangeClosed(1,threadsTotal)
                 .forEach(i ->
                         futures.add(CompletableFuture.runAsync(() -> {
-                            List<Integer> data = generateList();
+                            List<Integer> data = ListGenerator.generateInt(dataSize);
                             data.forEach(k -> {
                                 String v = String.valueOf(Math.random() * threadsTotal);
                                 mruCache.cache(k, v);
@@ -82,7 +99,7 @@ class RaceMemoryMruCacheTest {
         IntStream.rangeClosed(1,threadsTotal)
                 .forEach(i -> futures.add(CompletableFuture.runAsync(() -> {
                     try {
-                        List<Integer> data = generateList();
+                        List<Integer> data = ListGenerator.generateInt(dataSize);
                         latch.countDown();
                         latch.await();
                         data.forEach(k -> {
@@ -107,7 +124,7 @@ class RaceMemoryMruCacheTest {
         IntStream.rangeClosed(1,threadsTotal)
                 .forEach(i -> futures.add(CompletableFuture.runAsync(() -> {
                     try {
-                        List<Integer> data = generateList();
+                        List<Integer> data = ListGenerator.generateInt(dataSize);
                         latch.countDown();
                         latch.await();
                         data.forEach(k -> {
@@ -135,21 +152,16 @@ class RaceMemoryMruCacheTest {
 
         FutureConverter.getAllFinished(futures).get();
         assertTrue(maxSize >= mruCache.size());
+    }
+
+    @AfterEach
+    void tearDown() {
         mruCache.clear();
         assertEquals(0, mruCache.size());
     }
 
-    private List<Integer> generateList() {
-        final int dataSize = 1000;
-        return IntStream
-                .rangeClosed(1, dataSize)
-                .map(i -> (int)(Math.random() * threadsTotal))
-                .boxed()
-                .collect(Collectors.toList());
-    }
-
     @AfterAll
-    static void tearDown() {
+    static void finish() {
         exec.shutdown();
     }
 }

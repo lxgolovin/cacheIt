@@ -3,16 +3,13 @@ package com.lxgolovin.cache;
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.algorithm.Lru;
 import com.lxgolovin.cache.algorithm.Mru;
-import com.lxgolovin.cache.storage.FileSystemStorage;
+import com.lxgolovin.cache.storage.MemoryStorage;
 import com.lxgolovin.cache.storage.Storage;
+import com.lxgolovin.cache.tools.ListGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Paths;
-import java.util.AbstractMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,18 +25,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * @see Lru
  * @see Mru
  */
-class FileSystemCacheTest {
+class CacheLevelMemoryTest {
 
     /**
      * Algorithm types use in testing
      */
     private final CacheAlgorithm<Integer> lru = new Lru<>();
     private final CacheAlgorithm<Integer> mru = new Mru<>();
-
-    /**
-     * Directory for testing
-     */
-    private final String directoryPath = "./TEMP/";
 
     /**
      * LRU cache will be initialised with size 6
@@ -49,11 +41,8 @@ class FileSystemCacheTest {
     /**
      * caches with memory cache
      */
-    private final Storage<Integer, Integer> lruStorage = new FileSystemStorage<>();
-    private final Storage<Integer, Integer> mruStorage = new FileSystemStorage<>(Paths.get(directoryPath), true);
-
-    private final Cache<Integer, Integer> lruCache = new CacheLevel<>(lru, lruStorage, maxSize);
-    private final Cache<Integer, Integer> mruCache = new CacheLevel<>(mru, mruStorage);
+    private final Cache<Integer, Integer> lruCache = new CacheLevel<>(lru, maxSize);
+    private final Cache<Integer, Integer> mruCache = new CacheLevel<>(mru, 0, 0);
 
     /**
      * Fill in caches.
@@ -65,11 +54,23 @@ class FileSystemCacheTest {
     @BeforeEach
     void setUp() {
         int maxRange = 9;
-        for (int i = 1; i <= maxRange; i++) {
-            lruCache.cache(i,i);
-        }
-//        IntStream.rangeClosed(1, maxRange).forEach(x->lruCache.cache(x,x));
-        IntStream.rangeClosed(0, maxRange).forEach(x->mruCache.cache(x,x));
+        IntStream.rangeClosed(1, maxRange).forEach(x->lruCache.cache(x,x));
+        IntStream.rangeClosed(1, maxRange).forEach(x->mruCache.cache(x,x));
+    }
+
+    @Test
+    void putRandomDataIntoCache() {
+        final int dataListSize = 1000;
+        List<Integer> data = ListGenerator.generateInt(dataListSize);
+
+        data.forEach(k -> {
+                int v = (int) (Math.random() * dataListSize);
+                lruCache.cache(k, v);
+                mruCache.cache(k, v);
+            });
+
+        assertEquals(lruCache.size(), lruCache.sizeMax());
+        assertEquals(mruCache.size(), mruCache.sizeMax());
     }
 
     /**
@@ -77,45 +78,39 @@ class FileSystemCacheTest {
      */
     @Test
     void constructorWithDefaultSize() {
-        Storage<Integer, String> storage = new FileSystemStorage<>();
+        Storage<Integer, String> storage = new MemoryStorage<>();
         Cache<Integer, String> cache = new CacheLevel<>(lru, storage);
         assertEquals(0, cache.size());
         assertEquals(5, cache.sizeMax());
     }
 
     /**
-     * Checks work with not empty map
+     * Checks work if empty map is passed as argument
      */
     @Test
-    void constructorWithNotEmptyMap() {
-        Map<Integer, Integer> map = new TreeMap<>();
-        IntStream.rangeClosed(1, 10).forEach(x -> map.put(x, (x*x)));
+    void constructorWithEmptyMap() {
+        CacheAlgorithm<Integer> algorithm = new Lru<>();
+        Map<Integer, String> map = new TreeMap<>();
 
-        Storage<Integer, Integer> notEmptyStorage = new FileSystemStorage<>(Paths.get(directoryPath), map);
-        assertEquals(10, notEmptyStorage.size());
-
-        CacheAlgorithm<Integer> lru = new Lru<>();
-        Cache<Integer, Integer> cache = new CacheLevel<>(lru, notEmptyStorage);
-        assertEquals(Optional.of(1),cache.cache(36, 36).map(Map.Entry::getValue));
-        assertEquals(10, cache.size());
-        assertEquals(10, cache.sizeMax());
+        Cache<Integer, String> cache = new CacheLevel<>(algorithm,map);
+        assertFalse(cache.cache(36, "36").isPresent());
+        assertEquals(1, cache.size());
+        assertEquals(5, cache.sizeMax());
     }
 
     /**
-     * Reads data from existing directory. In this case storage is not empty
-     * The size is set to the number of files in the storage
+     * Checks work with not empty maps
      */
     @Test
-    void constructorWithNonEmptyStorage() {
-        Storage<Integer, Integer> notEmptyStorage = new FileSystemStorage<>(Paths.get(directoryPath));
-        assertEquals(0, notEmptyStorage.size());
+    void constructorWithMaps() {
+        CacheAlgorithm<Integer> algorithm = new Lru<>();
+        Map<Integer, String> map = new TreeMap<>();
+        IntStream.rangeClosed(1, 10).forEach(x -> map.put(x,String.valueOf(x*x)));
 
-        CacheAlgorithm<Integer> lru = new Lru<>();
-        Cache<Integer, Integer> cache = new CacheLevel<>(lru, notEmptyStorage);
-
-        assertTrue(notEmptyStorage.size() > 0);
-        assertEquals(notEmptyStorage.size(), cache.size());
-        assertEquals(notEmptyStorage.size(), cache.sizeMax());
+        Cache<Integer, String> cache = new CacheLevel<>(algorithm,map);
+        assertEquals(Optional.of(1),cache.cache(36, "36").map(Map.Entry::getKey));
+        assertEquals(10, cache.size());
+        assertEquals(10, cache.sizeMax());
     }
 
     /**
@@ -123,7 +118,7 @@ class FileSystemCacheTest {
      * cache works fine
      */
     @Test
-    void getPutInLruAlgorithm() {
+   void getPutInLruAlgorithm() {
         // 4..9 are the elements after init and size is 6
         assertEquals(Optional.of(5), lruCache.get(5));
         // Now {4,6,7,8,9,5}
@@ -136,7 +131,7 @@ class FileSystemCacheTest {
         // Now {4,7,8,5,9,6} and value for 6 was 6, but it was replaced. Inside cache value now is 36
         assertEquals(Optional.of(36), lruCache.get(6) );
         // Now {4,7,8,5,9,6} LRU will delete 4. Check this out
-        assertEquals(Optional.of(4), lruCache.pop().map(Map.Entry::getKey));
+        assertEquals(Optional.of(4),lruCache.pop().map(Map.Entry::getKey));
         // Now {7,8,5,9,6}; 4 was deleted, let's call for it again. Null should be
         assertFalse(lruCache.get(4).isPresent());
         assertThrows(IllegalArgumentException.class,
@@ -178,7 +173,7 @@ class FileSystemCacheTest {
         assertEquals(Optional.of(5), lruCache.get(5));
         // Now {4,6,7,8,9,5}
         // 4 is now a head (lru deletes it)
-        assertEquals(4, lruCache.pop().get().getKey());
+        assertEquals(Optional.of(4), lruCache.pop().map(Map.Entry::getKey));
         // Now {6,7,8,9,5}
         assertEquals(8, lruCache.delete(8).get());
         // Now {6,7,9,5}
@@ -251,11 +246,14 @@ class FileSystemCacheTest {
         CacheAlgorithm<Integer> algorithm = new Lru<>();
         assertThrows(IllegalArgumentException.class, () -> new CacheLevel<>(null));
         assertThrows(IllegalArgumentException.class, () -> new CacheLevel<>(algorithm,null, null));
-        assertThrows(IllegalArgumentException.class, () -> new CacheLevel<>(null, new FileSystemStorage<>()));
+        assertThrows(IllegalArgumentException.class, () -> new CacheLevel<>(null,new HashMap<>()));
 
-        Cache<Integer, Integer> memoryCache =  new CacheLevel<>(algorithm, new FileSystemStorage<>());
+        Cache<Integer, Integer> memoryCache =  new CacheLevel<>(algorithm);
         assertThrows(IllegalArgumentException.class, () -> memoryCache.delete(null));
         assertThrows(IllegalArgumentException.class, () -> memoryCache.get(null));
+        assertThrows(IllegalArgumentException.class, () -> memoryCache.cache(null, null));
+        assertThrows(IllegalArgumentException.class, () -> memoryCache.cache(666, null));
+        assertThrows(IllegalArgumentException.class, () -> memoryCache.cache(null, 666));
         assertFalse(memoryCache.contains(null));
     }
 }
