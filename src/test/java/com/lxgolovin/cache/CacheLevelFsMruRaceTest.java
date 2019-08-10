@@ -1,7 +1,7 @@
 package com.lxgolovin.cache;
 
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
-import com.lxgolovin.cache.algorithm.Lru;
+import com.lxgolovin.cache.algorithm.Mru;
 import com.lxgolovin.cache.storage.FileSystemStorage;
 import com.lxgolovin.cache.storage.Storage;
 import com.lxgolovin.cache.tools.FutureConverter;
@@ -15,55 +15,79 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class RaceFileSystemLruCacheTest {
+class CacheLevelFsMruRaceTest {
 
     private static final int threadsTotal = 100;
 
     private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
 
-    private final CacheAlgorithm<Integer> lru = new Lru<>();
+    private final CacheAlgorithm<Integer> mru = new Mru<>();
+
+    private final int dataSize = 1000;
 
     private final int maxSize = 40;
 
-    private final int dataSize = 100;
-
-    private Cache<Integer, String> lruCache;
+    private Cache<Integer, String> mruCache;
 
     @BeforeEach
     void setUp() {
         final String directoryPath = "./TEMP/";
-        final Storage<Integer, String> lruStorage = new FileSystemStorage<>(Paths.get(directoryPath), true);
-        lruCache = new CacheLevel<>(lru, lruStorage, maxSize);
+        final Storage<Integer, String> mruStorage = new FileSystemStorage<>(Paths.get(directoryPath), true);
+        mruCache = new CacheLevel<>(mru, mruStorage, maxSize);
 
         for (int i = 0; i < maxSize; i++) {
-            lruCache.cache(i, "init");
+            mruCache.cache(i, "init");
         }
+    }
+
+    @Test
+    void putDataIntoCacheBarrier() throws InterruptedException, BrokenBarrierException {
+        final CyclicBarrier barrier = new CyclicBarrier(threadsTotal + 1, () -> {
+            assertEquals(maxSize, mruCache.size());
+            assertEquals(mruCache.sizeMax(), mruCache.size());
+        });
+
+        assertEquals(maxSize, mruCache.size());
+        IntStream.rangeClosed(1,threadsTotal)
+                .forEach(i -> exec.execute(() -> {
+                    try {
+                        List<Integer> data = ListGenerator.generateInt(dataSize);
+                        data.forEach(k -> {
+                            String v = String.valueOf(Math.random() * threadsTotal);
+                            mruCache.cache(k, v);
+                        });
+
+                        barrier.await();
+                    } catch (InterruptedException | BrokenBarrierException e) {
+                        // just skip. Not needed here
+                    }
+                }));
+
+        barrier.await();
     }
 
     @Test
     void putDataIntoCacheFuture() throws InterruptedException, ExecutionException {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        assertEquals(maxSize, lruCache.size());
+        assertEquals(maxSize, mruCache.size());
         IntStream.rangeClosed(1,threadsTotal)
                 .forEach(i ->
                         futures.add(CompletableFuture.runAsync(() -> {
-                            List<Integer> data = generateList(dataSize);
-//                            List<Integer> data = ListGenerator.generate(dataSize);
+                            List<Integer> data = ListGenerator.generateInt(dataSize);
                             data.forEach(k -> {
                                 String v = String.valueOf(Math.random() * threadsTotal);
-                                lruCache.cache(k, v);
+                                mruCache.cache(k, v);
                             });
                         }, exec)));
 
         FutureConverter.getAllFinished(futures).get();
-        assertEquals(maxSize, lruCache.size());
+        assertEquals(maxSize, mruCache.size());
     }
 
     @Test
@@ -71,17 +95,16 @@ class RaceFileSystemLruCacheTest {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         CountDownLatch latch = new CountDownLatch(threadsTotal);
 
-        assertEquals(maxSize, lruCache.size());
+        assertEquals(maxSize, mruCache.size());
         IntStream.rangeClosed(1,threadsTotal)
                 .forEach(i -> futures.add(CompletableFuture.runAsync(() -> {
                     try {
-                        List<Integer> data = generateList(dataSize);
-//                        List<Integer> data = ListGenerator.generate(dataSize);
+                        List<Integer> data = ListGenerator.generateInt(dataSize);
                         latch.countDown();
                         latch.await();
                         data.forEach(k -> {
                             String v = String.valueOf(Math.random() * threadsTotal);
-                            lruCache.cache(k, v);
+                            mruCache.cache(k, v);
                         });
                     } catch (InterruptedException e) {
                         // just skip it and finish
@@ -89,7 +112,7 @@ class RaceFileSystemLruCacheTest {
                 }, exec)));
 
         FutureConverter.getAllFinished(futures).get();
-        assertEquals(maxSize, lruCache.size());
+        assertEquals(maxSize, mruCache.size());
     }
 
     @Test
@@ -97,57 +120,48 @@ class RaceFileSystemLruCacheTest {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         CountDownLatch latch = new CountDownLatch(threadsTotal);
 
-        assertEquals(maxSize, lruCache.size());
+        assertEquals(maxSize, mruCache.size());
         IntStream.rangeClosed(1,threadsTotal)
                 .forEach(i -> futures.add(CompletableFuture.runAsync(() -> {
                     try {
-                        List<Integer> data = generateList(dataSize);
-//                        List<Integer> data = ListGenerator.generate(dataSize);
+                        List<Integer> data = ListGenerator.generateInt(dataSize);
                         latch.countDown();
                         latch.await();
                         data.forEach(k -> {
                             String v = String.valueOf(Math.random() * threadsTotal);
-                            lruCache.pop();
+                            mruCache.pop();
                             Thread.yield();
 
-                            lruCache.cache(k, v);
+                            mruCache.cache(k, v);
                             Thread.yield();
 
-                            lruCache.get(k);
+                            mruCache.get(k);
                             Thread.yield();
 
-                            assertTrue(maxSize >= lruCache.size());
-                            lruCache.delete(k);
+                            assertTrue(maxSize >= mruCache.size());
+                            mruCache.delete(k);
                             Thread.yield();
 
-                            lruCache.cache(k, v);
-                            assertTrue(maxSize >= lruCache.size());
+                            mruCache.cache(k, v);
+                            assertTrue(maxSize >= mruCache.size());
                         });
                     } catch (InterruptedException e) {
                         // just skip it and finish
                     }
                 }, exec)));
 
-        FutureConverter.listToFuture(futures).get();
-        assertTrue(maxSize >= lruCache.size());
-    }
-
-    private List<Integer> generateList(int size) {
-        return IntStream
-                .rangeClosed(1, size)
-                .map(i -> (int)(Math.random() * threadsTotal))
-                .boxed()
-                .collect(Collectors.toList());
+        FutureConverter.getAllFinished(futures).get();
+        assertTrue(maxSize >= mruCache.size());
     }
 
     @AfterEach
     void tearDown() {
-        lruCache.clear();
-        assertEquals(0, lruCache.size());
+        mruCache.clear();
+        assertEquals(0, mruCache.size());
     }
 
     @AfterAll
-    static void finishAll() {
+    static void finish() {
         exec.shutdown();
     }
 }

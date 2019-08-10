@@ -2,10 +2,12 @@ package com.lxgolovin.cache;
 
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.algorithm.Mru;
+import com.lxgolovin.cache.tools.ListGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.AbstractMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -15,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Create useful tests to check cache controller working
  */
-class MruCacheControllerTest {
+class CacheControllerMruTest {
 
     /**
      * Cache controller
@@ -58,6 +60,23 @@ class MruCacheControllerTest {
         // try to remove non existing level
         assertThrows(IndexOutOfBoundsException.class,
                 () -> cc.removeLevel(5));
+    }
+
+    @Test
+    void putRandomDataIntoCache() {
+        CacheAlgorithm<Integer> mruLev1 = new Mru<>();
+        Cache<Integer, Integer> cacheLevel1 = new CacheLevel<>(mruLev1);
+        assertEquals(2,cc.addLevel(cacheLevel1));
+
+        final int dataListSize = 1000;
+        List<Integer> data = ListGenerator.generateInt(dataListSize);
+
+        data.forEach(k -> {
+            int v = (int) (Math.random() * dataListSize);
+            cc.cache(k, v);
+        });
+
+        assertEquals(cc.size(), cc.sizeMax());
     }
 
     /**

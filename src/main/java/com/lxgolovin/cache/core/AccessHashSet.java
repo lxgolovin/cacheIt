@@ -1,7 +1,6 @@
 package com.lxgolovin.cache.core;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -23,11 +22,6 @@ public class AccessHashSet<E> {
     private final Lock lock = new ReentrantLock();
 
     /**
-     * Inner class to define values inside map
-     * The class is a structure to get next and previous element
-     * Both elements are <K> type
-
-     /**
      * Inner class to define values inside map
      * The class is a structure to get next and previous element
      * Both elements are <K> type
@@ -64,7 +58,7 @@ public class AccessHashSet<E> {
      * default initial capacity (16) and load factor (0.75).
      */
     public AccessHashSet() {
-        map = new ConcurrentHashMap<>();
+        map = new HashMap<>();
     }
 
     /**
@@ -83,7 +77,6 @@ public class AccessHashSet<E> {
 
         lock.lock();
         try {
-//        synchronized (monitor) {
             // if element is present, just poke the element and push to tail
             if (map.containsKey(elem)) {
                 return poke(elem);
@@ -151,7 +144,6 @@ public class AccessHashSet<E> {
 
         lock.lock();
         try {
-//        synchronized (monitor) {
             // the element moved to tail if it is present
             if (poke(elem)) {
                 E beforeTail = map.get(elem).prevElem;
@@ -175,13 +167,8 @@ public class AccessHashSet<E> {
      * @return cut head
      */
     public Optional<E> cutHead() {
-        lock.lock();
-        try{
-            E elem = head;
-            return (this.remove(head)) ? Optional.ofNullable(elem) : Optional.empty();
-        } finally {
-            lock.unlock();
-        }
+        E elem = head;
+        return (this.remove(head)) ? Optional.ofNullable(elem) : Optional.empty();
     }
 
     /**
@@ -190,13 +177,8 @@ public class AccessHashSet<E> {
      * @return cut tail
      */
     public Optional<E> cutTail() {
-        lock.lock();
-        try{
-            E elem = tail;
-            return (this.remove(tail)) ? Optional.ofNullable(elem) : Optional.empty();
-        } finally {
-            lock.unlock();
-        }
+        E elem = tail;
+        return (this.remove(tail)) ? Optional.ofNullable(elem) : Optional.empty();
     }
 
     /**
@@ -205,12 +187,7 @@ public class AccessHashSet<E> {
      * @return the number of elements in this set (its cardinality)
      */
     public int size() {
-        lock.lock();
-        try{
-            return map.size();
-        } finally {
-            lock.unlock();
-        }
+        return map.size();
     }
 
     /**
@@ -219,12 +196,7 @@ public class AccessHashSet<E> {
      * @return <tt>true</tt> if this set contains no elements
      */
     public boolean isEmpty() {
-        lock.lock();
-        try{
-            return map.isEmpty();
-        } finally {
-            lock.unlock();
-        }
+        return map.isEmpty();
     }
 
     /**
@@ -283,26 +255,21 @@ public class AccessHashSet<E> {
     private Node<E> linkElementToTail(E elem) {
         Node<E> pokedNode;
 
-        lock.lock();
-        try {
-            if (map.containsKey(elem)) {
-                // if the element is present, link to tail
-                pokedNode = map.get(elem);
-            } else {
-                // if no such element in map, create empty and link to tail
-                pokedNode = new Node<>();
-            }
-
-            Node<E> tailNode = map.get(tail);
-            tailNode.nextElem = elem;
-            pokedNode.prevElem = tail;
-            pokedNode.nextElem = null;
-            tail = elem;
-
-            return pokedNode;
-        } finally {
-            lock.unlock();
+        if (map.containsKey(elem)) {
+            // if the element is present, link to tail
+            pokedNode = map.get(elem);
+        } else {
+            // if no such element in map, create empty and link to tail
+            pokedNode = new Node<>();
         }
+
+        Node<E> tailNode = map.get(tail);
+        tailNode.nextElem = elem;
+        pokedNode.prevElem = tail;
+        pokedNode.nextElem = null;
+        tail = elem;
+
+        return pokedNode;
     }
 
     /**
