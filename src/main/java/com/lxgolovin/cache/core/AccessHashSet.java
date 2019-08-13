@@ -1,16 +1,17 @@
 package com.lxgolovin.cache.core;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Implements doubly linked "set" based on {@link HashMap}. The elements link each other
+ * Implements doubly linked "set" based on {@link ConcurrentHashMap}. The elements link each other
  * by access order. This set is a kind of implementation of LinkedHashMap with access order
  * set to true
  *
  * @param <E> type for the incoming element
- * @see HashMap
+ * @see ConcurrentHashMap
  */
 public class AccessHashSet<E> {
 
@@ -58,7 +59,7 @@ public class AccessHashSet<E> {
      * default initial capacity (16) and load factor (0.75).
      */
     public AccessHashSet() {
-        map = new HashMap<>();
+        map = new ConcurrentHashMap<>();
     }
 
     /**
@@ -205,7 +206,7 @@ public class AccessHashSet<E> {
      */
     public void clear() {
         lock.lock();
-        try{
+        try {
             map.clear();
             head = null;
             tail = null;
