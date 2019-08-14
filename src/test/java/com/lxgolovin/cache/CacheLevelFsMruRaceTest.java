@@ -28,7 +28,7 @@ class CacheLevelFsMruRaceTest {
 
     private final CacheAlgorithm<Integer> mru = new Mru<>();
 
-    private final int dataSize = 1000;
+    private final int dataSize = 100;
 
     private final int maxSize = 40;
 

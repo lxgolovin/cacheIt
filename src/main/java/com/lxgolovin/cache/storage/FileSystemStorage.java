@@ -194,21 +194,11 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     }
 
     public int size() {
-        lock.readLock().lock();
-        try {
-            return indexMap.size();
-        } finally {
-            lock.readLock().unlock();
-        }
+        return indexMap.size();
     }
 
     public boolean isEmpty() {
-        lock.readLock().lock();
-        try {
-            return indexMap.isEmpty();
-        } finally {
-            lock.readLock().unlock();
-        }
+        return indexMap.isEmpty();
     }
 
     Path getDirectory() {

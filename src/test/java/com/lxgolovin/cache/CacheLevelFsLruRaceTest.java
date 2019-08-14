@@ -28,7 +28,7 @@ class CacheLevelFsLruRaceTest {
 
     private final CacheAlgorithm<Integer> lru = new Lru<>();
 
-    private final int dataSize = 1000;
+    private final int dataSize = 100;
 
     private final int maxSize = 40;
 
