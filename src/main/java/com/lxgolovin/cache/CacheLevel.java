@@ -4,6 +4,8 @@ import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.storage.FileSystemStorage;
 import com.lxgolovin.cache.storage.MemoryStorage;
 import com.lxgolovin.cache.storage.Storage;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 import java.util.AbstractMap;
 import java.util.HashMap;
@@ -31,7 +33,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @see MemoryStorage
  * @see FileSystemStorage
  */
-// @ThreadSafe
+@ThreadSafe
 public class CacheLevel<K, V> implements Cache<K, V> {
 
     /**
@@ -44,13 +46,13 @@ public class CacheLevel<K, V> implements Cache<K, V> {
     /**
      * Defines cache algorithm
      */
-    // @GuardedBy
+    @GuardedBy("this")
     private final CacheAlgorithm<K> algorithm;
 
     /**
      * Storage to keep key-values
      */
-    // @GuardedBy
+    @GuardedBy("this")
     private final Storage<K, V> storage;
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -118,7 +120,7 @@ public class CacheLevel<K, V> implements Cache<K, V> {
             throw new IllegalArgumentException();
         }
 
-        // last step of initialization.
+        // TODO: last step of initialization.
         this.algorithm = algorithm;
         this.storage = (storage == null) ? new MemoryStorage<>() : storage;
 
@@ -135,14 +137,14 @@ public class CacheLevel<K, V> implements Cache<K, V> {
         } else {
             maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
         }
-        putAll(initialDataMap);
+        putAll(algorithm, initialDataMap);
     }
 
     /**
      * Put all values of map into cache
      * @param map with key-values
      */
-    private void putAll(Map<K, V> map) {
+    private void putAll(CacheAlgorithm<K> algorithm, Map<K, V> map) {
         map.keySet().forEach(algorithm::shift);
     }
 

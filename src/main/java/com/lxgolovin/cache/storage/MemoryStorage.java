@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Implementation of {@link Storage} to keep data in memory
@@ -12,8 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MemoryStorage<K, V> implements Storage<K, V>{
 
-    // ConcurrentMap
-    private final Map<K, V> storageMap;
+    private final ConcurrentMap<K, V> storageMap;
 
     public MemoryStorage() {
         storageMap = new ConcurrentHashMap<>();

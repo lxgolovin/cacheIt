@@ -2,6 +2,8 @@ package com.lxgolovin.cache.storage;
 
 import com.lxgolovin.cache.core.CacheException;
 
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +22,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @see Storage
  * @see MemoryStorage
  */
-// @ThreadSafe
+@ThreadSafe
 public class FileSystemStorage<K extends Serializable, V extends Serializable> implements Storage<K, V> {
 
     /**
@@ -34,7 +36,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     private static final boolean EMPTY_STORAGE_DEFAULT = false;
 
-    //    @GuardedBy()
+    @GuardedBy("this")
     private final Map<K, Path> indexMap;
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -42,8 +44,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     /**
      * Defining the directory to keep all data
      */
-    // ! final
-    private Path directory;
+    private final Path directory;
 
     private final Logger logger = LoggerFactory.getLogger(FileSystemStorage.class);
 
@@ -56,11 +57,13 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     }
 
     public FileSystemStorage(Path path, boolean emptyStorage) {
-        indexMap = new HashMap<>();
-        createStorageDirectory(path);
+        this.directory = (path != null && checkDirectoryByPath(path))
+                ? path
+                : createTempDirectory();
         if (emptyStorage) {
             emptyDir();
         }
+        indexMap = new HashMap<>();
     }
 
     /**
@@ -68,7 +71,9 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     public FileSystemStorage(Path path, Map<K, V> map) {
         indexMap = new HashMap<>();
-        createStorageDirectory(path);
+        this.directory = (path != null && checkDirectoryByPath(path))
+                ? path
+                : createTempDirectory();
         emptyDir();
 
         if (map != null) {
@@ -197,14 +202,23 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         }
     }
 
-    // potential bug
     public int size() {
-        return indexMap.size();
+        lock.readLock().lock();
+        try {
+            return indexMap.size();
+
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
-    // potential bug
     public boolean isEmpty() {
-        return indexMap.isEmpty();
+        lock.readLock().lock();
+        try {
+            return indexMap.isEmpty();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     Path getDirectory() {
@@ -258,7 +272,6 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * @param path to the file
      * @return optional entry from the file
      */
-    // exception problem?
     @SuppressWarnings("unchecked")
     private Optional<Map.Entry<K, V>> readEntryFromFile(Path path) {
         if (path == null) {
@@ -274,10 +287,13 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
             if (entry != null)
                 indexMap.put(entry.getKey(), path);
 
-        } catch (Exception e) {
-            logger.error("Cannot read file {} from storage: {}", path.toUri(), e.getLocalizedMessage());
+        } catch (ClassNotFoundException | InvalidClassException | OptionalDataException e) {
+            logger.error("Cannot get data from file {} from storage: {}", path.toUri(), e.getLocalizedMessage());
+        } catch (SecurityException e) {
+            throw new CacheException("No rights to read the storage directory. Check access rights", e);
+        } catch (IOException e) {
+            throw new CacheException("IO error. Please check your storage drive", e);
         }
-
         return Optional.ofNullable(entry);
     }
 
@@ -295,49 +311,29 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         }
     }
 
-    /**
-     * Creates directory for the storage
-     *
-     * @param path if empty, creates temporary directory
-     */
-    private void createStorageDirectory(Path path) {
-        if (path == null) {
-            createTempDirectory();
-        } else {
-            createDirectoryByPath(path);
-        }
-    }
-
-    /**
-     * creates temporary directory for storage
-     */
-    private void createTempDirectory() {
+    private Path createTempDirectory() {
         try {
-            directory = Files.createTempDirectory(TEMP_DIR_PREFIX);
-            directory.toFile().deleteOnExit();
+            Path path = Files.createTempDirectory(TEMP_DIR_PREFIX);
+            path.toFile().deleteOnExit();
+            return path;
         } catch (Exception e) {
             throw new CacheException("Cannot create temporary directory", e);
         }
     }
 
-    /**
-     * creates directory by specified path
-     */
-    private void createDirectoryByPath(Path path) {
-        if (!path.toFile().isDirectory()) {
-            try {
-                directory = Files.createDirectory(path);
-            } catch (Exception e) {
-                throw new CacheException("Cannot create temporary directory", e);
-            }
-        } else {
-            directory = path;
+    private boolean checkDirectoryByPath(Path path) {
+        if (path.toFile().isDirectory()) {
+            return true;
         }
+
+        try {
+            Files.createDirectory(path);
+        } catch (IOException e) {
+            return false;
+        }
+        return true;
     }
 
-    /**
-     * cleans storage directory
-     */
     private void emptyDir() {
         try {
             Files.walk(directory)

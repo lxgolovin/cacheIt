@@ -1,7 +1,11 @@
 package com.lxgolovin.cache.core;
 
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -13,12 +17,14 @@ import java.util.concurrent.locks.ReentrantLock;
  * @param <E> type for the incoming element
  * @see ConcurrentHashMap
  */
+@ThreadSafe
 public class AccessHashSet<E> {
 
     /**
      * Map to keep elements
      */
-    private final Map<E,Node<E>> map;
+    @GuardedBy("this")
+    private final ConcurrentMap<E,Node<E>> map;
 
     private final Lock lock = new ReentrantLock();
 
@@ -42,25 +48,14 @@ public class AccessHashSet<E> {
         }
     }
 
-    /**
-     * Pointer to the first element
-     * Actually it is LRU
-     */
-    // why volatile?
-    private volatile E head;
+    private E head;
 
-    /**
-     * Pointer to the last element in map
-     * Actually it is MRU
-     */
-    // why volatile?
-    private volatile E tail;
+    private E tail;
 
     /**
      * Constructs a new, empty set; the backing <tt>HashMap</tt> instance has
      * default initial capacity (16) and load factor (0.75).
      */
-    // why concurrent? if for size than use concurrentMap interface
     public AccessHashSet() {
         map = new ConcurrentHashMap<>();
     }
@@ -171,9 +166,13 @@ public class AccessHashSet<E> {
      * @return cut head
      */
     public Optional<E> cutHead() {
-        E elem = head;
-        // bug
-        return (this.remove(head)) ? Optional.ofNullable(elem) : Optional.empty();
+        lock.lock();
+        try {
+            E elem = head;
+            return (this.remove(head)) ? Optional.ofNullable(elem) : Optional.empty();
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -182,9 +181,13 @@ public class AccessHashSet<E> {
      * @return cut tail
      */
     public Optional<E> cutTail() {
-        E elem = tail;
-        // bug
-        return (this.remove(tail)) ? Optional.ofNullable(elem) : Optional.empty();
+        lock.lock();
+        try {
+            E elem = tail;
+            return (this.remove(tail)) ? Optional.ofNullable(elem) : Optional.empty();
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -192,7 +195,6 @@ public class AccessHashSet<E> {
      *
      * @return the number of elements in this set (its cardinality)
      */
-
     public int size() {
         return map.size();
     }
