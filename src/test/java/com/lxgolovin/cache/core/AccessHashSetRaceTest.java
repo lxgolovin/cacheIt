@@ -42,6 +42,7 @@ class AccessHashSetRaceTest {
         assertEquals(threadsTotal, set.size());
     }
 
+    // have something -> add another butch -> remove previous batch
     @Test
     void putOneElementDeleteOneElement() throws InterruptedException, ExecutionException {
         final Integer element = 5000;

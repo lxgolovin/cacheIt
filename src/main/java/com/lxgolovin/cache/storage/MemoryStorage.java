@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MemoryStorage<K, V> implements Storage<K, V>{
 
+    // ConcurrentMap
     private final Map<K, V> storageMap;
 
     public MemoryStorage() {

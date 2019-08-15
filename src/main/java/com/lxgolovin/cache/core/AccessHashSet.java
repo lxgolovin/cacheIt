@@ -46,18 +46,21 @@ public class AccessHashSet<E> {
      * Pointer to the first element
      * Actually it is LRU
      */
+    // why volatile?
     private volatile E head;
 
     /**
      * Pointer to the last element in map
      * Actually it is MRU
      */
+    // why volatile?
     private volatile E tail;
 
     /**
      * Constructs a new, empty set; the backing <tt>HashMap</tt> instance has
      * default initial capacity (16) and load factor (0.75).
      */
+    // why concurrent? if for size than use concurrentMap interface
     public AccessHashSet() {
         map = new ConcurrentHashMap<>();
     }
@@ -169,6 +172,7 @@ public class AccessHashSet<E> {
      */
     public Optional<E> cutHead() {
         E elem = head;
+        // bug
         return (this.remove(head)) ? Optional.ofNullable(elem) : Optional.empty();
     }
 
@@ -179,6 +183,7 @@ public class AccessHashSet<E> {
      */
     public Optional<E> cutTail() {
         E elem = tail;
+        // bug
         return (this.remove(tail)) ? Optional.ofNullable(elem) : Optional.empty();
     }
 
@@ -187,6 +192,7 @@ public class AccessHashSet<E> {
      *
      * @return the number of elements in this set (its cardinality)
      */
+
     public int size() {
         return map.size();
     }

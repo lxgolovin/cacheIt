@@ -31,6 +31,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @see MemoryStorage
  * @see FileSystemStorage
  */
+// @ThreadSafe
 public class CacheLevel<K, V> implements Cache<K, V> {
 
     /**
@@ -43,11 +44,13 @@ public class CacheLevel<K, V> implements Cache<K, V> {
     /**
      * Defines cache algorithm
      */
+    // @GuardedBy
     private final CacheAlgorithm<K> algorithm;
 
     /**
      * Storage to keep key-values
      */
+    // @GuardedBy
     private final Storage<K, V> storage;
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -115,6 +118,7 @@ public class CacheLevel<K, V> implements Cache<K, V> {
             throw new IllegalArgumentException();
         }
 
+        // last step of initialization.
         this.algorithm = algorithm;
         this.storage = (storage == null) ? new MemoryStorage<>() : storage;
 

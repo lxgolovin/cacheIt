@@ -21,11 +21,13 @@ import java.util.stream.IntStream;
  * @see Lru
  * @see Mru
  */
+// Threadsafe
 public class CacheController<K, V> implements Cache<K,V> {
 
     /**
      * Cache controller list to keep levels of cache
      */
+    // GuardedBy
     private final List<Cache<K, V>> ccList = new LinkedList<>();
 
     private final Object monitor = new Object();
@@ -48,6 +50,7 @@ public class CacheController<K, V> implements Cache<K,V> {
      * @param cache new cache level with predefined algorithm
      * @return the number of levels after adding
      */
+    // bug
     public int addLevel(Cache<K, V> cache) {
         Cache<K, V> cacheLevel = (cache == null) ? createNewMemoryCacheLru() : cache;
         ccList.add(cacheLevel);
@@ -76,6 +79,7 @@ public class CacheController<K, V> implements Cache<K,V> {
      * Gets number of cache levels
      * @return number of levels
      */
+    // bug
     public int levels() {
         return ccList.size();
     }
@@ -147,6 +151,7 @@ public class CacheController<K, V> implements Cache<K,V> {
      */
     @Override
     public Optional<Map.Entry<K, V>> pop() {
+        // bug
         // check if there are no levels or all levels are empty
         if ((levels() < 1) || (size() < 1)) {
             return Optional.empty();

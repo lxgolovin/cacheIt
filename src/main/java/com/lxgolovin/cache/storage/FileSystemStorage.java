@@ -1,6 +1,7 @@
 package com.lxgolovin.cache.storage;
 
 import com.lxgolovin.cache.core.CacheException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,9 +16,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Implementation of {@link Storage} to keep data in files
+ *
  * @see Storage
  * @see MemoryStorage
  */
+// @ThreadSafe
 public class FileSystemStorage<K extends Serializable, V extends Serializable> implements Storage<K, V> {
 
     /**
@@ -31,6 +34,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     private static final boolean EMPTY_STORAGE_DEFAULT = false;
 
+    //    @GuardedBy()
     private final Map<K, Path> indexMap;
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -38,6 +42,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     /**
      * Defining the directory to keep all data
      */
+    // ! final
     private Path directory;
 
     private final Logger logger = LoggerFactory.getLogger(FileSystemStorage.class);
@@ -96,7 +101,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     }
 
     /**
-     * @param key cannot be null
+     * @param key   cannot be null
      * @param value cannot be null
      * @throws IllegalArgumentException if any key or value is null
      */
@@ -119,19 +124,18 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         }
     }
 
+    // ! rewrite
     boolean putAll(Map<K, V> map) {
-        boolean putAllSuccess = false;
+        if (map == null)
+            return false;
 
-        if (map != null) {
-            lock.writeLock().lock();
-            try {
-                map.forEach(this::put);
-            } finally {
-                lock.writeLock().unlock();
-            }
-            putAllSuccess = true;
+        lock.writeLock().lock();
+        try {
+            map.forEach(this::put);
+            return true;
+        } finally {
+            lock.writeLock().unlock();
         }
-        return putAllSuccess;
     }
 
     /**
@@ -183,7 +187,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         }
     }
 
-    public void clear(){
+    public void clear() {
         lock.writeLock().lock();
         try {
             indexMap.values().forEach(this::deleteFile);
@@ -193,10 +197,12 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         }
     }
 
+    // potential bug
     public int size() {
         return indexMap.size();
     }
 
+    // potential bug
     public boolean isEmpty() {
         return indexMap.isEmpty();
     }
@@ -220,8 +226,9 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
 
     /**
      * Writes mapping key-value to file
+     *
      * @param entry mapping key-value
-     * @param path path to the file. If null, file is created
+     * @param path  path to the file. If null, file is created
      */
     private void writeEntryToFile(Map.Entry<K, V> entry, Path path) throws IOException {
 
@@ -251,6 +258,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      * @param path to the file
      * @return optional entry from the file
      */
+    // exception problem?
     @SuppressWarnings("unchecked")
     private Optional<Map.Entry<K, V>> readEntryFromFile(Path path) {
         if (path == null) {
@@ -275,6 +283,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
 
     /**
      * Deletes file by path
+     *
      * @param path to file
      */
     private void deleteFile(Path path) {
@@ -288,6 +297,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
 
     /**
      * Creates directory for the storage
+     *
      * @param path if empty, creates temporary directory
      */
     private void createStorageDirectory(Path path) {
