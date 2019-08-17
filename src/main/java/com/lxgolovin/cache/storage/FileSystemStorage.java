@@ -3,6 +3,7 @@ package com.lxgolovin.cache.storage;
 import com.lxgolovin.cache.core.CacheException;
 
 import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @see MemoryStorage
  */
 @ThreadSafe
+@Immutable
 public class FileSystemStorage<K extends Serializable, V extends Serializable> implements Storage<K, V> {
 
     /**

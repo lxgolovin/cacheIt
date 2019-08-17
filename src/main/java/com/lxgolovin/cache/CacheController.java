@@ -105,7 +105,7 @@ public class CacheController<K, V> implements Cache<K,V> {
         }
     }
 
-     /**
+    /**
      * @param key cannot be null
      * @param value cannot be null
      * @throws IllegalArgumentException if input parameters are null
@@ -126,7 +126,7 @@ public class CacheController<K, V> implements Cache<K,V> {
      * Goes through all levels and moves data (popped out or inserted)
      */
     private Optional<Map.Entry<K, V>> loadToLevel(K key, V value, int index) {
-         Optional<Map.Entry<K, V>> returnEntry = ccList.get(index).cache(key, value);
+        Optional<Map.Entry<K, V>> returnEntry = ccList.get(index).cache(key, value);
 
         int nextLevel = index + 1;
         return returnEntry
@@ -156,12 +156,11 @@ public class CacheController<K, V> implements Cache<K,V> {
      */
     @Override
     public Optional<Map.Entry<K, V>> pop() {
-        // TODO: bug?
         // check if there are no levels or all levels are empty
-        if ((levels() < 1) || (size() < 1)) {
-            return Optional.empty();
-        }
         synchronized (monitor) {
+            if ((levels() < 1) || (size() < 1)) {
+                return Optional.empty();
+            }
 
             // try to pop from first levels. One by one. If first is empty, try next
             int notEmptyLevelIndex = IntStream.range(0, levels())

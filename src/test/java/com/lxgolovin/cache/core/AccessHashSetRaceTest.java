@@ -42,7 +42,53 @@ class AccessHashSetRaceTest {
         assertEquals(threadsTotal, set.size());
     }
 
-    // TODO: have something -> add another butch -> remove previous batch
+    @Test
+    void puAndRemoveRaceConditions() throws InterruptedException, ExecutionException {
+        final int puttersTotal = threadsTotal / 2;
+
+        ArrayList<Integer> initData = new ArrayList<>();
+        ArrayList<Integer> newData = new ArrayList<>();
+
+        IntStream.rangeClosed(1,puttersTotal)
+                .forEach(i -> {
+                    initData.add(i);
+                    set.put(i);
+                    newData.add(i + puttersTotal);
+                });
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        CountDownLatch latch = new CountDownLatch(puttersTotal + puttersTotal);
+
+        newData.forEach(elem -> futures.add(CompletableFuture.runAsync(() -> {
+            try {
+                latch.countDown();
+                latch.await();
+                set.put(elem);
+                TimeUnit.MILLISECONDS.sleep((int) (Math.random() * 100));
+                Thread.yield();
+            } catch (InterruptedException e) {
+                // just skip it and finish
+            }
+        }, exec)));
+
+        initData.forEach(elem -> futures.add(CompletableFuture.runAsync(() -> {
+            try {
+                latch.countDown();
+                latch.await();
+                set.remove(elem);
+                TimeUnit.MILLISECONDS.sleep((int) (Math.random() * 100));
+                Thread.yield();
+            } catch (InterruptedException e) {
+                // just skip it and finish
+            }
+        }, exec)));
+
+        FutureConverter.getAllFinished(futures).get();
+        assertEquals(puttersTotal, set.size());
+        newData.forEach(elem -> assertTrue(set.remove(elem)));
+        assertTrue(set.isEmpty());
+    }
+
     @Test
     void putOneElementDeleteOneElement() throws InterruptedException, ExecutionException {
         final Integer element = 5000;

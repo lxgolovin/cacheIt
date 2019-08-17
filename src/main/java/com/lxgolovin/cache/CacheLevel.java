@@ -119,25 +119,28 @@ public class CacheLevel<K, V> implements Cache<K, V> {
         if (algorithm == null) {
             throw new IllegalArgumentException();
         }
-
-        // TODO: last step of initialization.
-        this.algorithm = algorithm;
-        this.storage = (storage == null) ? new MemoryStorage<>() : storage;
+        Storage<K, V> cacheStorage = (storage == null) ? new MemoryStorage<>() : storage;
 
         Map<K, V> initialDataMap;
         if (map == null) {
-            initialDataMap = this.storage.getAll();
+            initialDataMap = cacheStorage.getAll();
         } else {
             initialDataMap = new HashMap<>(map);
-            initialDataMap.forEach(this.storage::put);
-        }
-
-        if (!initialDataMap.isEmpty()) {
-            maxSize = Math.max(initialDataMap.size(), size);
-        } else {
-            maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
+            initialDataMap.forEach(cacheStorage::put);
         }
         putAll(algorithm, initialDataMap);
+
+        this.maxSize = getMaxSize(size, initialDataMap);
+        this.algorithm = algorithm;
+        this.storage = cacheStorage;
+    }
+
+    private int getMaxSize(int size, Map<K, V> map) {
+        if (map.isEmpty()) {
+            return (size > 1) ? size : DEFAULT_CACHE_SIZE;
+        }
+
+        return Math.max(map.size(), size);
     }
 
     /**

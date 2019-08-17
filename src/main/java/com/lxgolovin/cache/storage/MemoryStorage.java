@@ -1,5 +1,9 @@
 package com.lxgolovin.cache.storage;
 
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.Immutable;
+import net.jcip.annotations.ThreadSafe;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -11,8 +15,11 @@ import java.util.concurrent.ConcurrentMap;
  * @see Storage
  * @see FileSystemStorage
  */
+@Immutable
+@ThreadSafe
 public class MemoryStorage<K, V> implements Storage<K, V>{
 
+    @GuardedBy("this")
     private final ConcurrentMap<K, V> storageMap;
 
     public MemoryStorage() {
