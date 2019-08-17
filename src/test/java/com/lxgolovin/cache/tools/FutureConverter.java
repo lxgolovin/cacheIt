@@ -7,8 +7,8 @@ import static java.util.stream.Collectors.toList;
 
 public class FutureConverter {
 
-    // TODO: the method commented is interesting to experiments. To be added later to junit tests
     /*
+    // TODO: the method commented is interesting for experiments. To be added later to junit tests
     public static<T> List<T> listOfResults(List<CompletableFuture<T>> list) {
         return list.stream()
                 .map(CompletableFuture::join)

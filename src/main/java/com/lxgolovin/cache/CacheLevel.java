@@ -4,6 +4,8 @@ import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.storage.FileSystemStorage;
 import com.lxgolovin.cache.storage.MemoryStorage;
 import com.lxgolovin.cache.storage.Storage;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 import java.util.AbstractMap;
 import java.util.HashMap;
@@ -31,6 +33,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @see MemoryStorage
  * @see FileSystemStorage
  */
+@ThreadSafe
 public class CacheLevel<K, V> implements Cache<K, V> {
 
     /**
@@ -43,11 +46,13 @@ public class CacheLevel<K, V> implements Cache<K, V> {
     /**
      * Defines cache algorithm
      */
+    @GuardedBy("this")
     private final CacheAlgorithm<K> algorithm;
 
     /**
      * Storage to keep key-values
      */
+    @GuardedBy("this")
     private final Storage<K, V> storage;
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -114,31 +119,35 @@ public class CacheLevel<K, V> implements Cache<K, V> {
         if (algorithm == null) {
             throw new IllegalArgumentException();
         }
-
-        this.algorithm = algorithm;
-        this.storage = (storage == null) ? new MemoryStorage<>() : storage;
+        Storage<K, V> cacheStorage = (storage == null) ? new MemoryStorage<>() : storage;
 
         Map<K, V> initialDataMap;
         if (map == null) {
-            initialDataMap = this.storage.getAll();
+            initialDataMap = cacheStorage.getAll();
         } else {
             initialDataMap = new HashMap<>(map);
-            initialDataMap.forEach(this.storage::put);
+            initialDataMap.forEach(cacheStorage::put);
+        }
+        putAll(algorithm, initialDataMap);
+
+        this.maxSize = getMaxSize(size, initialDataMap);
+        this.algorithm = algorithm;
+        this.storage = cacheStorage;
+    }
+
+    private int getMaxSize(int size, Map<K, V> map) {
+        if (map.isEmpty()) {
+            return (size > 1) ? size : DEFAULT_CACHE_SIZE;
         }
 
-        if (!initialDataMap.isEmpty()) {
-            maxSize = Math.max(initialDataMap.size(), size);
-        } else {
-            maxSize = (size > 1) ? size : DEFAULT_CACHE_SIZE;
-        }
-        putAll(initialDataMap);
+        return Math.max(map.size(), size);
     }
 
     /**
      * Put all values of map into cache
      * @param map with key-values
      */
-    private void putAll(Map<K, V> map) {
+    private void putAll(CacheAlgorithm<K> algorithm, Map<K, V> map) {
         map.keySet().forEach(algorithm::shift);
     }
 

@@ -3,6 +3,8 @@ package com.lxgolovin.cache;
 import com.lxgolovin.cache.algorithm.CacheAlgorithm;
 import com.lxgolovin.cache.algorithm.Lru;
 import com.lxgolovin.cache.algorithm.Mru;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 import java.util.*;
 import java.util.stream.IntStream;
@@ -21,11 +23,13 @@ import java.util.stream.IntStream;
  * @see Lru
  * @see Mru
  */
+@ThreadSafe
 public class CacheController<K, V> implements Cache<K,V> {
 
     /**
      * Cache controller list to keep levels of cache
      */
+    @GuardedBy("this")
     private final List<Cache<K, V>> ccList = new LinkedList<>();
 
     private final Object monitor = new Object();
@@ -50,8 +54,11 @@ public class CacheController<K, V> implements Cache<K,V> {
      */
     public int addLevel(Cache<K, V> cache) {
         Cache<K, V> cacheLevel = (cache == null) ? createNewMemoryCacheLru() : cache;
-        ccList.add(cacheLevel);
-        return levels();
+
+        synchronized (monitor) {
+            ccList.add(cacheLevel);
+            return levels();
+        }
     }
 
     /**
@@ -77,7 +84,9 @@ public class CacheController<K, V> implements Cache<K,V> {
      * @return number of levels
      */
     public int levels() {
-        return ccList.size();
+        synchronized (monitor) {
+            return ccList.size();
+        }
     }
 
     /**
@@ -96,7 +105,7 @@ public class CacheController<K, V> implements Cache<K,V> {
         }
     }
 
-     /**
+    /**
      * @param key cannot be null
      * @param value cannot be null
      * @throws IllegalArgumentException if input parameters are null
@@ -117,7 +126,7 @@ public class CacheController<K, V> implements Cache<K,V> {
      * Goes through all levels and moves data (popped out or inserted)
      */
     private Optional<Map.Entry<K, V>> loadToLevel(K key, V value, int index) {
-         Optional<Map.Entry<K, V>> returnEntry = ccList.get(index).cache(key, value);
+        Optional<Map.Entry<K, V>> returnEntry = ccList.get(index).cache(key, value);
 
         int nextLevel = index + 1;
         return returnEntry
@@ -148,10 +157,10 @@ public class CacheController<K, V> implements Cache<K,V> {
     @Override
     public Optional<Map.Entry<K, V>> pop() {
         // check if there are no levels or all levels are empty
-        if ((levels() < 1) || (size() < 1)) {
-            return Optional.empty();
-        }
         synchronized (monitor) {
+            if ((levels() < 1) || (size() < 1)) {
+                return Optional.empty();
+            }
 
             // try to pop from first levels. One by one. If first is empty, try next
             int notEmptyLevelIndex = IntStream.range(0, levels())
