@@ -26,6 +26,12 @@ public class AccessHashSet<E> {
     @GuardedBy("this")
     private final ConcurrentMap<E,Node<E>> map;
 
+    @GuardedBy("this")
+    private E head;
+
+    @GuardedBy("this")
+    private E tail;
+
     private final Lock lock = new ReentrantLock();
 
     /**
@@ -47,10 +53,6 @@ public class AccessHashSet<E> {
             this.prevElem = null;
         }
     }
-
-    private E head;
-
-    private E tail;
 
     /**
      * Constructs a new, empty set; the backing <tt>HashMap</tt> instance has
