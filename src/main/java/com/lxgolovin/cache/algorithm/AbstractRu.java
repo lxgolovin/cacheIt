@@ -16,29 +16,14 @@ import java.util.Optional;
  */
 abstract class AbstractRu<E> implements CacheAlgorithm<E> {
 
-    /**
-     * LRU algorithm
-     */
     static final String LRU_ALGORITHM = "LRU";
 
-    /**
-     * MRU algorithm
-     */
     static final String MRU_ALGORITHM = "MRU";
 
-    /**
-     * Default algorithm type if none is defined in constructor
-     */
     static final String DEFAULT_ALGORITHM_TYPE = "LRU";
 
-    /**
-     * Queue to organize algorithm
-     */
     final AccessHashSet<E> queue;
 
-    /**
-     * Starts a queue to keep all elements inside and delete according to algorithms
-     */
     AbstractRu() {
         queue = new AccessHashSet<>();
     }
