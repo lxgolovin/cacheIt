@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * interface {@link CacheAlgorithm} is used. Also default size is set for the cache, but the
  * size could be set by user. Note that size should by greater then 1, as cache with size 1 has no
  * sense.
- * By default the size of the cache is {@link Cache#DEFAULT_CACHE_SIZE} and the implementation is memory
+ * By default the size of the cache is {@link #DEFAULT_CACHE_SIZE} and the implementation is memory
  * cache {@link MemoryStorage}. But these parameters could be defined during initialization phase
  *
  * Here got methods to cache, delete, pop data by key. Has a possibility to clean data,
@@ -36,9 +36,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @ThreadSafe
 public final class CacheLevel<K, V> implements Cache<K, V> {
 
+    public static final int DEFAULT_CACHE_SIZE = 5;
+
     /**
      * maximum possible size for the cache. Minimum value is greater then 1.
-     * If you try to use less then 2, {@link Cache#DEFAULT_CACHE_SIZE}
+     * If you try to use less then 2, {@link #DEFAULT_CACHE_SIZE}
      * will be used as a size
      */
     private final int maxSize;
@@ -62,23 +64,23 @@ public final class CacheLevel<K, V> implements Cache<K, V> {
      * @param algorithm specifies algorithm type that is used by the cache
      */
     public CacheLevel(CacheAlgorithm<K> algorithm) {
-        this(algorithm, new MemoryStorage<>(), new HashMap<>(), Cache.DEFAULT_CACHE_SIZE);
+        this(algorithm, new MemoryStorage<>(), new HashMap<>(), DEFAULT_CACHE_SIZE);
     }
 
     /**
      * Creates memory cache with defined algorithm and size. Fills with map key-values
-     * If the map is empty, empty cache is created with maxSize {@link Cache#DEFAULT_CACHE_SIZE}.
+     * If the map is empty, empty cache is created with maxSize {@link #DEFAULT_CACHE_SIZE}.
      * If the map is not empty, cache is created with maxSize equal to the size of the incoming map.
-     * {@link Cache#DEFAULT_CACHE_SIZE} will be used as a size
+     * {@link #DEFAULT_CACHE_SIZE} will be used as a size
      * @param algorithm specifies algorithm type that is used by the cache
      * @param map incoming with keys-values of empty
      */
     public CacheLevel(CacheAlgorithm<K> algorithm, Map<K, V> map) {
-        this(algorithm, null, map, Cache.DEFAULT_CACHE_SIZE);
+        this(algorithm, null, map, DEFAULT_CACHE_SIZE);
     }
 
     public CacheLevel(CacheAlgorithm<K> algorithm, Storage<K, V> storage) {
-        this(algorithm, storage, null, Cache.DEFAULT_CACHE_SIZE);
+        this(algorithm, storage, null, DEFAULT_CACHE_SIZE);
     }
 
     /**
@@ -89,14 +91,14 @@ public final class CacheLevel<K, V> implements Cache<K, V> {
      * @param value defined value inside entry
      */
     public CacheLevel(CacheAlgorithm<K> algorithm, K key, V value) {
-        this(algorithm, null, null, Cache.DEFAULT_CACHE_SIZE);
+        this(algorithm, null, null, DEFAULT_CACHE_SIZE);
         cache(key, value);
     }
 
     /**
      * Creates memory cache with defined algorithm and size.
      * Minimum size value is greater then 1. If you try to use less then 2,
-     * {@link Cache#DEFAULT_CACHE_SIZE} will be used as a size
+     * {@link #DEFAULT_CACHE_SIZE} will be used as a size
      * @param algorithm specifies algorithm type that is used by the cache
      */
     public CacheLevel(CacheAlgorithm<K> algorithm, int size) {
@@ -110,14 +112,14 @@ public final class CacheLevel<K, V> implements Cache<K, V> {
     /**
      * Creates memory cache with defined algorithm and size. Fills with map key-values
      * Minimum size value is greater then 1. If you try to use less then 2,
-     * {@link Cache#DEFAULT_CACHE_SIZE} will be used as a size
+     * {@link #DEFAULT_CACHE_SIZE} will be used as a size
      * @param algorithm specifies algorithm type that is used by the cache
      * @param map incoming with keys-values of empty
      * @param size defining the size for the mapping
      */
     private CacheLevel(CacheAlgorithm<K> algorithm, Storage<K, V> storage, Map<K, V> map, int size) {
         if (algorithm == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Algorithm should be defined and should not be null");
         }
         Storage<K, V> cacheStorage = (storage == null) ? new MemoryStorage<>() : storage;
 

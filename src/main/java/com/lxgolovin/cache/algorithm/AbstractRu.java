@@ -38,7 +38,7 @@ abstract class AbstractRu<E> implements CacheAlgorithm<E> {
     @Override
     public boolean shift(E elem) {
         if (elem == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("elem cannot be null");
         }
         return (queue.put(elem));
     }
@@ -59,7 +59,7 @@ abstract class AbstractRu<E> implements CacheAlgorithm<E> {
     @Override
     public boolean delete(E elem) {
         if (elem == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("elem cannot be null");
         }
         return (queue.remove(elem));
     }

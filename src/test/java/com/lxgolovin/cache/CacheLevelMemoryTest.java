@@ -36,7 +36,7 @@ class CacheLevelMemoryTest {
     /**
      * LRU cache will be initialised with size 6
      */
-    private final int maxSize = Cache.DEFAULT_CACHE_SIZE + 1;
+    private final int maxSize = CacheLevel.DEFAULT_CACHE_SIZE + 1;
 
     /**
      * caches with memory cache

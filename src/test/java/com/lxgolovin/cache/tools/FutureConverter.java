@@ -5,7 +5,9 @@ import java.util.concurrent.CompletableFuture;
 
 import static java.util.stream.Collectors.toList;
 
-public class FutureConverter {
+public final class FutureConverter {
+
+    private FutureConverter() {}
 
     /*
     // TODO: the method commented is interesting for experiments. To be added later to junit tests

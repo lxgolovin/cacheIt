@@ -46,7 +46,7 @@ public class MemoryStorage<K, V> implements Storage<K, V>{
      */
     public Optional<V> put(K key, V value) {
         if ((key == null) || (value == null)) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Input key and value should not be null");
         }
 
         return Optional.ofNullable(storageMap.put(key, value));
@@ -58,7 +58,7 @@ public class MemoryStorage<K, V> implements Storage<K, V>{
      */
     public Optional<V> get(K key) {
         if (key == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Input key should not be null");
         }
 
         return Optional.ofNullable(storageMap.get(key));
@@ -78,7 +78,7 @@ public class MemoryStorage<K, V> implements Storage<K, V>{
      */
     public Optional<V> remove(K key) {
         if (key == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Input key should not be null");
         }
 
         return Optional.ofNullable(storageMap.remove(key));

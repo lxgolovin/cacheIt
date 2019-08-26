@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Stream;
 
 /**
  * Implementation of {@link Storage} to keep data in files
@@ -91,16 +92,14 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         Map<K, V> loadedMap = new HashMap<>();
         lock.readLock().lock();
         try {
-            try {
-                Files.walk(directory)
-                        .filter(Files::isRegularFile)
+            try (Stream<Path> dirTree = Files.walk(directory)) {
+                dirTree.filter(Files::isRegularFile)
                         .map(this::readEntryFromFile)
                         .filter(Optional::isPresent)
                         .forEach(e -> loadedMap.put(e.get().getKey(), e.get().getValue()));
                 return loadedMap;
-
             } catch (IOException | SecurityException e) {
-                throw new CacheException("Contact admin. Cannot read directory ".concat(directory.toString()));
+                throw new CacheException("Contact admin. Cannot read directory " + directory);
             }
         } finally {
             lock.readLock().unlock();
@@ -114,7 +113,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     public Optional<V> put(K key, V value) {
         if ((key == null) || (value == null)) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Key and value should not be null");
         }
 
         lock.writeLock().lock();
@@ -151,7 +150,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     public Optional<V> get(K key) {
         if (key == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Key should not be null");
         }
 
         lock.readLock().lock();
@@ -178,7 +177,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     public Optional<V> remove(K key) {
         if (key == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Input key should not be null");
         }
 
         lock.writeLock().lock();
@@ -337,12 +336,11 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
     }
 
     private void emptyDir() {
-        try {
-            Files.walk(directory)
-                    .filter(Files::isRegularFile)
+        try (Stream<Path> dirTree = Files.walk(directory)) {
+            dirTree.filter(Files::isRegularFile)
                     .forEach(this::deleteFile);
         } catch (Exception e) {
-            throw new CacheException("Cannot create temporary directory ".concat(directory.toString()), e);
+            throw new CacheException("Cannot create temporary directory " + directory, e);
         }
     }
 }

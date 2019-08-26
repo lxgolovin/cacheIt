@@ -4,11 +4,13 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -96,8 +98,9 @@ class FileSystemStorageTest {
     void emptyStorageDirectoryOnInit() throws IOException {
         FileSystemStorage<Integer, String> emptyFileStorage = new FileSystemStorage<>(Paths.get(directoryPath), true);
         assertEquals(Paths.get(directoryPath), emptyFileStorage.getDirectory());
-        assertFalse(Files.walk(Paths.get(directoryPath))
-                .anyMatch(Files::isRegularFile));
+        try (Stream<Path> dirTree =Files.walk(Paths.get(directoryPath))) {
+            assertFalse(dirTree.anyMatch(Files::isRegularFile));
+        }
     }
 
     @Test

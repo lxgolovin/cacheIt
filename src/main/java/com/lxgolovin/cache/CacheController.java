@@ -69,7 +69,7 @@ public final class CacheController<K, V> implements Cache<K,V> {
      */
     public int removeLevel(int index) {
         if ((index < 0) | (index >= levels())) {
-            throw new IndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException("Index value is out of range");
         }
 
         synchronized (monitor) {
@@ -97,7 +97,7 @@ public final class CacheController<K, V> implements Cache<K,V> {
      */
     public boolean isLevelFull(int index) {
         if ((index < 0) | (index >= levels())) {
-            throw new IndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException("Index is out of range");
         }
 
         synchronized (monitor) {
@@ -112,7 +112,7 @@ public final class CacheController<K, V> implements Cache<K,V> {
      */
     public Optional<Map.Entry<K, V>> cache(K key, V value) {
         if ((key == null) | (value == null)) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Key aor value should not be null");
         }
 
         synchronized (monitor) {

@@ -42,7 +42,7 @@ class CacheLevelFsTest {
     /**
      * LRU cache will be initialised with size 6
      */
-    private final int maxSize = Cache.DEFAULT_CACHE_SIZE + 1;
+    private final int maxSize = CacheLevel.DEFAULT_CACHE_SIZE + 1;
 
     /**
      * caches with memory cache
@@ -126,7 +126,7 @@ class CacheLevelFsTest {
         CacheAlgorithm<Integer> lru = new Lru<>();
         Cache<Integer, Integer> cache = new CacheLevel<>(lru, notEmptyStorage);
 
-        assertTrue(!notEmptyStorage.isEmpty());
+        assertFalse(notEmptyStorage.isEmpty());
         assertEquals(notEmptyStorage.size(), cache.size());
         assertEquals(notEmptyStorage.size(), cache.sizeMax());
     }
