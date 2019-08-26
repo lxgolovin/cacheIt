@@ -2,8 +2,6 @@ package com.lxgolovin.cache.algorithm;
 
 import com.lxgolovin.cache.core.AccessHashSet;
 
-import java.util.Optional;
-
 /**
  * Abstract class with some methods to define Recently Used (LRU-MRU) algorithms.
  * Implements {@link CacheAlgorithm} using {@link AccessHashSet} as a queue of keys
@@ -44,13 +42,6 @@ abstract class AbstractRu<E> implements CacheAlgorithm<E> {
     }
 
     /**
-     * Deletes element from the queue depending on the algorithm type
-     * @return element that was deleted or null if the queue is empty
-     */
-    @Override
-    public abstract Optional<E> pop();
-
-    /**
      * Removes element from the queue
      * @param elem - may not be null
      * @return true if element was present in queue, else false
@@ -71,12 +62,6 @@ abstract class AbstractRu<E> implements CacheAlgorithm<E> {
     public String toString() {
         return getType();
     }
-
-    /**
-     * @return type of used algorithm
-     */
-    @Override
-    public abstract String getType();
 
     /**
      * Clears all data from the queue {@link AbstractRu#queue}

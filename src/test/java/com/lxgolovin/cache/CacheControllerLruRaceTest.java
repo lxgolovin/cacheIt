@@ -21,9 +21,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CacheControllerLruRaceTest {
 
-    private static final int threadsTotal = 100;
+    private static final int THREADS_TOTAL = 100;
 
-    private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
+    private static final ExecutorService executor = Executors.newFixedThreadPool(THREADS_TOTAL);
 
     private CacheController<Integer, Integer> cc;
 
@@ -55,18 +55,18 @@ class CacheControllerLruRaceTest {
 
     @Test
     void putDataIntoCacheBarrier() throws InterruptedException, BrokenBarrierException {
-        final CyclicBarrier barrier = new CyclicBarrier(threadsTotal + 1, () -> {
+        final CyclicBarrier barrier = new CyclicBarrier(THREADS_TOTAL + 1, () -> {
             assertEquals(maxSize * cc.levels(), cc.size());
             assertEquals(cc.sizeMax(), cc.size());
         });
 
         assertEquals(cc.size(), cc.sizeMax());
-        IntStream.rangeClosed(1,threadsTotal)
-                .forEach(i -> exec.execute(() -> {
+        IntStream.rangeClosed(1, THREADS_TOTAL)
+                .forEach(i -> executor.execute(() -> {
                     try {
                         List<Integer> data = ListGenerator.generateInt(dataSize);
                         data.forEach(k -> {
-                            int v = (int)(Math.random() * threadsTotal);
+                            int v = (int)(Math.random() * THREADS_TOTAL);
                             cc.cache(k, v);
                         });
 
@@ -84,15 +84,15 @@ class CacheControllerLruRaceTest {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         assertEquals((maxSize * cc.levels()), cc.size());
-        IntStream.rangeClosed(1,threadsTotal)
+        IntStream.rangeClosed(1, THREADS_TOTAL)
                 .forEach(i ->
                         futures.add(CompletableFuture.runAsync(() -> {
                             List<Integer> data = ListGenerator.generateInt(dataSize);
                             data.forEach(k -> {
-                                int v = (int)(Math.random() * threadsTotal);
+                                int v = (int)(Math.random() * THREADS_TOTAL);
                                 cc.cache(k, v);
                             });
-                        }, exec)));
+                        }, executor)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals((maxSize * cc.levels()), cc.size());
@@ -101,23 +101,23 @@ class CacheControllerLruRaceTest {
     @Test
     void putDataIntoCacheLatch() throws InterruptedException, ExecutionException {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        CountDownLatch latch = new CountDownLatch(threadsTotal);
+        CountDownLatch latch = new CountDownLatch(THREADS_TOTAL);
 
         assertEquals(cc.sizeMax(), cc.size());
-        IntStream.rangeClosed(1,threadsTotal)
+        IntStream.rangeClosed(1, THREADS_TOTAL)
                 .forEach(i -> futures.add(CompletableFuture.runAsync(() -> {
                     try {
                         List<Integer> data = ListGenerator.generateInt(dataSize);
                         latch.countDown();
                         latch.await();
                         data.forEach(k -> {
-                            int v = (int)(Math.random() * threadsTotal);
+                            int v = (int)(Math.random() * THREADS_TOTAL);
                             cc.cache(k, v);
                         });
                     } catch (InterruptedException e) {
                         // just skip it and finish
                     }
-                }, exec)));
+                }, executor)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(cc.sizeMax(), cc.size());
@@ -126,17 +126,17 @@ class CacheControllerLruRaceTest {
     @Test
     void chaosStressTest() throws InterruptedException, ExecutionException {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        CountDownLatch latch = new CountDownLatch(threadsTotal);
+        CountDownLatch latch = new CountDownLatch(THREADS_TOTAL);
 
         assertEquals(maxSize * cc.levels(), cc.size());
-        IntStream.rangeClosed(1,threadsTotal)
+        IntStream.rangeClosed(1, THREADS_TOTAL)
                 .forEach(i -> futures.add(CompletableFuture.runAsync(() -> {
                     try {
                         List<Integer> data = ListGenerator.generateInt(dataSize);
                         latch.countDown();
                         latch.await();
                         data.forEach(k -> {
-                            int v = (int)(Math.random() * threadsTotal);
+                            int v = (int)(Math.random() * THREADS_TOTAL);
                             cc.pop();
                             Thread.yield();
 
@@ -156,7 +156,7 @@ class CacheControllerLruRaceTest {
                     } catch (InterruptedException e) {
                         // just skip it and finish
                     }
-                }, exec)));
+                }, executor)));
 
         FutureConverter.listToFuture(futures).get();
         assertTrue(cc.sizeMax() >= cc.size());
@@ -170,6 +170,6 @@ class CacheControllerLruRaceTest {
 
     @AfterAll
     static void finish() {
-        exec.shutdown();
+        executor.shutdown();
     }
 }

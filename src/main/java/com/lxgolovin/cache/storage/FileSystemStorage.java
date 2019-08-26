@@ -130,7 +130,6 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         }
     }
 
-    // ! rewrite
     boolean putAll(Map<K, V> map) {
         if (map == null)
             return false;
@@ -305,8 +304,8 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
      */
     private void deleteFile(Path path) {
         if (path != null) {
-            boolean fileDeleted = path.toFile().delete();
-            if (!fileDeleted) {
+            boolean fileNotDeleted = !path.toFile().delete();
+            if (fileNotDeleted) {
                 logger.warn("File {} not deleted", path.toUri());
             }
         }

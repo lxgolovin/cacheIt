@@ -14,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FileSystemStorageRaceTest {
 
-    private static final int threadsTotal = 100;
+    private static final int THREADS_TOTAL = 100;
 
-    private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
+    private static final ExecutorService exec = Executors.newFixedThreadPool(THREADS_TOTAL);
 
     private final Map<Integer, String> map = new HashMap<>();
 
@@ -26,8 +26,8 @@ class FileSystemStorageRaceTest {
     void setUp() {
         final String directoryPath = "./TEMP/";
         storage = new FileSystemStorage<>(Paths.get(directoryPath), true);
-        for (int i = 0; i < threadsTotal; i++) {
-            map.put(i, String.valueOf(Math.random() * threadsTotal * 10));
+        for (int i = 0; i < THREADS_TOTAL; i++) {
+            map.put(i, String.valueOf(Math.random() * THREADS_TOTAL * 10));
         }
     }
 
@@ -43,7 +43,7 @@ class FileSystemStorageRaceTest {
                 }));
 
         TimeUnit.SECONDS.sleep(3); // wait all finished
-        assertEquals(threadsTotal, storage.size());
+        assertEquals(THREADS_TOTAL, storage.size());
         assertEquals(storage.getAll(), map);
     }
 
@@ -61,7 +61,7 @@ class FileSystemStorageRaceTest {
                 }, exec)));
 
         FutureConverter.getAllFinished(futures).get();
-        assertEquals(threadsTotal, storage.size());
+        assertEquals(THREADS_TOTAL, storage.size());
         map.forEach((k, v) -> {
             assertTrue(storage.containsKey(k));
             assertTrue(storage.get(k).isPresent());
@@ -72,7 +72,7 @@ class FileSystemStorageRaceTest {
     @Test
     void putKeyToHashMapLatch() throws InterruptedException, ExecutionException {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        CountDownLatch latch = new CountDownLatch(threadsTotal);
+        CountDownLatch latch = new CountDownLatch(THREADS_TOTAL);
 
         map.forEach((k, v) -> futures.add(CompletableFuture.runAsync(() -> {
             try {
@@ -89,14 +89,14 @@ class FileSystemStorageRaceTest {
         }, exec)));
 
         FutureConverter.getAllFinished(futures).get();
-        assertEquals(threadsTotal, storage.size());
+        assertEquals(THREADS_TOTAL, storage.size());
         assertEquals(storage.getAll(), map);
     }
 
     @Test
     void chaosStressTest() throws InterruptedException, ExecutionException {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        CountDownLatch latch = new CountDownLatch(threadsTotal);
+        CountDownLatch latch = new CountDownLatch(THREADS_TOTAL);
 
         map.forEach((k, v) -> futures.add(CompletableFuture.runAsync(() -> {
             try {
@@ -120,7 +120,7 @@ class FileSystemStorageRaceTest {
         }, exec)));
 
         FutureConverter.getAllFinished(futures).get();
-        assertEquals(threadsTotal, storage.size());
+        assertEquals(THREADS_TOTAL, storage.size());
         assertEquals(storage.getAll(), map);
         storage.clear();
         assertEquals(0, storage.size());

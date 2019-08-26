@@ -37,7 +37,6 @@ public class AccessHashSet<E> {
     /**
      * Inner class to define values inside map
      * The class is a structure to get next and previous element
-     * Both elements are <K> type
      *
      * @param <K> links to next and previous elements
      */

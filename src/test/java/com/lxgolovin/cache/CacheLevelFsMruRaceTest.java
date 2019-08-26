@@ -22,9 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CacheLevelFsMruRaceTest {
 
-    private static final int threadsTotal = 100;
+    private static final int THREADS_TOTAL = 100;
 
-    private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
+    private static final ExecutorService exec = Executors.newFixedThreadPool(THREADS_TOTAL);
 
     private final CacheAlgorithm<Integer> mru = new Mru<>();
 
@@ -47,18 +47,18 @@ class CacheLevelFsMruRaceTest {
 
     @Test
     void putDataIntoCacheBarrier() throws InterruptedException, BrokenBarrierException {
-        final CyclicBarrier barrier = new CyclicBarrier(threadsTotal + 1, () -> {
+        final CyclicBarrier barrier = new CyclicBarrier(THREADS_TOTAL + 1, () -> {
             assertEquals(maxSize, mruCache.size());
             assertEquals(mruCache.sizeMax(), mruCache.size());
         });
 
         assertEquals(maxSize, mruCache.size());
-        IntStream.rangeClosed(1,threadsTotal)
+        IntStream.rangeClosed(1, THREADS_TOTAL)
                 .forEach(i -> exec.execute(() -> {
                     try {
                         List<Integer> data = ListGenerator.generateInt(dataSize);
                         data.forEach(k -> {
-                            String v = String.valueOf(Math.random() * threadsTotal);
+                            String v = String.valueOf(Math.random() * THREADS_TOTAL);
                             mruCache.cache(k, v);
                         });
 
@@ -76,12 +76,12 @@ class CacheLevelFsMruRaceTest {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         assertEquals(maxSize, mruCache.size());
-        IntStream.rangeClosed(1,threadsTotal)
+        IntStream.rangeClosed(1, THREADS_TOTAL)
                 .forEach(i ->
                         futures.add(CompletableFuture.runAsync(() -> {
                             List<Integer> data = ListGenerator.generateInt(dataSize);
                             data.forEach(k -> {
-                                String v = String.valueOf(Math.random() * threadsTotal);
+                                String v = String.valueOf(Math.random() * THREADS_TOTAL);
                                 mruCache.cache(k, v);
                             });
                         }, exec)));
@@ -93,17 +93,17 @@ class CacheLevelFsMruRaceTest {
     @Test
     void putDataIntoCacheLatch() throws InterruptedException, ExecutionException {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        CountDownLatch latch = new CountDownLatch(threadsTotal);
+        CountDownLatch latch = new CountDownLatch(THREADS_TOTAL);
 
         assertEquals(maxSize, mruCache.size());
-        IntStream.rangeClosed(1,threadsTotal)
+        IntStream.rangeClosed(1, THREADS_TOTAL)
                 .forEach(i -> futures.add(CompletableFuture.runAsync(() -> {
                     try {
                         List<Integer> data = ListGenerator.generateInt(dataSize);
                         latch.countDown();
                         latch.await();
                         data.forEach(k -> {
-                            String v = String.valueOf(Math.random() * threadsTotal);
+                            String v = String.valueOf(Math.random() * THREADS_TOTAL);
                             mruCache.cache(k, v);
                         });
                     } catch (InterruptedException e) {
@@ -118,17 +118,17 @@ class CacheLevelFsMruRaceTest {
     @Test
     void chaosStressTest() throws InterruptedException, ExecutionException {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        CountDownLatch latch = new CountDownLatch(threadsTotal);
+        CountDownLatch latch = new CountDownLatch(THREADS_TOTAL);
 
         assertEquals(maxSize, mruCache.size());
-        IntStream.rangeClosed(1,threadsTotal)
+        IntStream.rangeClosed(1, THREADS_TOTAL)
                 .forEach(i -> futures.add(CompletableFuture.runAsync(() -> {
                     try {
                         List<Integer> data = ListGenerator.generateInt(dataSize);
                         latch.countDown();
                         latch.await();
                         data.forEach(k -> {
-                            String v = String.valueOf(Math.random() * threadsTotal);
+                            String v = String.valueOf(Math.random() * THREADS_TOTAL);
                             mruCache.pop();
                             Thread.yield();
 

@@ -14,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AccessHashSetRaceTest {
 
-    private static final int threadsTotal = 100;
+    private static final int THREADS_TOTAL = 100;
 
-    private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
+    private static final ExecutorService executor = Executors.newFixedThreadPool(THREADS_TOTAL);
 
     private AccessHashSet<Integer> set;
 
@@ -29,22 +29,22 @@ class AccessHashSetRaceTest {
     void putDataToSetFuture() throws InterruptedException, ExecutionException {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        IntStream.rangeClosed(1,threadsTotal)
+        IntStream.rangeClosed(1, THREADS_TOTAL)
                 .forEach(elem -> futures.add(CompletableFuture.runAsync(() -> {
                     set.put(elem);
                     Thread.yield();
                     set.remove(elem);
                     Thread.yield();
                     set.put(elem);
-                }, exec)));
+                }, executor)));
 
         FutureConverter.listToFuture(futures).get();
-        assertEquals(threadsTotal, set.size());
+        assertEquals(THREADS_TOTAL, set.size());
     }
 
     @Test
     void puAndRemoveRaceConditions() throws InterruptedException, ExecutionException {
-        final int puttersTotal = threadsTotal / 2;
+        final int puttersTotal = THREADS_TOTAL / 2;
 
         ArrayList<Integer> initData = new ArrayList<>();
         ArrayList<Integer> newData = new ArrayList<>();
@@ -69,7 +69,7 @@ class AccessHashSetRaceTest {
             } catch (InterruptedException e) {
                 // just skip it and finish
             }
-        }, exec)));
+        }, executor)));
 
         initData.forEach(elem -> futures.add(CompletableFuture.runAsync(() -> {
             try {
@@ -81,7 +81,7 @@ class AccessHashSetRaceTest {
             } catch (InterruptedException e) {
                 // just skip it and finish
             }
-        }, exec)));
+        }, executor)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(puttersTotal, set.size());
@@ -94,14 +94,14 @@ class AccessHashSetRaceTest {
         final Integer element = 5000;
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        for (int i = 0; i < threadsTotal; i++) {
+        for (int i = 0; i < THREADS_TOTAL; i++) {
             futures.add(CompletableFuture.runAsync(() -> {
                 set.put(element);
                 Thread.yield();
                 set.remove(element);
                 Thread.yield();
                 set.put(element);
-            }, exec));
+            }, executor));
         }
 
         FutureConverter.getAllFinished(futures).get();
@@ -111,9 +111,9 @@ class AccessHashSetRaceTest {
     @Test
     void chaosStressTest() throws InterruptedException, ExecutionException {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        CountDownLatch latch = new CountDownLatch(threadsTotal);
+        CountDownLatch latch = new CountDownLatch(THREADS_TOTAL);
 
-        IntStream.rangeClosed(1,threadsTotal)
+        IntStream.rangeClosed(1, THREADS_TOTAL)
                 .forEach(elem -> futures.add(CompletableFuture.runAsync(() -> {
                     try {
                         latch.countDown();
@@ -132,14 +132,14 @@ class AccessHashSetRaceTest {
                     } catch (InterruptedException e) {
                         // just skip it and finish
                     }
-                }, exec)));
+                }, executor)));
 
         FutureConverter.getAllFinished(futures).get();
-        assertEquals(threadsTotal, set.size());
+        assertEquals(THREADS_TOTAL, set.size());
     }
 
     @AfterAll
     static void tearDown() {
-        exec.shutdown();
+        executor.shutdown();
     }
 }

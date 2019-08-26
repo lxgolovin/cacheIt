@@ -13,18 +13,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class LruRaceTest {
 
-    private static final int threadsTotal = 100;
+    private static final int THREADS_TOTAL = 100;
 
-    private static final ExecutorService exec = Executors.newFixedThreadPool(threadsTotal);
+    private static final ExecutorService exec = Executors.newFixedThreadPool(THREADS_TOTAL);
 
     private final CacheAlgorithm<Integer> lQueue = new Lru<>();
 
     @Test
     void shiftDataStressTest() throws InterruptedException, ExecutionException {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        CountDownLatch latch = new CountDownLatch(threadsTotal);
+        CountDownLatch latch = new CountDownLatch(THREADS_TOTAL);
 
-        IntStream.rangeClosed(1,threadsTotal)
+        IntStream.rangeClosed(1, THREADS_TOTAL)
                 .forEach(elem -> futures.add(CompletableFuture.runAsync(() -> {
                     try {
                         latch.countDown();
@@ -44,7 +44,7 @@ class LruRaceTest {
         final Integer element = 5000;
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        for (int i = 0; i < threadsTotal; i++) {
+        for (int i = 0; i < THREADS_TOTAL; i++) {
             futures.add(CompletableFuture.runAsync(() -> {
                 lQueue.shift(element);
                 Thread.yield();
@@ -61,9 +61,9 @@ class LruRaceTest {
     @Test
     void chaosStressTest() throws InterruptedException, ExecutionException {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        CountDownLatch latch = new CountDownLatch(threadsTotal);
+        CountDownLatch latch = new CountDownLatch(THREADS_TOTAL);
 
-        IntStream.rangeClosed(1,threadsTotal)
+        IntStream.rangeClosed(1, THREADS_TOTAL)
                 .forEach(elem -> futures.add(CompletableFuture.runAsync(() -> {
                     try {
                         latch.countDown();
