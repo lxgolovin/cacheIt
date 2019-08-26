@@ -34,7 +34,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @see FileSystemStorage
  */
 @ThreadSafe
-public class CacheLevel<K, V> implements Cache<K, V> {
+public final class CacheLevel<K, V> implements Cache<K, V> {
 
     /**
      * maximum possible size for the cache. Minimum value is greater then 1.

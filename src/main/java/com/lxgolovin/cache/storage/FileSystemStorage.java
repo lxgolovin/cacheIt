@@ -313,7 +313,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         }
     }
 
-    private Path createTempDirectory() {
+    private static Path createTempDirectory() {
         try {
             Path path = Files.createTempDirectory(TEMP_DIR_PREFIX);
             path.toFile().deleteOnExit();
@@ -323,7 +323,7 @@ public class FileSystemStorage<K extends Serializable, V extends Serializable> i
         }
     }
 
-    private boolean checkDirectoryByPath(Path path) {
+    private static boolean checkDirectoryByPath(Path path) {
         if (path.toFile().isDirectory()) {
             return true;
         }

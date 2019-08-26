@@ -13,8 +13,7 @@ import java.util.Optional;
  * @see AbstractRu
  * @see Lru
  */
-public class Mru<E> extends AbstractRu<E>
-        implements CacheAlgorithm<E> {
+public class Mru<E> extends AbstractRu<E> {
 
     /**
      * @return type of used algorithm

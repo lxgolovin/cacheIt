@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
  * @see Mru
  */
 @ThreadSafe
-public class CacheController<K, V> implements Cache<K,V> {
+public final class CacheController<K, V> implements Cache<K,V> {
 
     /**
      * Cache controller list to keep levels of cache

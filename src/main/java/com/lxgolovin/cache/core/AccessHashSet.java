@@ -41,12 +41,13 @@ public class AccessHashSet<E> {
      *
      * @param <K> links to next and previous elements
      */
-    private final class Node<K> {
+    private static final class Node<K> {
 
         /**
          * Pointers to previous and next element
          */
-        private K nextElem, prevElem;
+        private K nextElem;
+        private K prevElem;
 
         Node() {
             this.nextElem = null;

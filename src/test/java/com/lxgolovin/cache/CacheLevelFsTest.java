@@ -126,7 +126,7 @@ class CacheLevelFsTest {
         CacheAlgorithm<Integer> lru = new Lru<>();
         Cache<Integer, Integer> cache = new CacheLevel<>(lru, notEmptyStorage);
 
-        assertTrue(notEmptyStorage.size() > 0);
+        assertTrue(!notEmptyStorage.isEmpty());
         assertEquals(notEmptyStorage.size(), cache.size());
         assertEquals(notEmptyStorage.size(), cache.sizeMax());
     }
