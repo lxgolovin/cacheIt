@@ -15,7 +15,7 @@ class MruRaceTest {
 
     private static final int THREADS_TOTAL = 100;
 
-    private static final ExecutorService exec = Executors.newFixedThreadPool(THREADS_TOTAL);
+    private static final ExecutorService EXEC = Executors.newFixedThreadPool(THREADS_TOTAL);
 
     private final CacheAlgorithm<Integer> mQueue = new Mru<>();
 
@@ -33,7 +33,7 @@ class MruRaceTest {
                     } catch (InterruptedException e) {
                         // just skip it and finish
                     }
-                }, exec)));
+                }, EXEC)));
 
         FutureConverter.getAllFinished(futures).get();
         assertTrue(mQueue.pop().isPresent());
@@ -51,7 +51,7 @@ class MruRaceTest {
                 mQueue.pop();
                 Thread.yield();
                 mQueue.shift(element);
-            }, exec));
+            }, EXEC));
         }
 
         FutureConverter.getAllFinished(futures).get();
@@ -83,7 +83,7 @@ class MruRaceTest {
                     } catch (InterruptedException e) {
                         // just skip it and finish
                     }
-                }, exec)));
+                }, EXEC)));
 
         FutureConverter.getAllFinished(futures).get();
         assertTrue(mQueue.pop().isPresent());
@@ -91,7 +91,7 @@ class MruRaceTest {
 
     @AfterAll
     static void tearDown() {
-        exec.shutdown();
+        EXEC.shutdown();
     }
 
 }

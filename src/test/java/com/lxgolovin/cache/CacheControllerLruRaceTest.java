@@ -23,7 +23,7 @@ class CacheControllerLruRaceTest {
 
     private static final int THREADS_TOTAL = 100;
 
-    private static final ExecutorService executor = Executors.newFixedThreadPool(THREADS_TOTAL);
+    private static final ExecutorService EXEC = Executors.newFixedThreadPool(THREADS_TOTAL);
 
     private CacheController<Integer, Integer> cc;
 
@@ -62,7 +62,7 @@ class CacheControllerLruRaceTest {
 
         assertEquals(cc.size(), cc.sizeMax());
         IntStream.rangeClosed(1, THREADS_TOTAL)
-                .forEach(i -> executor.execute(() -> {
+                .forEach(i -> EXEC.execute(() -> {
                     try {
                         List<Integer> data = ListGenerator.generateInt(dataSize);
                         data.forEach(k -> {
@@ -92,7 +92,7 @@ class CacheControllerLruRaceTest {
                                 int v = (int)(Math.random() * THREADS_TOTAL);
                                 cc.cache(k, v);
                             });
-                        }, executor)));
+                        }, EXEC)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals((maxSize * cc.levels()), cc.size());
@@ -117,7 +117,7 @@ class CacheControllerLruRaceTest {
                     } catch (InterruptedException e) {
                         // just skip it and finish
                     }
-                }, executor)));
+                }, EXEC)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(cc.sizeMax(), cc.size());
@@ -156,7 +156,7 @@ class CacheControllerLruRaceTest {
                     } catch (InterruptedException e) {
                         // just skip it and finish
                     }
-                }, executor)));
+                }, EXEC)));
 
         FutureConverter.listToFuture(futures).get();
         assertTrue(cc.sizeMax() >= cc.size());
@@ -170,6 +170,6 @@ class CacheControllerLruRaceTest {
 
     @AfterAll
     static void finish() {
-        executor.shutdown();
+        EXEC.shutdown();
     }
 }

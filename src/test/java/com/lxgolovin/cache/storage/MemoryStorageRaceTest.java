@@ -14,7 +14,7 @@ class MemoryStorageRaceTest {
 
     private static final int THREADS_TOTAL = 100;
 
-    private static final ExecutorService exec = Executors.newFixedThreadPool(THREADS_TOTAL);
+    private static final ExecutorService EXEC = Executors.newFixedThreadPool(THREADS_TOTAL);
 
     private final Map<Integer, String> map = new HashMap<>();
 
@@ -30,7 +30,7 @@ class MemoryStorageRaceTest {
     @Test
     void putKeyToHashMapSleep() throws InterruptedException {
         map.forEach((k, v) ->
-                exec.execute(() -> {
+                EXEC.execute(() -> {
                     storage.put(k, v);
                     Thread.yield();
                     storage.remove(k);
@@ -54,7 +54,7 @@ class MemoryStorageRaceTest {
                     storage.remove(k);
                     Thread.yield();
                     storage.put(k, v);
-                }, exec)));
+                }, EXEC)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(THREADS_TOTAL, storage.size());
@@ -89,7 +89,7 @@ class MemoryStorageRaceTest {
             } catch (InterruptedException e) {
                 // just skip it and finish
             }
-        }, exec)));
+        }, EXEC)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(THREADS_TOTAL, storage.size());
@@ -115,7 +115,7 @@ class MemoryStorageRaceTest {
             } catch (InterruptedException e) {
                 // just skip it and finish
             }
-        }, exec)));
+        }, EXEC)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(THREADS_TOTAL, storage.size());
@@ -124,6 +124,6 @@ class MemoryStorageRaceTest {
 
     @AfterAll
     static void tearDown() {
-        exec.shutdown();
+        EXEC.shutdown();
     }
 }

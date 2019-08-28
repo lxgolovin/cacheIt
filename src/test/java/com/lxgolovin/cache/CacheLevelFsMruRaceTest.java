@@ -24,7 +24,7 @@ class CacheLevelFsMruRaceTest {
 
     private static final int THREADS_TOTAL = 100;
 
-    private static final ExecutorService exec = Executors.newFixedThreadPool(THREADS_TOTAL);
+    private static final ExecutorService EXEC = Executors.newFixedThreadPool(THREADS_TOTAL);
 
     private final CacheAlgorithm<Integer> mru = new Mru<>();
 
@@ -54,7 +54,7 @@ class CacheLevelFsMruRaceTest {
 
         assertEquals(maxSize, mruCache.size());
         IntStream.rangeClosed(1, THREADS_TOTAL)
-                .forEach(i -> exec.execute(() -> {
+                .forEach(i -> EXEC.execute(() -> {
                     try {
                         List<Integer> data = ListGenerator.generateInt(dataSize);
                         data.forEach(k -> {
@@ -84,7 +84,7 @@ class CacheLevelFsMruRaceTest {
                                 String v = String.valueOf(Math.random() * THREADS_TOTAL);
                                 mruCache.cache(k, v);
                             });
-                        }, exec)));
+                        }, EXEC)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(maxSize, mruCache.size());
@@ -109,7 +109,7 @@ class CacheLevelFsMruRaceTest {
                     } catch (InterruptedException e) {
                         // just skip it and finish
                     }
-                }, exec)));
+                }, EXEC)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(maxSize, mruCache.size());
@@ -148,7 +148,7 @@ class CacheLevelFsMruRaceTest {
                     } catch (InterruptedException e) {
                         // just skip it and finish
                     }
-                }, exec)));
+                }, EXEC)));
 
         FutureConverter.getAllFinished(futures).get();
         assertTrue(maxSize >= mruCache.size());
@@ -162,6 +162,6 @@ class CacheLevelFsMruRaceTest {
 
     @AfterAll
     static void finish() {
-        exec.shutdown();
+        EXEC.shutdown();
     }
 }

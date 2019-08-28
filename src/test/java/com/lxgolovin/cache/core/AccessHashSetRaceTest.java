@@ -16,7 +16,7 @@ class AccessHashSetRaceTest {
 
     private static final int THREADS_TOTAL = 100;
 
-    private static final ExecutorService executor = Executors.newFixedThreadPool(THREADS_TOTAL);
+    private static final ExecutorService EXEC = Executors.newFixedThreadPool(THREADS_TOTAL);
 
     private AccessHashSet<Integer> set;
 
@@ -36,7 +36,7 @@ class AccessHashSetRaceTest {
                     set.remove(elem);
                     Thread.yield();
                     set.put(elem);
-                }, executor)));
+                }, EXEC)));
 
         FutureConverter.listToFuture(futures).get();
         assertEquals(THREADS_TOTAL, set.size());
@@ -69,7 +69,7 @@ class AccessHashSetRaceTest {
             } catch (InterruptedException e) {
                 // just skip it and finish
             }
-        }, executor)));
+        }, EXEC)));
 
         initData.forEach(elem -> futures.add(CompletableFuture.runAsync(() -> {
             try {
@@ -81,7 +81,7 @@ class AccessHashSetRaceTest {
             } catch (InterruptedException e) {
                 // just skip it and finish
             }
-        }, executor)));
+        }, EXEC)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(puttersTotal, set.size());
@@ -101,7 +101,7 @@ class AccessHashSetRaceTest {
                 set.remove(element);
                 Thread.yield();
                 set.put(element);
-            }, executor));
+            }, EXEC));
         }
 
         FutureConverter.getAllFinished(futures).get();
@@ -132,7 +132,7 @@ class AccessHashSetRaceTest {
                     } catch (InterruptedException e) {
                         // just skip it and finish
                     }
-                }, executor)));
+                }, EXEC)));
 
         FutureConverter.getAllFinished(futures).get();
         assertEquals(THREADS_TOTAL, set.size());
@@ -140,6 +140,6 @@ class AccessHashSetRaceTest {
 
     @AfterAll
     static void tearDown() {
-        executor.shutdown();
+        EXEC.shutdown();
     }
 }
